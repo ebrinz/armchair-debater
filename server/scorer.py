@@ -6,6 +6,7 @@ takes, and submit() never blocks the pipeline.
 """
 
 import asyncio
+import contextlib
 from collections.abc import Callable
 
 from loguru import logger
@@ -29,18 +30,31 @@ class TurnScorer:
         self._transcript: list[tuple[str, str]] = []
         self._tail: asyncio.Task | None = None
         self._closed = False
+        self._generation = 0
 
     def submit(self, by: str, text: str) -> None:
+        """Queue a turn for background scoring; must be called from a running event loop, and never blocks."""
         text = text.strip()
         if self._closed or not text or self._current_stage() not in DEBATE_ROUNDS:
             return
         history = list(self._transcript)
         self._transcript.append((by, text))
-        self._tail = asyncio.create_task(self._run(self._tail, by, text, history))
+        generation = self._generation
+        self._tail = asyncio.create_task(self._run(self._tail, by, text, history, generation))
 
-    async def _run(self, previous: asyncio.Task | None, by: str, text: str, history) -> None:
+    async def _run(
+        self,
+        previous: asyncio.Task | None,
+        by: str,
+        text: str,
+        history: list[tuple[str, str]],
+        generation: int,
+    ) -> None:
         if previous:
-            await previous
+            with contextlib.suppress(Exception):
+                await previous
+        if generation != self._generation:
+            return
         user_theory, bot_theory = self._theories()
         try:
             score = await self._score(
@@ -54,7 +68,15 @@ class TurnScorer:
         except judge.JudgeError:
             logger.warning(f"scorer: skipping an unscored {by} turn")
             return
-        await self._state.apply_hit(by, score.damage, score.recovery, score.reason)
+        except Exception:
+            logger.exception(f"scorer: unexpected error scoring a {by} turn")
+            return
+        if generation != self._generation:
+            return
+        try:
+            await self._state.apply_hit(by, score.damage, score.recovery, score.reason)
+        except Exception:
+            logger.exception(f"scorer: unexpected error applying a {by} hit")
 
     async def drain(self) -> None:
         if self._tail:
@@ -66,3 +88,5 @@ class TurnScorer:
     def reset(self) -> None:
         self._transcript = []
         self._closed = False
+        self._generation += 1
+        self._tail = None

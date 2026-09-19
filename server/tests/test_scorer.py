@@ -14,6 +14,7 @@ class Rig:
         self.calls = []
         self.gates: dict[str, asyncio.Event] = {}
         self.failing: set[str] = set()
+        self.crashing: set[str] = set()
         self.scorer = TurnScorer(
             self.state,
             current_stage=lambda: self.stage,
@@ -27,6 +28,8 @@ class Rig:
             await gate.wait()
         if kwargs["turn"] in self.failing:
             raise JudgeError("down")
+        if kwargs["turn"] in self.crashing:
+            raise RuntimeError("boom")
         return TurnScore(10, 5 if kwargs["was_hit"] else 0, f"scored {kwargs['turn']}")
 
 
@@ -98,3 +101,38 @@ async def test_close_stops_new_turns_and_reset_reopens_with_empty_history():
 
 async def test_drain_with_nothing_submitted_returns():
     await Rig().scorer.drain()
+
+
+async def test_an_unexpected_error_is_skipped_and_later_turns_still_apply():
+    rig = Rig()
+    rig.crashing.add("first")
+    rig.scorer.submit("bot", "first")
+    rig.scorer.submit("user", "second")
+    await rig.scorer.drain()
+    assert [h["reason"] for h in rig.state.hits] == ["scored second"]
+
+
+async def test_an_apply_hit_failure_does_not_break_the_chain():
+    rig = Rig()
+    rig.scorer.submit("referee", "first")
+    rig.scorer.submit("user", "second")
+    await rig.scorer.drain()
+    assert [h["reason"] for h in rig.state.hits] == ["scored second"]
+
+
+async def test_reset_discards_turns_still_in_flight():
+    rig = Rig()
+    rig.gates["first"] = asyncio.Event()
+    rig.scorer.submit("bot", "first")
+    in_flight = rig.scorer._tail
+    await asyncio.sleep(0)
+    rig.scorer.reset()
+    rig.gates["first"].set()
+    for _ in range(5):
+        await asyncio.sleep(0)
+    await in_flight
+    assert rig.state.hits == []
+    rig.scorer.submit("user", "fresh")
+    await rig.scorer.drain()
+    assert [h["reason"] for h in rig.state.hits] == ["scored fresh"]
+    assert rig.calls[-1]["history"] == []
