@@ -27,7 +27,7 @@
 - id: iit
   name: Integrated Information Theory
   aliases: [IIT, phi, integrated information]
-  kuhn_category: Materialism > Integrated information
+  kuhn_category: Integrated Information Theory
   claim: >-
     Consciousness is identical to a system's integrated cause-effect structure.
     The quantity of consciousness is phi, the amount of information the whole
@@ -73,11 +73,11 @@
 - id: rpt
   name: Recurrent Processing Theory
   aliases: [RPT, recurrent processing, local recurrence, Lamme's theory]
-  kuhn_category: Materialism > Neurobiological > Recurrent processing
+  kuhn_category: Materialism > First-order
   claim: >-
     Consciousness arises from local recurrent processing within sensory
     cortex, where feedback loops between higher and lower areas sustain a
-    representation; no brain-wide broadcast or further higher-order thought
+    representation. No brain-wide broadcast or further higher-order thought
     is required.
   arguments:
     - It ties consciousness to a well-documented cortical mechanism, feedback loops between visual areas, rather than to a poorly specified global broadcast or an extra higher-order thought.
@@ -95,7 +95,7 @@
 - id: predictive_processing
   name: Predictive Processing
   aliases: [PP, predictive coding, free energy principle, the prediction error theory]
-  kuhn_category: Materialism > Computational > Predictive processing
+  kuhn_category: Materialism > Homeostatic and affective
   claim: >-
     The brain is a hierarchical prediction machine that constantly generates
     top-down expectations about the causes of its sensory input and corrects
@@ -118,14 +118,14 @@
 - id: ast
   name: Attention Schema Theory
   aliases: [AST, attention schema, Graziano's theory]
-  kuhn_category: Materialism > Neurobiological > Attention schema
+  kuhn_category: Materialism > Eliminative/Illusionism
   claim: >-
     The brain builds a constantly updated model of its own attention, much as
     it builds a body schema, and it is this simplified internal model,
     misread as a nonphysical inner awareness, that we report as subjective
     experience.
   arguments:
-    - It explains why we describe our awareness as a ghostly, nonphysical inner light, since the attention schema is a deliberately simplified, physically inaccurate model, the same way the body schema misrepresents the body as having a fixed size.
+    - It explains why we describe our awareness as a ghostly, nonphysical inner light, since the attention schema is a deliberately simplified, physically inaccurate model, the same way the body schema is a simplified, imperfect model of the body.
     - It gives attention a clear evolutionary and computational function, since a model of one's own attention helps the brain predict and control that attention rather than letting it drift unmanaged.
     - It extends naturally to explain social cognition, since the same modeling machinery that tracks one's own attention is repurposed to attribute awareness and attention to other people.
   objections:
@@ -134,17 +134,17 @@
     - Beyond the labels themselves, the theory has not yet produced a specific, falsifiable neural prediction that a rival theory could not equally well explain.
   rivals: [panpsychism, iit]
   citations:
-    - "Webb and Graziano 2015, Frontiers in Psychology, The attention schema theory: a mechanistic account of subjective awareness"
+    - "Graziano and Webb 2015, Frontiers in Psychology, The attention schema theory: a mechanistic account of subjective awareness"
     - "Graziano and Kastner 2011, Cognitive Neuroscience, Human consciousness and its relationship to social neuroscience: a novel hypothesis"
     - "Graziano 2017, Frontiers in Robotics and AI, The attention schema theory: a foundation for engineering artificial consciousness"
 
 - id: illusionism
   name: Illusionism
   aliases: [illusionist, consciousness is an illusion, Dennett's view]
-  kuhn_category: Materialism > Eliminativist > Illusionism
+  kuhn_category: Materialism > Eliminative/Illusionism
   claim: >-
     Phenomenal consciousness, the rich, ineffable, non-physical feel that
-    dualists describe, does not exist as advertised; what exists is a brain
+    dualists describe, does not exist as advertised. What exists is a brain
     that represents itself as having such a feel, and that introspective
     illusion is the real thing to be explained.
   arguments:
@@ -153,7 +153,7 @@
     - It fits naturally with everything else we know about the brain as a physical information-processing system, without needing to add any new law of nature to bridge matter and experience.
   objections:
     - Critics call this the hard problem in denial, since the felt reality of pain or color seems like the one thing that cannot coherently be argued away as mere appearance.
-    - Saying an experience only seems to have phenomenal qualities still uses the very concept of seeming, which itself looks like a phenomenal state that the theory has not actually eliminated.
+    - If it merely seems to someone that they are in pain, that seeming is itself a conscious experience, so illusionism looks like it smuggles phenomenal consciousness back in under a different name.
     - It asks people to give up the datum they are most certain of, so many find its conclusion harder to accept than any problem it claims to solve.
   rivals: [property_dualism, panpsychism, orch_or]
   citations:
@@ -163,8 +163,8 @@
 
 - id: biological_naturalism
   name: Biological Naturalism
-  aliases: [Searle's view, the Chinese Room, Searle's theory]
-  kuhn_category: Materialism > Biological naturalism
+  aliases: [Searle's view, Searle's theory]
+  kuhn_category: Materialism > Neurobiological
   claim: >-
     Consciousness is an ordinary biological process, caused by specific
     neurobiological mechanisms in the brain the way digestion is caused by
@@ -186,7 +186,7 @@
 - id: orch_or
   name: Orchestrated Objective Reduction
   aliases: [Orch OR, Penrose-Hameroff theory, quantum consciousness]
-  kuhn_category: Quantum > Orchestrated objective reduction
+  kuhn_category: Quantum Theories
   claim: >-
     Consciousness arises from quantum computations inside microtubules within
     neurons, orchestrated by the cell's structure, and each moment of
@@ -205,12 +205,12 @@
   citations:
     - "Hameroff and Penrose 2014, Physics of Life Reviews, Consciousness in the universe: a review of the Orch OR theory"
     - "Penrose 1989, Oxford University Press, The emperor's new mind"
-    - "Hameroff and Penrose 1998, Philosophical Transactions of the Royal Society A, Quantum computation in brain microtubules? The Penrose-Hameroff Orch OR model of consciousness"
+    - "Hameroff and Penrose 1996, Mathematics and Computers in Simulation, Orchestrated reduction of quantum coherence in brain microtubules: a model for consciousness"
 
 - id: panpsychism
   name: Panpsychism
   aliases: [panpsychist, everything is conscious, Strawson's view, Goff's view]
-  kuhn_category: Non-materialism > Panpsychism
+  kuhn_category: Panpsychisms
   claim: >-
     Consciousness, in some minimal form, is a fundamental and ubiquitous
     feature of physical reality, present in some small degree even in the
@@ -232,8 +232,8 @@
 
 - id: property_dualism
   name: Property Dualism
-  aliases: [the hard problem, dualism, Chalmers' view, zombies]
-  kuhn_category: Non-materialism > Property dualism
+  aliases: [dualism, Chalmers' view, zombies]
+  kuhn_category: Dualisms
   claim: >-
     Conscious experience is a genuine, non-physical property of certain
     physical systems, arising from but not reducible to their physical
@@ -255,15 +255,15 @@
 
 - id: analytic_idealism
   name: Analytic Idealism
-  aliases: [idealism, Kastrup's view, the mind is fundamental]
-  kuhn_category: Non-materialism > Idealism > Analytic idealism
+  aliases: [idealism, Kastrup's view]
+  kuhn_category: Idealisms
   claim: >-
-    Reality is fundamentally mental: there is only one universal field of
+    Reality is fundamentally mental. There is only one universal field of
     consciousness, and each of us is a dissociated pattern of excitation
     within it, with the physical world we perceive being what that mental
     activity looks like from the outside.
   arguments:
-    - It avoids the hard problem entirely, since it never needs to explain how experience arises from non-experiential matter; on this view matter is already an appearance within mind, not something separate from it.
+    - It avoids the hard problem entirely, since it never needs to explain how experience arises from non-experiential matter, because on this view matter is already an appearance within mind rather than something separate from it.
     - It gives a natural account of why brain activity correlates so tightly with reported experience without making the brain the cause of that experience, since a brain image is simply what a mind's activity looks like when observed from outside.
     - It draws on real clinical cases of dissociative identity disorder as a working model for how one field of consciousness could give rise to what look like separate, private centers of experience.
   objections:

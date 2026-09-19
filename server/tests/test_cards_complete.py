@@ -34,5 +34,5 @@ def test_rivalry_is_mutual_somewhere():
 def test_text_is_speakable():
     for theory in knowledge.THEORIES.values():
         for text in (theory.claim, *theory.arguments, *theory.objections):
-            assert not any(ch in text for ch in "*#_`[]"), (theory.id, text)
+            assert not any(ch in text for ch in "*#_`[];"), (theory.id, text)
             assert len(text.split()) <= 45, (theory.id, text)
