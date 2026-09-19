@@ -91,6 +91,8 @@ nodes:
 
           When the user has given their rebuttal, call rebuttal_done
           immediately, without replying to it; your closing comes next round.
+          If instead they ask a question or object to the theory you matched
+          them with, answer briefly and invite their rebuttal again.
     functions:
       - name: rebuttal_done
         transition_only: true
@@ -112,6 +114,8 @@ nodes:
 
           When the user has given their closing statement, call judge_debate
           immediately, without replying to it.
+          If instead they ask a question or object to the theory you matched
+          them with, answer briefly and invite their closing statement again.
     functions:
       - name: judge_debate
         transition_to: verdict
