@@ -1,0 +1,48 @@
+# Theory cards. Schema and rules: docs/design/2026-09-19-debate-mode-design.md
+# Every citation here has been confirmed by web search. Unconfirmed ones are left off.
+
+- id: gwt
+  name: Global Workspace Theory
+  aliases: [GWT, global workspace, global neuronal workspace, GNWT, workspace theory]
+  kuhn_category: Materialism > Neurobiological > Global workspace
+  claim: >-
+    A mental content becomes conscious when it wins the competition for a
+    limited-capacity workspace and is broadcast across the brain, making it
+    available to memory, language, and action all at once.
+  arguments:
+    - Conscious perception coincides with a sudden brain-wide ignition of activity, while unconscious processing of the same stimulus stays local.
+    - It explains why consciousness is serial and limited in capacity even though the brain computes massively in parallel.
+    - It makes predictions that can fail, such as late prefrontal ignition, which masking and attentional blink experiments have repeatedly tested.
+  objections:
+    - Broadcast explains why information is accessible, but not why being accessible should feel like anything at all.
+    - The Cogitate adversarial collaboration did not find the sustained prefrontal signal or the ignition at stimulus offset that the theory predicted.
+    - Much of the evidence relies on subjects reporting their experience, so it may track the machinery of report rather than experience itself.
+  rivals: [iit]
+  citations:
+    - "Baars 1988, Cambridge University Press, A Cognitive Theory of Consciousness"
+    - "Dehaene and Naccache 2001, Cognition, Towards a cognitive neuroscience of consciousness: basic evidence and a workspace framework"
+    - "Dehaene and Changeux 2011, Neuron, Experimental and theoretical approaches to conscious processing"
+    - "Mashour, Roelfsema, Changeux and Dehaene 2020, Neuron, Conscious processing and the global neuronal workspace hypothesis"
+
+- id: iit
+  name: Integrated Information Theory
+  aliases: [IIT, phi, integrated information]
+  kuhn_category: Materialism > Integrated information
+  claim: >-
+    Consciousness is identical to a system's integrated cause-effect structure.
+    The quantity of consciousness is phi, the amount of information the whole
+    system specifies beyond its parts.
+  arguments:
+    - It starts from the undeniable features of experience itself and derives what a physical system must be like to have them, rather than starting from behavior.
+    - It explains why the cerebellum, with more neurons than the cortex, contributes almost nothing to consciousness, since its wiring is modular rather than integrated.
+    - It inspired the perturbational complexity index, which distinguishes conscious from unconscious patients without requiring any report.
+  objections:
+    - Phi cannot be computed for any realistic brain, so the central quantity of the theory can never actually be measured.
+    - It implies that a simple but highly integrated grid of logic gates would be more conscious than a human, which many take as a reductio.
+    - More than a hundred researchers signed a 2023 open letter calling the theory pseudoscience, arguing that its core claims are untestable.
+  rivals: [gwt]
+  citations:
+    - "Tononi 2004, BMC Neuroscience, An information integration theory of consciousness"
+    - "Oizumi, Albantakis and Tononi 2014, PLoS Computational Biology, From the phenomenology to the mechanisms of consciousness: Integrated Information Theory 3.0"
+    - "Tononi, Boly, Massimini and Koch 2016, Nature Reviews Neuroscience, Integrated information theory: from consciousness to its physical substrate"
+    - "Albantakis et al. 2023, PLoS Computational Biology, Integrated information theory (IIT) 4.0"
