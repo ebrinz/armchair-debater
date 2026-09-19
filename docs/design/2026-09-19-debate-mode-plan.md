@@ -141,7 +141,9 @@ def card(**overrides):
 
 
 def beta(**overrides):
-    return card(id="beta", name="Beta Theory", aliases=["beta"], rivals=["alpha"], **overrides)
+    defaults = {"id": "beta", "name": "Beta Theory", "aliases": ["beta"], "rivals": ["alpha"]}
+    defaults.update(overrides)
+    return card(**defaults)
 
 
 def write(tmp_path: Path, cards) -> Path:
