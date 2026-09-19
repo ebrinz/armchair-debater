@@ -39,7 +39,6 @@ server/
   scorer.py                 # TurnScorer: ordered background scoring of finished turns
   flow.yaml                 # FlowConfig: setup → opening → rebuttal → closing → verdict
   handlers.py               # Flows tools + action: set_positions, judge_debate, emit_stage
-  eval_services.py          # General Compute factory for the eval judge and simulator
   bot.py                    # wires Flow, FlowManager, DebateState, TurnScorer
   tests/                    # pytest
   evals/                    # scripted + simulated scenarios
@@ -241,8 +240,10 @@ fixtures on a timer so the UI is built and demoed with no server.
    arguments. `success:` the debate reached a verdict and `judge_debate` was called.
    Metrics: `words` ≤ 90 per reply; judged — "the reply rebuts or concedes a
    specific point the user made; a reply that merely agrees fails".
-5. **Eval judge and simulator** — General Compute through `eval_services.llm`
-   (Ollama is installed but has no model pulled; this avoids a 7.6 GB download).
+5. **Eval judge and simulator** — the harness default, local Ollama `gemma4:12b`.
+   It keeps eval traffic off General Compute, which the bot and the live judge are
+   using during a run. The live judge stays on General Compute: measured 1.45 s per
+   turn there, against 5–9 s (15 s cold) for `gemma4:12b` on this machine.
 6. **UI** — `npm run build` and `npm run lint` clean; the `?mock` replay shows bars
    moving, the hit caption, and the verdict card.
 7. **End to end** — one live browser debate: bars move during the debate and the

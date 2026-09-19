@@ -1987,7 +1987,6 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task B.5: Evals
 
 **Files:**
-- Create: `server/eval_services.py`
 - Create: `server/evals/debate_text.yaml`
 - Create: `server/evals/debate_simulated.yaml`
 - Create: `server/evals/suite.yaml`
@@ -1996,38 +1995,16 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: the running bot from Task B.4 (`uv run bot.py -t eval`).
-- Produces: `eval_services.llm(config: dict)` — a factory returning an `OpenAILLMService` on General Compute, for `judge.eval` and `simulator` blocks.
-- Verified against pipecat 1.11.0 source: a `factory:` is a dotted path to a callable taking the config mapping and returning a `BaseOpenAILLMService` subclass; `OpenAILLMService.Settings` takes `model` and `extra`; a scripted `expect` entry accepts `event`, `text_contains`, `eval`, and `calls` (a list of `{name, args}`); `pipecat eval suite` takes a manifest whose `bot`, `bots_dir`, and `scenarios_dir` paths resolve relative to the manifest file, and spawns a fresh bot per scenario with `{python} {bot} -t eval --port {port}`.
+- The eval judge and the simulated caller both run on the harness default: local Ollama `gemma4:12b` (already pulled on this machine). Scenario files therefore carry no `judge:` or `simulator:` block. Rationale: it keeps eval traffic off General Compute, which the bot and the live debate judge are already using during a run. (The live judge in `judge.py` stays on General Compute: measured 1.45 s per turn there against 5–9 s on local Ollama.)
+- Verified against pipecat 1.11.0 source: with no `judge.eval` block the harness builds an Ollama service at `http://localhost:11434/v1` with model `gemma4:12b`; a scripted `expect` entry accepts `event`, `text_contains`, `eval`, and `calls` (a list of `{name, args}`); `pipecat eval suite` takes a manifest whose `bot`, `bots_dir`, and `scenarios_dir` paths resolve relative to the manifest file, and spawns a fresh bot per scenario with `{python} {bot} -t eval --port {port}`.
 
-- [ ] **Step 1: Write the factory**
+- [ ] **Step 1: Confirm the local judge is available**
 
-Create `server/eval_services.py`:
-
-```python
-"""LLM factory for `pipecat eval`: the scenario judge and the simulated caller.
-
-Scenarios name it as ``factory: eval_services.llm``. It points at the same
-General Compute endpoint the bot uses, so no local model is needed.
-"""
-
-import os
-
-from dotenv import load_dotenv
-
-
-def llm(config: dict):
-    from pipecat.services.openai.llm import OpenAILLMService
-
-    load_dotenv()
-    return OpenAILLMService(
-        api_key=os.environ["GENERAL_COMPUTE_API_KEY"],
-        base_url="https://api.generalcompute.com/v1",
-        settings=OpenAILLMService.Settings(
-            model=config.get("model") or os.getenv("GENERAL_COMPUTE_MODEL", "deepseek-v3.2"),
-            extra=config.get("extra") or {},
-        ),
-    )
+```bash
+ollama list | grep gemma4:12b && curl -s -m 3 http://localhost:11434/api/tags > /dev/null && echo "ollama ok"
 ```
+
+Expected: the model line, then `ollama ok`. If the server is not running, start it with `ollama serve` in another terminal. If the model is missing, stop and report — pulling it (7.6 GB) is the user's call.
 
 - [ ] **Step 2: Write the scripted scenarios**
 
@@ -2038,13 +2015,10 @@ name: debate_text
 
 # Scripted, text mode: the bot's decisions, turn by turn. Run from server/:
 #
-#   PYTHONPATH=$PWD uv run pipecat eval suite evals/suite.yaml -k script
+#   uv run pipecat eval suite evals/suite.yaml -k script
 #
 # The suite starts a fresh bot per scenario, so each one begins in the setup
-# node. PYTHONPATH lets the harness import eval_services.
-
-judge:
-  eval: {factory: eval_services.llm}
+# node. `eval:` criteria are judged by local Ollama (`ollama pull gemma4:12b`).
 
 scenarios:
   - name: setup_matches_view_and_opposes
@@ -2139,10 +2113,10 @@ Add `eval-runs/` to the repo-root `.gitignore` under the "Pipecat eval artifacts
 With any running bot stopped (the suite starts its own), run from `server/`:
 
 ```bash
-PYTHONPATH=$PWD uv run pipecat eval suite evals/suite.yaml -k script
+uv run pipecat eval suite evals/suite.yaml -k script
 ```
 
-Expected: 3 scenarios pass. Logs land in `server/eval-runs/<timestamp>/logs/`. To iterate on one scenario with the conversation streamed, boot the bot yourself (`uv run bot.py -t eval`) and in a second terminal run `PYTHONPATH=$PWD uv run pipecat eval run evals/debate_text.yaml -s full_debate_reaches_a_verdict -v` (check `uv run pipecat eval run --help` for the scenario-selection flag), restarting the bot between runs so it begins in `setup`. When a scenario fails, read the conversation: a wrong or missing `function_call` means the node's instructions in `flow.yaml` need tightening (the usual fault is the bot replying to a statement instead of calling the transition — make the "call X immediately, without replying" line more prominent); a judge `eval` failing on a reasonable reply means the criterion is too strict — loosen the criterion, not the bot.
+Expected: 3 scenarios pass. Logs land in `server/eval-runs/<timestamp>/logs/`. To iterate on one scenario with the conversation streamed, boot the bot yourself (`uv run bot.py -t eval`) and in a second terminal run `uv run pipecat eval run evals/debate_text.yaml -s full_debate_reaches_a_verdict -v` (check `uv run pipecat eval run --help` for the scenario-selection flag), restarting the bot between runs so it begins in `setup`. When a scenario fails, read the conversation: a wrong or missing `function_call` means the node's instructions in `flow.yaml` need tightening (the usual fault is the bot replying to a statement instead of calling the transition — make the "call X immediately, without replying" line more prominent); a judge `eval` failing on a reasonable reply means the criterion is too strict — loosen the criterion, not the bot.
 
 - [ ] **Step 4: Write the simulated scenario**
 
@@ -2154,11 +2128,9 @@ name: debate_simulated
 # Simulated, text mode: an LLM plays a stubborn workspace theorist through a
 # whole debate. Run from server/:
 #
-#   PYTHONPATH=$PWD uv run pipecat eval suite evals/suite.yaml -k simulation
-
-simulator: {factory: eval_services.llm}
-judge:
-  eval: {factory: eval_services.llm}
+#   uv run pipecat eval suite evals/suite.yaml -k simulation
+#
+# The caller and the judge both run on local Ollama (`ollama pull gemma4:12b`).
 
 persona: |
   Sam, a confident amateur who has read a lot about global workspace theory and
@@ -2189,7 +2161,7 @@ runs: 2
 - [ ] **Step 5: Run the simulation**
 
 ```bash
-PYTHONPATH=$PWD uv run pipecat eval suite evals/suite.yaml -k simulation
+uv run pipecat eval suite evals/suite.yaml -k simulation
 ```
 
 Expected: both runs pass. Read one full conversation in the run's log regardless of the result and check: rounds advanced one user turn each; the bot cited only card papers; the verdict's numbers are plausible (neither bar untouched at 100). If the bot wins every run by a wide margin, note it for Part D — do not tune the judge yet.
@@ -2200,14 +2172,14 @@ Expected: both runs pass. Read one full conversation in the run's log regardless
 git rm server/evals/starter_text.yaml
 ```
 
-Start the bot (`uv run bot.py -t eval`), then in a second terminal run `uv run pipecat eval run evals/starter_audio.yaml -v`. Its judge defaults to local Ollama, which has no model here; add the same `judge:` block (`eval: {factory: eval_services.llm}`) to `starter_audio.yaml`, keeping its `modality` and `transcription` settings, run with `PYTHONPATH=$PWD`, and update its second turn's criterion to "the bot responds to the user" if the original criterion no longer fits a debate bot. Expected: passes, proving the audio path still works end to end.
+Start the bot (`uv run bot.py -t eval`), then in a second terminal run `uv run pipecat eval run evals/starter_audio.yaml -v`. Its judge is the same local Ollama default, so it needs no judge changes; update its second turn's criterion to "the bot responds to the user" if the original criterion no longer fits a debate bot. Expected: passes, proving the audio path still works end to end.
 
 - [ ] **Step 7: Run everything and commit**
 
 ```bash
 uv run pytest -q
-git add server/eval_services.py server/evals .gitignore
-git commit -m "test: scripted and simulated debate evals on General Compute
+git add server/evals .gitignore
+git commit -m "test: scripted and simulated debate evals
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -2617,7 +2589,7 @@ Expected: no conflicts — file ownership was disjoint. If `client/src/debate/fi
 ```bash
 cd server
 uv run pytest -q
-PYTHONPATH=$PWD uv run pipecat eval suite evals/suite.yaml
+uv run pipecat eval suite evals/suite.yaml
 ```
 
 Expected: all pass. With twelve cards the bot may now oppose `gwt` with `rpt` or `biological_naturalism` instead of `iit`; the `cites_only_from_the_card` scenario names IIT authors, so if it fails for that reason, change its second user turn to "It's a global workspace. And I want you to defend integrated information theory." and re-run.
