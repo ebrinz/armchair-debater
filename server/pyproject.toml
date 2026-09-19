@@ -26,3 +26,6 @@ select = ["I", "UP"]
 pythonpath = ["."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:'audioop' is deprecated:DeprecationWarning",
+]
