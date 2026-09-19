@@ -153,8 +153,25 @@ Two health bars, each starting at 100. After every argument turn in `opening`,
   Zero when the speaker has not been hit yet.
 - `reason`: one short sentence, shown in the UI.
 
-Then `opponent.health -= damage` (floor 0) and `speaker.health += recovery`
-(cap 100). A bar at 0 does not end the debate; all three rounds always run.
+The judge's two scores are turned into bar movement by `DebateState`, under rules
+tuned on real runs (with the raw scores applied one-for-one, each side healed most
+of what it had just taken, and three debates in four ended inside the draw margin
+with both bars near 80):
+
+- **Damage is doubled.** `dealt = damage × 2` (0–50), and `opponent.health -= dealt`
+  (floor 0).
+- **A rebuttal heals at most half of the last hit the speaker took.**
+  `healed = round(last_hit_taken × 0.5 × recovery / 15)`, capped at the health the
+  speaker is missing, where `last_hit_taken` is the `dealt` value of the most recent
+  hit against the speaker (zero if there is none). So the judge's recovery score
+  says how much of the recoverable half was earned, and a rebuttal can blunt a hit
+  but never erase it.
+
+The snapshot's `last_hit.damage` and `last_hit.recovery` carry the APPLIED values
+(`dealt`, `healed`) — what the bars actually moved — so the client's numbers always
+agree with its bars. A bar at 0 does not end the debate; all three rounds always
+run. With these rules a close debate ends with both bars low and the last turn
+deciding it, and a one-sided debate can end in a knockout.
 
 The judge prompt defines damage by four criteria — argument strength,
 responsiveness to the opponent, use of evidence, clarity — and tells the judge to

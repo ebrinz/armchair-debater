@@ -100,12 +100,12 @@ elsewhere.
 
   ```
   YOU used "Pressed that phi cannot be computed for any real brain."
-  It's super effective!  −18
+  It's super effective!  −30
   ```
 
-  The speaker is `YOU` or `THE HOUSE`. The effectiveness line comes from `damage`:
-  ≥ 15 "It's super effective!", 6–14 no line, 1–5 "It's not very effective…",
-  0 "But it missed!". If `recovery > 0` a second line follows: "{SPEAKER} shook off
+  The speaker is `YOU` or `THE HOUSE`. The effectiveness line comes from `damage`
+  (the applied value the server sends, 0–50): ≥ 30 "It's super effective!", 11–29
+  no line, 1–10 "It's not very effective…", 0 "But it missed!". If `recovery > 0` a second line follows: "{SPEAKER} shook off
   the last hit!  +{recovery}". A button on the box opens a transcript drawer, closed
   by default. Before the first hit the box shows a prompt for whose turn it is.
 - **Announcer.** A banner that slams in and out on each stage change: `ROUND 1`
@@ -163,14 +163,15 @@ On screen the sides are labelled `1P YOU` and `CPU THE HOUSE`.
 
 ### Hit feel: scaled to the damage
 
-Three tiers, on the same thresholds as the battle text:
+Tiers, on the same thresholds as the battle text. `damage` is the applied value
+the server sends (the judge's score doubled, 0–50):
 
 | Tier | Damage | Feedback |
 |---|---|---|
 | Miss | 0 | a small "whiff" dust puff at the attacker; no target reaction |
-| Glancing | 1–5 | target flinches; small grey number; no shake |
-| Solid | 6–14 | target rocks back; white flash; yellow number; 2 px shake for 150 ms; a few stuffing puffs |
-| Super effective | 15+ | ~4-frame hit-stop freeze; hard rock-back onto the rear legs; big red number that pops then floats; 6 px shake for 300 ms; a burst of stuffing; the fire flares; the text-box line slams in instead of typing |
+| Glancing | 1–10 | target flinches; small grey number; no shake |
+| Solid | 11–29 | target rocks back; white flash; yellow number; 2 px shake for 150 ms; a few stuffing puffs |
+| Super effective | 30+ | ~4-frame hit-stop freeze; hard rock-back onto the rear legs; big red number that pops then floats; 6 px shake for 300 ms; a burst of stuffing; the fire flares; the text-box line slams in instead of typing |
 
 Recovery, in any tier: a green `+N` rises from the healer with a brief glow.
 Under `prefers-reduced-motion` every tier reduces to the number and the bar change.
@@ -281,11 +282,11 @@ move ("Cerebellum Puzzle", "Global Ignition"). The loader validates them; they a
 sent to the client in `theory_cards`. They are display-only: the bot does not speak
 them and the judge never sees them.
 
-**Damage scale.** With measured hits of 5–15 over six turns, a lost debate ends
-near 65, which leaves the bars looking undramatic. After the turn-capture fixes
-land and the numbers can be trusted, a single server-side multiplier on damage will
-be tuned so that a clearly lost debate ends near 30. This is a server constant; the
-client needs no change.
+**Balance.** Settled with the user on real numbers, and implemented on the server
+(see the server spec, "Live judging > Model"): damage is doubled, and a rebuttal
+heals at most half of the last hit taken. `last_hit.damage` and `last_hit.recovery`
+are the applied values, so the floating numbers always match the bar movement. The
+client needs no balance logic of its own.
 
 ## Testing
 

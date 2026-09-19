@@ -2,73 +2,183 @@
   {
     "type": "debate_state",
     "stage": "setup",
-    "user": {"theory_id": null, "theory_name": null, "health": 100},
-    "bot": {"theory_id": null, "theory_name": null, "health": 100},
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
     "last_hit": null,
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "opening",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 100},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 100},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 100
+    },
     "last_hit": null,
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "opening",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 86},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 100},
-    "last_hit": {"by": "bot", "damage": 14, "recovery": 0, "reason": "Argued that broadcast explains access, not why access feels like anything."},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 76
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 24,
+      "recovery": 0,
+      "reason": "Argued that broadcast explains access, not why access feels like anything."
+    },
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "opening",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 86},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 82},
-    "last_hit": {"by": "user", "damage": 18, "recovery": 0, "reason": "Pressed that phi cannot be computed for any real brain."},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 76
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 70
+    },
+    "last_hit": {
+      "by": "user",
+      "damage": 30,
+      "recovery": 0,
+      "reason": "Pressed that phi cannot be computed for any real brain."
+    },
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "rebuttal",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 78},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 92},
-    "last_hit": {"by": "bot", "damage": 8, "recovery": 10, "reason": "Answered that intractable is not the same as ill-defined, citing proxy measures."},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 68
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 80
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 8,
+      "recovery": 10,
+      "reason": "Answered that intractable is not the same as ill-defined, but added little."
+    },
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "rebuttal",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 84},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 70},
-    "last_hit": {"by": "user", "damage": 22, "recovery": 6, "reason": "Used the expander-graph objection: a trivial grid would out-score a brain."},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 69
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 36
+    },
+    "last_hit": {
+      "by": "user",
+      "damage": 44,
+      "recovery": 1,
+      "reason": "Used the logic-gate objection: a trivial grid would out-score a brain."
+    },
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "closing",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 74},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 75},
-    "last_hit": {"by": "bot", "damage": 10, "recovery": 5, "reason": "Turned the adversarial collaboration results against late prefrontal ignition."},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 49
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 43
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 20,
+      "recovery": 7,
+      "reason": "Turned the adversarial collaboration results against late prefrontal ignition."
+    },
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "closing",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 74},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 61},
-    "last_hit": {"by": "user", "damage": 14, "recovery": 0, "reason": "Closed on testability: workspace theory makes predictions that can fail."},
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 49
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 15
+    },
+    "last_hit": {
+      "by": "user",
+      "damage": 28,
+      "recovery": 0,
+      "reason": "Closed on testability: workspace theory makes predictions that can fail."
+    },
     "verdict": null
   },
   {
     "type": "debate_state",
     "stage": "verdict",
-    "user": {"theory_id": "gwt", "theory_name": "Global Workspace Theory", "health": 74},
-    "bot": {"theory_id": "iit", "theory_name": "Integrated Information Theory", "health": 61},
-    "last_hit": {"by": "user", "damage": 14, "recovery": 0, "reason": "Closed on testability: workspace theory makes predictions that can fail."},
-    "verdict": {"winner": "user", "rationale": "The expander-graph objection was never fully answered. The workspace side also closed on the stronger point about testability."}
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 49
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 15
+    },
+    "last_hit": {
+      "by": "user",
+      "damage": 28,
+      "recovery": 0,
+      "reason": "Closed on testability: workspace theory makes predictions that can fail."
+    },
+    "verdict": {
+      "winner": "user",
+      "rationale": "The logic-gate objection was never fully answered. The challenger also closed on the stronger point about testability."
+    }
   }
 ]
