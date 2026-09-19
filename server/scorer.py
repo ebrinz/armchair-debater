@@ -40,6 +40,9 @@ class TurnScorer:
         history = list(self._transcript)
         self._transcript.append((by, text))
         generation = self._generation
+        logger.debug(
+            f"scorer: accepted {by} turn in {self._current_stage()} ({len(text.split())} words)"
+        )
         self._tail = asyncio.create_task(self._run(self._tail, by, text, history, generation))
 
     async def _run(
@@ -75,6 +78,10 @@ class TurnScorer:
             return
         try:
             await self._state.apply_hit(by, score.damage, score.recovery, score.reason)
+            logger.debug(
+                f"scorer: applied {by} hit (damage={score.damage}, recovery={score.recovery}, "
+                f"healths={self._state.health}, reason={score.reason!r})"
+            )
         except Exception:
             logger.exception(f"scorer: unexpected error applying a {by} hit")
 

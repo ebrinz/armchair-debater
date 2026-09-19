@@ -49,6 +49,7 @@ import handlers
 import knowledge
 from debate_state import DebateState
 from scorer import TurnScorer
+from user_turns import UserTurnObserver
 
 load_dotenv(override=True)
 
@@ -144,10 +145,9 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         {"debate": debate, "scorer": scorer, "theory_index": knowledge.index()}
     )
 
-    # Finished turns are scored in the background; submit() never blocks.
-    @context_aggregator.user().event_handler("on_user_turn_message_added")
-    async def on_user_turn_message_added(aggregator, message):
-        scorer.submit("user", message.content or "")
+    # User turns reach the LLM as a context frame whose last message is the
+    # user's, whether they were spoken or typed, so score them from there.
+    worker.add_observer(UserTurnObserver(llm, lambda text: scorer.submit("user", text)))
 
     @context_aggregator.assistant().event_handler("on_assistant_turn_stopped")
     async def on_assistant_turn_stopped(aggregator, message):
