@@ -52,10 +52,12 @@ class TurnScore:
 
 
 def parse_score(text: str) -> TurnScore:
-    start, end = text.find("{"), text.rfind("}")
-    if start == -1 or end <= start:
+    start = text.find("{")
+    if start == -1:
         raise ValueError("no JSON object in judge output")
-    data = json.loads(text[start : end + 1])
+    data, _ = json.JSONDecoder().raw_decode(text, start)
+    if not isinstance(data, dict):
+        raise ValueError("judge output is not a JSON object")
     damage, recovery, reason = data.get("damage"), data.get("recovery"), data.get("reason")
     for value in (damage, recovery):
         if not isinstance(value, int) or isinstance(value, bool):

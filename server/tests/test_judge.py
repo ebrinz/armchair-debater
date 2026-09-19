@@ -39,11 +39,17 @@ def test_parse_score_finds_json_inside_prose_and_fences():
         '{"damage": "lots", "recovery": 0, "reason": "x"}',
         '{"damage": 5, "recovery": 0, "reason": ""}',
         '{"damage": true, "recovery": 0, "reason": "x"}',
+        'prefix {"a": 1} suffix',
     ],
 )
 def test_parse_score_rejects_malformed(text):
     with pytest.raises(ValueError):
         judge.parse_score(text)
+
+
+def test_parse_score_ignores_trailing_text_with_braces():
+    text = '{"damage": 5, "recovery": 0, "reason": "Weak."} Let me know if you want {more} detail.'
+    assert judge.parse_score(text) == TurnScore(5, 0, "Weak.")
 
 
 async def score(complete, **overrides):
