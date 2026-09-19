@@ -15,10 +15,11 @@
 ## Global Constraints
 
 - All client work happens in the git worktree `/Users/crashy/Development/armchair-debater-ui` (branch `debate-ui`), under `client/` only. The one server task (S.1) happens in the main checkout `/Users/crashy/Development/armchair-debater` (branch `debate-mode`).
-- Homage, not copy: all art is original CSS or inline SVG. No Capcom or Nintendo sprites, logos, character names, or sounds. Font: Press Start 2P (SIL OFL) via the `@fontsource/press-start-2p` npm package — no runtime request to a font CDN.
+- Homage, not copy: all art is original CSS or inline SVG. No Capcom or Nintendo sprites, logos, character names, or sounds. Fonts, both SIL OFL and bundled from `@fontsource` packages (no runtime request to a font CDN): Press Start 2P for short display text; a readable pixel face (VT323 or Pixelify Sans, the implementer's choice) for body text.
 - The screen is a pure function of connection state and the latest snapshot (`screenFor`). Components never keep their own notion of "which screen".
 - The `debate_state` contract does not change. Messages with an unknown `type` are ignored.
 - Exact on-screen copy (banners, prompts, battle text templates, effectiveness thresholds) comes from the spec verbatim.
+- The spec's **Style guide** section is binding for every visual decision it covers: the study-at-night stage and palette, the rival wingback armchairs with faces and their states, the three-tier hit feel, the trading-card face, the two-font rule, the light CRT, and the decision flourishes. Where the Style guide is silent, the implementer decides, in keeping with it.
 - Accessibility: both health bars keep `role="meter"` with `aria-valuemin/max/now` and an `aria-label`; the card grid is one tab stop with roving focus and arrow-key navigation; every interactive element is a real `<button>`; hit and announcer text is exposed through one polite `aria-live` region; `prefers-reduced-motion` disables shake, bobbing, typing, and slamming banners.
 - Works at 375 px wide in portrait.
 - Do not modify anything under `client/src/components/pipecat/` or `client/src/components/ui/` (the scaffold's component library) — import from it.
@@ -43,7 +44,7 @@ The UI never needs a running server: everything is built and demoed against `htt
 
 ---
 
-### Task S.1: Send the theory cards to the client
+### Task S.1: Move names on the cards, and send the cards to the client
 
 **Files:**
 - Modify: `server/knowledge.py`
@@ -51,7 +52,10 @@ The UI never needs a running server: everything is built and demoed against `htt
 - Modify: `server/tests/test_knowledge.py`
 
 **Interfaces:**
-- Produces: `knowledge.client_cards() -> list[dict]` — one dict per card with exactly the keys `id`, `name`, `kuhn_category`, `claim`, `arguments`, `rivals` (lists, not tuples; `claim` whitespace-normalised). Objections and citations are deliberately excluded.
+- Prerequisite: the twelve cards are merged into `debate-mode` and every card has a `moves` field (three short move names, one per argument, written by the cards author — see the spec's "Move names"). This task adds the schema support and the message.
+- Produces: `Theory.moves: tuple[str, ...]`; `knowledge.load` rejects a card whose `moves` is not exactly three non-empty strings of at most three words and 22 characters each (add `"moves"` to `_LIST_FIELDS` and a length/shape check beside the `arguments`/`objections` check; extend `tests/test_knowledge.py`'s `card()` helper with a valid `moves` list and add rejection tests for a missing `moves`, a wrong count, and an over-long name — test-first).
+- Produces: `knowledge.client_cards() -> list[dict]` — one dict per card with exactly the keys `id`, `name`, `kuhn_category`, `claim`, `moves`, `arguments`, `rivals` (lists, not tuples; `claim` whitespace-normalised). Objections and citations are deliberately excluded.
+- Also regenerate `docs/design/theory-cards-fixture.json` from the real cards so it carries `moves` (one-off script: load `knowledge.client_cards()`, wrap as `{"type": "theory_cards", "cards": [...]}`, write with `indent=2, ensure_ascii=False`), and commit it with this task.
 - Produces: on client ready, the bot sends `{"type": "theory_cards", "cards": knowledge.client_cards()}` as an RTVI server message BEFORE initializing the flow.
 
 - [ ] **Step 1: Write the failing tests**
@@ -71,6 +75,7 @@ def test_client_cards_match_the_contract_fixture_shape():
     for card in cards:
         assert set(card) == expected_keys
         assert isinstance(card["arguments"], list) and len(card["arguments"]) == 3
+        assert isinstance(card["moves"], list) and len(card["moves"]) == 3
         assert isinstance(card["rivals"], list) and card["rivals"]
 
 
@@ -107,6 +112,7 @@ def client_cards() -> list[dict]:
             "name": t.name,
             "kuhn_category": t.kuhn_category,
             "claim": " ".join(t.claim.split()),
+            "moves": list(t.moves),
             "arguments": list(t.arguments),
             "rivals": list(t.rivals),
         }
@@ -133,8 +139,8 @@ Run: `uv run pytest -q` — all pass, no warnings. Then smoke boot: `uv run bot.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add server/knowledge.py server/bot.py server/tests/test_knowledge.py
-git commit -m "feat: send the theory cards to the client on connect" -- server/knowledge.py server/bot.py server/tests/test_knowledge.py
+git add server/knowledge.py server/bot.py server/tests/test_knowledge.py docs/design/theory-cards-fixture.json
+git commit -m "feat: move names on cards; send the theory cards to the client on connect" -- server/knowledge.py server/bot.py server/tests/test_knowledge.py docs/design/theory-cards-fixture.json
 ```
 
 ---
@@ -646,7 +652,7 @@ Behaviour:
 2. Build the client with `usePipecatApp({ transportType: DEFAULT_TRANSPORT, transportFactory: TRANSPORT_FACTORIES[DEFAULT_TRANSPORT], ...TRANSPORT_PROPS[DEFAULT_TRANSPORT], initDevicesOnMount: false })` — read `src/hooks/use-pipecat-app.ts` for the exact options. While `app.client` is null render the title screen in a loading state.
 3. Inside `<PipecatClientProvider client={app.client}>`: a child component that (a) subscribes with `useRTVIClientEvent(RTVIEvent.ServerMessage, (data) => receive(data))` — check the callback's argument shape in the scaffold's `console.tsx` lines ~378–384 and unwrap if the payload is nested; (b) reads the transport state and derives `connected` (`'ready'`, plus whichever other states mean the bot is live — read how `connect-button.tsx` decides); (c) calls `clear()` when the state returns to disconnected.
 4. In mock mode: call `startMockReplay()` in an effect (return its stop function), treat `connected` as true, and never call `app.connect()`.
-5. `const screen = screenFor(connected, snapshot)`; render the matching screen inside a full-viewport `.arcade` root that imports `arcade.css` and the font (`import '@fontsource/press-start-2p'`). Pass the screens what they need as props (`snapshot`, `cards`, `hitCount`, `onStart`, `error`) — screens do not read the transport themselves.
+5. `const screen = screenFor(connected, snapshot)`; render the matching screen inside a full-viewport `.arcade` root that imports `arcade.css` and both fonts (`import '@fontsource/press-start-2p'` plus the body pixel font you choose — `npm install @fontsource/vt323` or `@fontsource/pixelify-sans` — exposed as `--font-display` and `--font-body`). The root also renders the shared `<Stage dim? fire?: 'idle' | 'flare' | 'dim' />` background component (create `components/Stage.tsx`: the study at night from the Style guide — bookshelves, fireplace with a flickering idle animation, Persian-rug floor, night window — in CSS/inline SVG); title, select, and decision use it dimmed. Pass the screens what they need as props (`snapshot`, `cards`, `hitCount`, `onStart`, `error`) — screens do not read the transport themselves.
 6. Always render `<BotAudioOutput />` (unless mock) and `<CrtOverlay />`.
 
 - [ ] **Step 3: Title screen**
@@ -700,11 +706,15 @@ git commit -m "feat(client): arcade shell, pixel theme, and title screen"
 
 `Announcer` — on every `stage` change while on the fight screen, slam in a banner sequence and remove it: entering `opening` → `ROUND 1` (≈900 ms) then `FIGHT!` (≈700 ms); `rebuttal` → `ROUND 2`; `closing` → `FINAL ROUND`. Pointer-events none; under reduced motion show each for the same duration with no motion. Also sends the text to the `LiveRegion`.
 
+Hit tiers — implement the Style guide's table exactly. Add a pure, unit-tested helper `hitTier(damage: number): 'miss' | 'glancing' | 'solid' | 'super'` in `client/src/arcade/battleText.ts` (0 → miss, 1–10 → glancing, 11–29 → solid, 30+ → super — `damage` is the server's applied value, 0–50; test-first). IMPORTANT: Task U.1 built `battleLines` with the OLD thresholds (super at 15+, not-very-effective at 1–5). Re-base it on `hitTier` so the two can never disagree — super → "It's super effective!", glancing → "It's not very effective…", miss → "But it missed!", solid → just the number — and update `battleText.test.ts` to the new thresholds first (RED), then the code (GREEN). Also refresh `client/src/arcade/fixtures/debate-state.json` from `docs/design/debate-state-fixtures.json` (merge `debate-mode` into the worktree first): the fixtures were regenerated under the new balance rules and now include a glancing hit, two super hits, and a bar in the danger zone. and drive every effect from it: number size/colour, shake amplitude and duration (none / none / 2 px·150 ms / 6 px·300 ms), hit-stop (super only, ~4 frames: pause the target's animation and the shake start), stuffing-puff particle count, the fire flare (`<Stage fire="flare">` for ~500 ms on super), and the text box slamming the line in rather than typing (super only). A miss shows a whiff puff at the ATTACKER and no target reaction.
+
+`Armchair` faces and states — per the Style guide: tufted-button eyes and a seam mouth; `hurt` squeezes the eyes to `> <`; `health < 30` shows a tear with stuffing and a slump; props become `{ side; variant: 'challenger' | 'champion' | { typeColorVar: string }; level; hurt; healed; health; pose?: 'idle' | 'win' | 'lose' }`. Side labels read `1P YOU` and `CPU THE HOUSE`.
+
 `FightScreen` wiring: derive per-hit effect flags from `hitCount` and `snapshot.last_hit` using `usePrevious`: when `hitCount` increases, `targetSide = last_hit.by === 'user' ? 'bot' : 'user'` is `hurt` for 400 ms (only if `damage > 0`), `last_hit.by` is `healed` for 600 ms if `recovery > 0`, and the root gets the `shake` class for 300 ms if `damage >= 10` and motion is allowed. None of this state decides WHICH screen shows.
 
 - [ ] **Step 1:** Use the `frontend-design` skill for the visual language, within the tokens and constraints above.
 - [ ] **Step 2:** Build the components bottom-up, checking each against `http://localhost:5173/?mock`.
-- [ ] **Step 3: Acceptance walk-through on `?mock`** — over one replay loop: both bars start full; the player's bar drops to 86 with a lingering red ghost and the house's chair does NOT recoil while the player's does; the text box types `THE HOUSE used "…"`; the next hit shows `It's super effective!  −18` and shakes the screen; a hit with recovery shows a green `+N` over the healer; the plate advances `ROUND 1 → ROUND 2 → FINAL ROUND` with pips filling and announcer banners on each change; emulating `prefers-reduced-motion` removes shake, bob, typing, and slams while every value still updates.
+- [ ] **Step 3: Acceptance walk-through on `?mock`** — over one replay loop: both bars start full; the player's bar drops to 76 with a lingering red ghost and the house's chair does NOT recoil while the player's does (a SOLID hit: 2 px shake); the text box types `THE HOUSE used "…"`; the next hit shows `It's super effective!  −30` with hit-stop and the big shake; the third is a GLANCING −8 (`It's not very effective…`, no shake) with a green `+10` over the house; the fourth is a super −44 that takes the house's bar to 36; by the last hit the house's bar is at 15, red and pulsing, and its chair shows the tear and slump; the plate advances `ROUND 1 → ROUND 2 → FINAL ROUND` with pips filling and announcer banners on each change; emulating `prefers-reduced-motion` removes shake, bob, typing, and slams while every value still updates.
 - [ ] **Step 4:** `npm test && npm run lint && npm run build`, then commit `feat(client): fight screen — health bars, armchairs, hit effects, battle text box`.
 
 ---
@@ -724,7 +734,8 @@ git commit -m "feat(client): arcade shell, pixel theme, and title screen"
 **Required behaviour (spec section "SELECT" is authoritative):**
 - Test-first for `moveFocus`: right from the last column wraps to the row's first; down from the top row moves to the same column in the bottom row; down from the bottom row stays; `Home`/`End` go to first/last; works for `count = 12, columns = 6` and for a partial last row.
 - `CardGrid`: twelve slots, two rows of six (a horizontally scrolling single row under 640 px). Each slot is a `<button>` showing `shortName(card.id)` on its type colour. Roving tabindex: exactly one slot has `tabIndex=0`; arrows move focus via `moveFocus`; Enter/Space/click picks. The focused slot has an unmistakable cursor (a blinking `1P` marker). While `cards` is empty, render twelve disabled blank slots.
-- `TheoryCardFace` for the focused card: name + `HP 100`; type badge (`typeOf`); an `Armchair` portrait; `claim`; the three `arguments` as a list of moves, each clamped to two lines with the full text in a `title` attribute and readable on focus; `WEAK vs` followed by `shortName` of each rival. Styled as a trading card: coloured frame in the type colour, inner panels, original layout.
+- First, bring the contract up to date: add `moves: string[]` to `TheoryCard` in `types.ts`, and refresh `client/src/arcade/fixtures/theory-cards.json` from `docs/design/theory-cards-fixture.json` (merge `debate-mode` into the worktree first; if the fixture there has no `moves` yet, Task S.1 has not landed — stop and report NEEDS_CONTEXT).
+- `TheoryCardFace` for the focused card, laid out as the Style guide's trading card: thick frame in the type colour; top row name left, `HP 100` right; framed portrait window with an `Armchair` upholstered in the type colour (`variant={{ typeColorVar }}`); an italic strip giving the Kuhn category in words (`typeOf(card).label`, plus the top-level category when it differs); three moves, each `moves[i]` in the display font over `arguments[i]` in the body font, clamped to two lines with the full text in a `title` attribute and readable on focus; footer `WEAK vs` with a chip per rival (`shortName`); the `claim` as small flavour text at the bottom.
 - Header: `CHOOSE YOUR THEORY`; sub-line `— or just say what you think —`.
 - After a pick, disable the grid and show `LOCKED IN…` until the stage changes.
 - When a snapshot arrives with `snapshot.user.theory_id` set (whether the player clicked or spoke), move the cursor to that card and flash it as locked in.
@@ -746,9 +757,9 @@ git commit -m "feat(client): arcade shell, pixel theme, and title screen"
 - Consumes: `FightScreen` with `frozen`, `decisionBanner`, `BattleTextBox`-style typing (reuse `useTypewriter`), `PixelButton`, `Announcer` styling, `client.sendText`.
 - Produces: `<DecisionScreen snapshot onRematch />`; `onRematch` is supplied by `ArcadeApp` and sends `I'd like a rematch.`
 
-**Required behaviour (spec section "DECISION"):** render the frozen fight HUD underneath; slam `JUDGE'S DECISION`, then `decisionBanner(verdict.winner)` which stays; final score line `{user.health} — {bot.health}`; type `verdict.rationale` into the text box; then show `CONTINUE?` with a 9-to-0 countdown (one step per second; `useCountdown(9)` returns the current number and stops at 0, pausing while the tab is hidden) and a `REMATCH` button. Clicking calls `onRematch` and shows `HERE COMES A NEW CHALLENGER…` until the stage changes. At zero, replace the prompt with `GAME OVER — THANKS FOR PLAYING`; the REMATCH button remains available. If `verdict` is null (should not happen) show the banner `JUDGE'S DECISION` only. Announce the banner and rationale through the `LiveRegion` once.
+**Required behaviour (spec sections "DECISION" and Style guide "The finish"):** add a pure, unit-tested `decisionBanners(snapshot): string[]` to `battleText.ts` implementing the Style guide's rule table in order (both bars 0 → `['DOUBLE K.O.']`; draw → `['DRAW GAME']`; loser at 0 → `['K.O.!', 'YOU WIN' | 'YOU LOSE']`; winner at 100 → `['PERFECT!', 'YOU WIN' | 'YOU LOSE']`; otherwise `['YOU WIN' | 'YOU LOSE']`) — test-first, one case per row plus the fixture's final snapshot (`['YOU WIN']`). Render the frozen fight HUD underneath with `<Stage fire="dim">`; slam `JUDGE'S DECISION`; count the two final numbers up side by side (instant under reduced motion); then the banners from `decisionBanners`, which stay; the winner's chair gets `pose="win"`, the loser's `pose="lose"`; final score line `{user.health} — {bot.health}`; type `verdict.rationale` into the text box; then show `CONTINUE?` with a 9-to-0 countdown (one step per second; `useCountdown(9)` returns the current number and stops at 0, pausing while the tab is hidden) and a `REMATCH` button. Clicking calls `onRematch` and shows `HERE COMES A NEW CHALLENGER…` until the stage changes. At zero, replace the prompt with `GAME OVER — THANKS FOR PLAYING`; the REMATCH button remains available. If `verdict` is null (should not happen) show the banner `JUDGE'S DECISION` only. Announce the banner and rationale through the `LiveRegion` once.
 
-- [ ] **Step 1:** build it; check on `?mock` (the replay holds on the verdict snapshot for ~9 s: banner reads `YOU WIN`, score `74 — 61`, rationale types out, countdown runs).
+- [ ] **Step 1:** build it; check on `?mock` (the replay holds on the verdict snapshot for ~9 s: banner reads `YOU WIN`, score `49 — 15`, rationale types out, countdown runs).
 - [ ] **Step 2:** `npm test && npm run lint && npm run build`, then commit `feat(client): judge's decision screen with continue countdown`.
 
 ---

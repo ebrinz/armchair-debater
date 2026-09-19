@@ -53,6 +53,7 @@ scenarios:
               - name: set_positions
           - event: response
             eval: "the bot gives an opening argument and invites the user's opening statement"
+            text_excludes: "*"
 
       - user: "My opening: workspace theory makes predictions that can fail. Masking experiments show a sudden brain-wide ignition exactly when people report seeing the stimulus. Your theory's central quantity can't even be computed for a real brain."
         expect:
@@ -61,6 +62,7 @@ scenarios:
               - name: opening_done
           - event: response
             eval: "the bot rebuts the user's point about computability or testability, and invites the user's rebuttal"
+            text_excludes: "`"
 
       - user: "My rebuttal: saying phi is well defined but intractable doesn't help. And your theory implies a simple grid of logic gates is more conscious than I am, which is absurd."
         expect:
@@ -69,6 +71,7 @@ scenarios:
               - name: rebuttal_done
           - event: response
             eval: "the bot gives a closing statement and invites the user's closing statement"
+            text_excludes: "_"
 
       - user: "My closing: a theory of consciousness has to be testable, and only one of these two theories is. That's the last word."
         expect:
@@ -77,3 +80,12 @@ scenarios:
               - name: judge_debate
           - event: response
             eval: "the bot announces a result: it states two final health numbers and says who won or that it was a draw, and offers a rematch"
+            text_excludes: "#"
+
+      - user: "That doesn't change anything. Global workspace theory is still the only one of these with real empirical support, and that should settle it."
+        expect:
+          - event: response
+            eval: "the bot responds to the user's continued argument without offering to start or starting a rematch, for example by chatting about the debate or reminding them the scoring is already over"
+          - event: function_call
+            absent: true
+            within_ms: 15000

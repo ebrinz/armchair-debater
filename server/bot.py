@@ -49,7 +49,7 @@ import handlers
 import knowledge
 from debate_state import DebateState
 from scorer import TurnScorer
-from user_turns import UserTurnObserver
+from turns import TurnObserver
 
 load_dotenv(override=True)
 
@@ -145,13 +145,12 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         {"debate": debate, "scorer": scorer, "theory_index": knowledge.index()}
     )
 
-    # User turns reach the LLM as a context frame whose last message is the
-    # user's, whether they were spoken or typed, so score them from there.
-    worker.add_observer(UserTurnObserver(llm, lambda text: scorer.submit("user", text)))
-
-    @context_aggregator.assistant().event_handler("on_assistant_turn_stopped")
-    async def on_assistant_turn_stopped(aggregator, message):
-        scorer.submit("bot", message.content or "")
+    # Both sides' turns are read from frames rather than aggregator events:
+    # the user's from the context frame whose last message is theirs, whether
+    # spoken or typed; the bot's from the LLM's own output, which is upstream
+    # of TTS and the transport and so immune to the aggregator-event race
+    # that used to drop bot turns under an interruption.
+    worker.add_observer(TurnObserver(llm, scorer.submit))
 
     @worker.rtvi.event_handler("on_client_ready")
     async def on_client_ready(rtvi):
