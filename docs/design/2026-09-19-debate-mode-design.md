@@ -37,6 +37,7 @@ server/
   debate_state.py           # DebateState: stage, positions, health, verdict; snapshot()
   judge.py                  # score_turn() and write_rationale(); no Pipecat imports
   scorer.py                 # TurnScorer: ordered background scoring of finished turns
+  user_turns.py             # UserTurnObserver: the user's turns, spoken or typed, from the LLM context frame
   flow.yaml                 # FlowConfig: setup → opening → rebuttal → closing → verdict
   handlers.py               # Flows tools + action: set_positions, judge_debate, emit_stage
   bot.py                    # wires Flow, FlowManager, DebateState, TurnScorer
@@ -163,12 +164,22 @@ only the two theory names, the transcript so far, and the turn to score.
 
 ### Off the voice path
 
-`TurnScorer` listens to the context aggregators' `on_user_turn_stopped` and
-`on_assistant_turn_stopped` events. A turn with non-empty text, finished while the
-flow's current node is a debate round, is submitted for scoring. Submissions run as
-a chain of background asyncio tasks — each awaits the one before — so scores apply
-in turn order and never delay the bot's reply. Bars move a second or two after a
-turn ends.
+The bot's finished turns come from the assistant context aggregator's
+`on_assistant_turn_stopped` event. The user's turns come from `UserTurnObserver`
+(`user_turns.py`), a Pipecat observer watching the `LLMContextFrame` that triggers
+each LLM run: when that frame's last message has role `user`, that message is the
+user's turn. This holds whether the turn was spoken or typed — the user
+aggregator's turn events fire only on the speech path, which would leave typed
+input (the eval harness's text mode, the web client's text box) unscored — and at
+that moment the flow has not yet transitioned, so the current node is still the
+round the user spoke in.
+
+A turn with non-empty text, finished while the flow's current node is a debate
+round, is submitted for scoring. Submissions run as a chain of background asyncio
+tasks — each awaits the one before — so scores apply in turn order and never delay
+the bot's reply. Bars move a second or two after a turn ends. Any error while
+scoring a turn is logged and skips only that turn; a `reset()` for a rematch
+discards turns still in flight.
 
 A failed or unparseable scoring call is retried once, then skipped: that turn moves
 no bars, and the miss is logged.

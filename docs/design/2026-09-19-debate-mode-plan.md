@@ -1804,7 +1804,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: everything above.
 - Produces: a bot that, on client ready, enters the `setup` node; sends a `debate_state` RTVI server message on every state change; and submits every finished user and bot turn to the `TurnScorer`.
-- Verified against pipecat 1.11.0 source: `LLMContextAggregatorPair` has `.user()` and `.assistant()`; the user aggregator fires `on_user_turn_message_added(aggregator, message)` with `message.content` whenever a user message enters the context (text and audio modes alike); the assistant aggregator fires `on_assistant_turn_stopped(aggregator, message)` with `message.content`; `worker.rtvi.send_server_message(data)` sends an RTVI server message; `FlowManager(worker=, llm=, context_aggregator=, transport=, global_functions=)`; `flow_manager.current_node` is the active node's name.
+- Verified against pipecat 1.11.0 source: `LLMContextAggregatorPair` has `.user()` and `.assistant()`; the user aggregator fires `on_user_turn_message_added(aggregator, message)` with `message.content` (CORRECTION, found in evals: only on the speech path — typed input bypasses it; see Task B.6); the assistant aggregator fires `on_assistant_turn_stopped(aggregator, message)` with `message.content`; `worker.rtvi.send_server_message(data)` sends an RTVI server message; `FlowManager(worker=, llm=, context_aggregator=, transport=, global_functions=)`; `flow_manager.current_node` is the active node's name.
 
 - [ ] **Step 1: Update the module docstring and imports**
 
@@ -2185,6 +2185,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
 Expected: all pytest tests pass.
+
+---
+
+### Task B.6: Score the user's turns from the LLM context frame (added during execution)
+
+Added after end-to-end evals showed the user was never scored: Task B.4's `on_user_turn_message_added` hook fires only on the speech path, not for typed input, contrary to what Task B.4's Interfaces block claims. The fix replaces that hook with `UserTurnObserver` in a new `server/user_turns.py` and adds debug logging to `scorer.py`. The task's full brief, with the diagnosed root cause and the live-verified mechanism, was written at execution time; the design is recorded in the spec under "Live judging > Off the voice path".
 
 ---
 
