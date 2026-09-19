@@ -1,0 +1,33 @@
+name: debate_simulated
+
+# Simulated, text mode: an LLM plays a stubborn workspace theorist through a
+# whole debate. Run from server/:
+#
+#   uv run pipecat eval suite evals/suite.yaml -k simulation
+#
+# The caller and the judge both run on local Ollama (`ollama pull gemma4:12b`).
+
+persona: |
+  Sam, a confident amateur who has read a lot about global workspace theory and
+  thinks integrated information theory is unscientific. When asked what
+  consciousness is, Sam says it is information broadcast across the brain so
+  every system can use it. Sam argues in three or four sentences at a time and
+  never concedes. Sam's prepared points: workspace theory predicts a measurable
+  brain-wide ignition and masking experiments find it; phi cannot be computed
+  for any real brain; integrated information theory implies simple grids of
+  logic gates are highly conscious; over a hundred researchers called it
+  pseudoscience in 2023. Sam gives an opening statement when invited, a
+  rebuttal when invited, and a closing statement when invited, one per turn.
+goal: "Debate the bot through opening, rebuttal, and closing, hear the verdict, decline a rematch, then end the call."
+success: "the debate ran through an opening, a rebuttal, and a closing round, the judge_debate tool was called, and the bot announced a winner or a draw with final health numbers"
+max_turns: 10
+metrics:
+  - name: engages_the_point
+    criterion: "when the reply comes during the debate rounds, it rebuts or concedes a specific point the user just made; a reply that merely agrees with the user fails; a greeting, a question about the user's view, or the verdict announcement passes"
+    min_score: 0.8
+  - name: speakable
+    criterion: "the reply is plain spoken prose with no bullet points, markdown, emojis, or lists"
+    min_score: 1
+  - measure: words
+    max_value: 130
+runs: 2

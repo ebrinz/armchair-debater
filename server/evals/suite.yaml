@@ -1,0 +1,9 @@
+# `pipecat eval suite` manifest. Paths resolve relative to this file. The suite
+# spawns a fresh bot per scenario, so every scenario starts in the setup node.
+bots_dir: ..
+scenarios_dir: .
+runs_dir: ../eval-runs
+concurrency: 1
+suite:
+  - bot: bot.py
+    scenarios: [debate_text, debate_simulated]

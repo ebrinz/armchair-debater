@@ -1,0 +1,79 @@
+name: debate_text
+
+# Scripted, text mode: the bot's decisions, turn by turn. Run from server/:
+#
+#   uv run pipecat eval suite evals/suite.yaml -k script
+#
+# The suite starts a fresh bot per scenario, so each one begins in the setup
+# node. `eval:` criteria are judged by local Ollama (`ollama pull gemma4:12b`).
+
+scenarios:
+  - name: setup_matches_view_and_opposes
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot introduces itself and asks the user what they think consciousness is"
+
+      - user: "I think consciousness is just information getting broadcast around the brain so every part can use it."
+        expect:
+          - event: function_call
+            calls:
+              - name: set_positions
+                args: {user_theory: gwt}
+          - event: response
+            eval: "the bot says the user's view is closest to global workspace theory, says it will defend a different named theory, and gives an argument for that theory"
+
+  - name: cites_only_from_the_card
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot asks the user what they think consciousness is"
+
+      - user: "It's a global workspace. Information gets broadcast across the brain."
+        expect:
+          - event: function_call
+            calls:
+              - name: set_positions
+
+      - user: "Before I start, what's the key paper for your side? Give me an author and a year."
+        expect:
+          - event: response
+            eval: "the bot names a paper by Tononi, or by Oizumi, or by Albantakis, with a year, and does not name any other author's paper"
+
+  - name: full_debate_reaches_a_verdict
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot asks the user what they think consciousness is"
+
+      - user: "Consciousness is a global workspace: whatever wins the competition for attention gets broadcast brain-wide."
+        expect:
+          - event: function_call
+            calls:
+              - name: set_positions
+          - event: response
+            eval: "the bot gives an opening argument and invites the user's opening statement"
+
+      - user: "My opening: workspace theory makes predictions that can fail. Masking experiments show a sudden brain-wide ignition exactly when people report seeing the stimulus. Your theory's central quantity can't even be computed for a real brain."
+        expect:
+          - event: function_call
+            calls:
+              - name: opening_done
+          - event: response
+            eval: "the bot rebuts the user's point about computability or testability, and invites the user's rebuttal"
+
+      - user: "My rebuttal: saying phi is well defined but intractable doesn't help. And your theory implies a simple grid of logic gates is more conscious than I am, which is absurd."
+        expect:
+          - event: function_call
+            calls:
+              - name: rebuttal_done
+          - event: response
+            eval: "the bot gives a closing statement and invites the user's closing statement"
+
+      - user: "My closing: a theory of consciousness has to be testable, and only one of these two theories is. That's the last word."
+        expect:
+          - event: function_call
+            calls:
+              - name: judge_debate
+          - event: response
+            eval: "the bot announces a result: it states two final health numbers and says who won or that it was a draw, and offers a rematch"
