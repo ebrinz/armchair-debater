@@ -17,7 +17,7 @@
     - Broadcast explains why information is accessible, but not why being accessible should feel like anything at all.
     - The Cogitate adversarial collaboration did not find the sustained prefrontal signal or the ignition at stimulus offset that the theory predicted.
     - Much of the evidence relies on subjects reporting their experience, so it may track the machinery of report rather than experience itself.
-  rivals: [iit]
+  rivals: [iit, rpt, biological_naturalism]
   citations:
     - "Baars 1988, Cambridge University Press, A Cognitive Theory of Consciousness"
     - "Dehaene and Naccache 2001, Cognition, Towards a cognitive neuroscience of consciousness: basic evidence and a workspace framework"
@@ -40,9 +40,238 @@
     - Phi cannot be computed for any realistic brain, so the central quantity of the theory can never actually be measured.
     - It implies that a simple but highly integrated grid of logic gates would be more conscious than a human, which many take as a reductio.
     - More than a hundred researchers signed a 2023 open letter calling the theory pseudoscience, arguing that its core claims are untestable.
-  rivals: [gwt]
+  rivals: [gwt, illusionism, ast]
   citations:
     - "Tononi 2004, BMC Neuroscience, An information integration theory of consciousness"
     - "Oizumi, Albantakis and Tononi 2014, PLoS Computational Biology, From the phenomenology to the mechanisms of consciousness: Integrated Information Theory 3.0"
     - "Tononi, Boly, Massimini and Koch 2016, Nature Reviews Neuroscience, Integrated information theory: from consciousness to its physical substrate"
     - "Albantakis et al. 2023, PLoS Computational Biology, Integrated information theory (IIT) 4.0"
+
+- id: hot
+  name: Higher-Order Thought Theory
+  aliases: [HOT, higher-order theory, higher-order thought, Rosenthal's theory]
+  kuhn_category: Materialism > Higher-order
+  claim: >-
+    A mental state becomes conscious only when it is the target of a further
+    thought representing oneself as being in that state, so consciousness is
+    a relation between two mental states rather than a property either has
+    alone.
+  arguments:
+    - It explains blindsight, where a person reliably uses visual information to guide action with no accompanying sense of seeing, as a first-order state that never becomes the target of a higher-order thought.
+    - It gives a precise, testable criterion for consciousness, letting researchers ask specifically whether the required higher-order representation is present rather than gesturing at a raw feeling.
+    - It naturally explains why confidence and subjective certainty track reported awareness so closely, since both draw on the same higher-order monitoring of one's own mental states.
+  objections:
+    - It seems to allow a stray higher-order thought to make someone consciously experience a state they are not actually in, which is a strange consequence for a theory of experience.
+    - Critics argue it overintellectualizes consciousness, requiring a further conceptual thought that infants and many animals plausibly lack despite plausibly having some conscious experience.
+    - No one has isolated a distinct neural signature for the higher-order representation itself, separate from the first-order state it is supposedly about.
+  rivals: [rpt, iit]
+  citations:
+    - "Rosenthal 1986, Philosophical Studies, Two concepts of consciousness"
+    - "Lau and Rosenthal 2011, Trends in Cognitive Sciences, Empirical support for higher-order theories of conscious awareness"
+    - "Brown, Lau and LeDoux 2019, Trends in Cognitive Sciences, Understanding the higher-order approach to consciousness"
+
+- id: rpt
+  name: Recurrent Processing Theory
+  aliases: [RPT, recurrent processing, local recurrence, Lamme's theory]
+  kuhn_category: Materialism > Neurobiological > Recurrent processing
+  claim: >-
+    Consciousness arises from local recurrent processing within sensory
+    cortex, where feedback loops between higher and lower areas sustain a
+    representation; no brain-wide broadcast or further higher-order thought
+    is required.
+  arguments:
+    - It ties consciousness to a well-documented cortical mechanism, feedback loops between visual areas, rather than to a poorly specified global broadcast or an extra higher-order thought.
+    - It explains why a purely feedforward pass through the visual system, as in fast object recognition, can drive accurate behavior without producing any visual experience.
+    - It predicts that backward masking, where a second image presented soon after the first disrupts only the feedback sweep, should make the first image invisible while the fast feedforward sweep still drives behavior, which experiments confirm.
+  objections:
+    - It implies that any circuit with local recurrent loops, including some simple feedback models far short of a brain, would count as conscious, which strikes many as too permissive.
+    - Its distinction between a rich local consciousness that is never reported and a globally accessible one invites the objection that claims about experience no one can ever report are unfalsifiable.
+    - Recurrent activity explains a functional marker that correlates with reported experience, but not why that activity should feel like anything at all.
+  rivals: [hot, gwt]
+  citations:
+    - "Lamme 2006, Trends in Cognitive Sciences, Towards a true neural stance on consciousness"
+    - "Lamme 2010, Cognitive Neuroscience, How neuroscience will change our view on consciousness"
+
+- id: predictive_processing
+  name: Predictive Processing
+  aliases: [PP, predictive coding, free energy principle, the prediction error theory]
+  kuhn_category: Materialism > Computational > Predictive processing
+  claim: >-
+    The brain is a hierarchical prediction machine that constantly generates
+    top-down expectations about the causes of its sensory input and corrects
+    them using the prediction errors that flow back up. Conscious experience
+    is the brain's best guess about the world and the body.
+  arguments:
+    - It unifies perception, action, and attention under one mechanism, minimizing prediction error, rather than treating them as separate modules bolted together.
+    - It explains vivid perceptual illusions and hallucinations as cases where strong prior expectations overwhelm weak or noisy sensory evidence, exactly as the framework predicts.
+    - It gives a principled account of the felt sense of selfhood and embodiment as predictions about interoceptive signals from the body, extending the theory beyond vision to emotion and mood.
+  objections:
+    - The theory is defined so broadly that almost any finding in neuroscience can be redescribed in its vocabulary after the fact, which raises the worry that it is not really testable.
+    - Minimizing prediction error is a story about representation and inference, so critics argue it explains what the brain computes but not why any of that computing should be accompanied by experience.
+    - Free energy minimization is also used to describe simple homeostatic systems with no plausible experience, so the framework alone cannot mark the line between a mere controller and a conscious mind.
+  rivals: [iit, property_dualism]
+  citations:
+    - "Clark 2013, Behavioral and Brain Sciences, Whatever next? Predictive brains, situated agents, and the future of cognitive science"
+    - "Friston 2010, Nature Reviews Neuroscience, The free-energy principle: a unified brain theory?"
+    - "Seth and Hohwy 2021, Cognitive Neuroscience, Predictive processing as an empirical theory for consciousness science"
+
+- id: ast
+  name: Attention Schema Theory
+  aliases: [AST, attention schema, Graziano's theory]
+  kuhn_category: Materialism > Neurobiological > Attention schema
+  claim: >-
+    The brain builds a constantly updated model of its own attention, much as
+    it builds a body schema, and it is this simplified internal model,
+    misread as a nonphysical inner awareness, that we report as subjective
+    experience.
+  arguments:
+    - It explains why we describe our awareness as a ghostly, nonphysical inner light, since the attention schema is a deliberately simplified, physically inaccurate model, the same way the body schema misrepresents the body as having a fixed size.
+    - It gives attention a clear evolutionary and computational function, since a model of one's own attention helps the brain predict and control that attention rather than letting it drift unmanaged.
+    - It extends naturally to explain social cognition, since the same modeling machinery that tracks one's own attention is repurposed to attribute awareness and attention to other people.
+  objections:
+    - Treating awareness as merely a model that misrepresents its target does not explain why the misrepresentation itself has to be experienced, so critics say the hard problem simply reappears one level up.
+    - Attention and awareness can be dissociated in the lab, since a stimulus can be attended without being consciously seen, which sits awkwardly with a theory that grounds awareness so tightly in a model of attention.
+    - Beyond the labels themselves, the theory has not yet produced a specific, falsifiable neural prediction that a rival theory could not equally well explain.
+  rivals: [panpsychism, iit]
+  citations:
+    - "Webb and Graziano 2015, Frontiers in Psychology, The attention schema theory: a mechanistic account of subjective awareness"
+    - "Graziano and Kastner 2011, Cognitive Neuroscience, Human consciousness and its relationship to social neuroscience: a novel hypothesis"
+    - "Graziano 2017, Frontiers in Robotics and AI, The attention schema theory: a foundation for engineering artificial consciousness"
+
+- id: illusionism
+  name: Illusionism
+  aliases: [illusionist, consciousness is an illusion, Dennett's view]
+  kuhn_category: Materialism > Eliminativist > Illusionism
+  claim: >-
+    Phenomenal consciousness, the rich, ineffable, non-physical feel that
+    dualists describe, does not exist as advertised; what exists is a brain
+    that represents itself as having such a feel, and that introspective
+    illusion is the real thing to be explained.
+  arguments:
+    - It dissolves the hard problem instead of trying to solve it, since there is no need to explain how physical processes produce an ineffable extra feel if no such feel actually exists.
+    - It takes introspection seriously as a real cognitive process while denying it a special authority, treating our confident reports about inner qualia as data about self-representation rather than infallible witness testimony.
+    - It fits naturally with everything else we know about the brain as a physical information-processing system, without needing to add any new law of nature to bridge matter and experience.
+  objections:
+    - Critics call this the hard problem in denial, since the felt reality of pain or color seems like the one thing that cannot coherently be argued away as mere appearance.
+    - Saying an experience only seems to have phenomenal qualities still uses the very concept of seeming, which itself looks like a phenomenal state that the theory has not actually eliminated.
+    - It asks people to give up the datum they are most certain of, so many find its conclusion harder to accept than any problem it claims to solve.
+  rivals: [property_dualism, panpsychism, orch_or]
+  citations:
+    - "Frankish 2016, Journal of Consciousness Studies, Illusionism as a theory of consciousness"
+    - "Dennett 1988, Clarendon Press, Quining qualia"
+    - "Dennett 1991, Little Brown, Consciousness explained"
+
+- id: biological_naturalism
+  name: Biological Naturalism
+  aliases: [Searle's view, the Chinese Room, Searle's theory]
+  kuhn_category: Materialism > Biological naturalism
+  claim: >-
+    Consciousness is an ordinary biological process, caused by specific
+    neurobiological mechanisms in the brain the way digestion is caused by
+    the stomach, and it is a genuine, irreducibly subjective feature of the
+    brain rather than a computation any system could run.
+  arguments:
+    - It takes the causal power of real neurons seriously, insisting that whatever produces consciousness must share the specific biochemical properties of brains, not just their abstract functional organization.
+    - Its Chinese Room thought experiment shows that manipulating symbols according to a program is not enough for understanding, since a person following English instructions to shuffle Chinese symbols would produce correct answers without understanding a word.
+    - It avoids the extremes of dualism and eliminativism at once, treating consciousness as fully physical and fully real, a genuine biological feature rather than a separate substance or a mere illusion.
+  objections:
+    - It never explains why carbon-based neurons in particular, rather than any system with the same causal organization, are needed for consciousness, which critics call an unexplained bias toward biology.
+    - Functionalists reply that the Chinese Room only shows the person in the room does not understand, not that the whole system, person plus rulebook plus paper, fails to understand.
+    - Saying consciousness is simply caused by the brain the way digestion is caused by the stomach restates that the brain produces experience without explaining the mechanism that does the producing.
+  rivals: [gwt, illusionism]
+  citations:
+    - "Searle 1992, MIT Press, The rediscovery of the mind"
+    - "Searle 2000, Annual Review of Neuroscience, Consciousness"
+
+- id: orch_or
+  name: Orchestrated Objective Reduction
+  aliases: [Orch OR, Penrose-Hameroff theory, quantum consciousness]
+  kuhn_category: Quantum > Orchestrated objective reduction
+  claim: >-
+    Consciousness arises from quantum computations inside microtubules within
+    neurons, orchestrated by the cell's structure, and each moment of
+    awareness occurs when a quantum superposition among these microtubules
+    reaches a threshold and collapses on its own, independent of any outside
+    observer.
+  arguments:
+    - It takes seriously the deep, unresolved puzzle of why anything ever collapses from quantum superposition into a single definite outcome, and proposes that this same physical process is the moment consciousness occurs.
+    - It offers a specific physical mechanism, quantum states in microtubules, rather than leaving the emergence of experience from matter as an unexplained brute fact.
+    - It could, in principle, explain why consciousness feels unified and non-computable, since the objective reduction it proposes is tied to quantum gravity rather than to any classical, step-by-step algorithm.
+  objections:
+    - Physicist Max Tegmark calculated that quantum coherence in a warm, wet brain would decohere in a small fraction of a second, far too fast to support the sustained quantum computation the theory needs.
+    - Mainstream neuroscience finds no evidence that microtubules perform the kind of quantum computation the theory requires, and the proposed link to quantum gravity remains untested.
+    - Critics say invoking two of the biggest open mysteries in science, quantum gravity and consciousness, to explain each other looks more like matching mysteries than solving either one.
+  rivals: [gwt, illusionism]
+  citations:
+    - "Hameroff and Penrose 2014, Physics of Life Reviews, Consciousness in the universe: a review of the Orch OR theory"
+    - "Penrose 1989, Oxford University Press, The emperor's new mind"
+    - "Hameroff and Penrose 1998, Philosophical Transactions of the Royal Society A, Quantum computation in brain microtubules? The Penrose-Hameroff Orch OR model of consciousness"
+
+- id: panpsychism
+  name: Panpsychism
+  aliases: [panpsychist, everything is conscious, Strawson's view, Goff's view]
+  kuhn_category: Non-materialism > Panpsychism
+  claim: >-
+    Consciousness, in some minimal form, is a fundamental and ubiquitous
+    feature of physical reality, present in some small degree even in the
+    basic constituents of matter, rather than something that suddenly
+    switches on only in complex brains.
+  arguments:
+    - It takes the one thing we know with certainty, that consciousness exists, as fundamental rather than trying to build it out of ingredients, like mass or charge, that were never described in experiential terms to begin with.
+    - It avoids the puzzle of strong emergence, where entirely new, qualitatively different properties like experience would have to leap into existence once matter reaches a certain complexity, for no clear physical reason.
+    - Physics itself only ever describes the relational, dispositional behavior of matter and stays silent on what matter is like in itself, leaving open exactly the intrinsic nature that experience could fill.
+  objections:
+    - The combination problem asks how billions of tiny, separate experiences in individual particles could ever combine into the single, unified experience of a person, and no proposed solution is widely accepted.
+    - It multiplies fundamental posits far beyond necessity, attributing some form of experience to electrons and rocks with no independent evidence, which strikes many as a heavy metaphysical cost.
+    - It has no way to test or observe the tiny proto-experiences it posits in fundamental particles, so critics say it trades one mystery for an equally untestable one.
+  rivals: [illusionism, ast]
+  citations:
+    - "Strawson 2006, Journal of Consciousness Studies, Realistic monism: why physicalism entails panpsychism"
+    - "Goff 2017, Oxford University Press, Consciousness and fundamental reality"
+    - "Chalmers 2016, Oxford University Press, The combination problem for panpsychism"
+
+- id: property_dualism
+  name: Property Dualism
+  aliases: [the hard problem, dualism, Chalmers' view, zombies]
+  kuhn_category: Non-materialism > Property dualism
+  claim: >-
+    Conscious experience is a genuine, non-physical property of certain
+    physical systems, arising from but not reducible to their physical
+    structure, so a complete physical description of the brain would still
+    leave out what it is like to have an experience.
+  arguments:
+    - Zombies, beings physically identical to us in every respect but with no inner experience at all, seem genuinely conceivable, and if they are truly conceivable then consciousness cannot be identical to any physical process.
+    - Someone who learned every physical fact about color vision while seeing only black and white would still learn something new on first seeing red, showing that physical facts alone do not capture every fact about experience.
+    - It takes the explanatory gap seriously rather than assuming it will simply dissolve, since no proposed physical mechanism has ever been shown to necessitate why that mechanism should feel like anything.
+  objections:
+    - If conscious properties do no physical work of their own, then it becomes hard to explain why we ever talk about our experiences at all, since that talk is itself a physical effect.
+    - Critics reply that the conceivability of zombies shows at most that we cannot fully imagine the physical facts involved, not that consciousness is genuinely separate from those facts.
+    - It leaves fundamental physics incomplete without ever saying how or where new psychophysical laws would connect physical states to experience, which many see as no better than admitting defeat.
+  rivals: [illusionism, predictive_processing, analytic_idealism]
+  citations:
+    - "Chalmers 1995, Journal of Consciousness Studies, Facing up to the problem of consciousness"
+    - "Jackson 1982, Philosophical Quarterly, Epiphenomenal qualia"
+    - "Nagel 1974, The Philosophical Review, What is it like to be a bat?"
+
+- id: analytic_idealism
+  name: Analytic Idealism
+  aliases: [idealism, Kastrup's view, the mind is fundamental]
+  kuhn_category: Non-materialism > Idealism > Analytic idealism
+  claim: >-
+    Reality is fundamentally mental: there is only one universal field of
+    consciousness, and each of us is a dissociated pattern of excitation
+    within it, with the physical world we perceive being what that mental
+    activity looks like from the outside.
+  arguments:
+    - It avoids the hard problem entirely, since it never needs to explain how experience arises from non-experiential matter; on this view matter is already an appearance within mind, not something separate from it.
+    - It gives a natural account of why brain activity correlates so tightly with reported experience without making the brain the cause of that experience, since a brain image is simply what a mind's activity looks like when observed from outside.
+    - It draws on real clinical cases of dissociative identity disorder as a working model for how one field of consciousness could give rise to what look like separate, private centers of experience.
+  objections:
+    - It faces its own decombination problem, the mirror image of panpsychism's combination problem, since it must explain how a single universal consciousness fragments into many distinct individual minds like ours.
+    - Critics ask why the shared physical world behaves so consistently and predictably across observers if it is ultimately just the appearance of one mind's activity rather than a mind-independent reality.
+    - It is hard to see what observation could ever count against it, since any physical evidence can always be redescribed as more appearances within the one universal mind.
+  rivals: [illusionism, biological_naturalism]
+  citations:
+    - "Kastrup 2019, Iff Books, The idea of the world: a multi-disciplinary argument for the mental nature of reality"
+    - "Kastrup 2018, Journal of Consciousness Studies, The universe in consciousness"
+    - "Kastrup 2019, Radboud University Nijmegen, Analytic idealism: a consciousness-only ontology"
