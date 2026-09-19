@@ -29,5 +29,5 @@ metrics:
     criterion: "the reply is plain spoken prose with no bullet points, markdown, emojis, or lists"
     min_score: 1
   - measure: words
-    max_value: 130
+    max_value: 90
 runs: 2
