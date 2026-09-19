@@ -1,0 +1,6 @@
+agent_name = "armchair-debater"
+secret_set = "armchair-debater-secrets"
+agent_profile = "agent-1x"
+
+[scaling]
+	min_agents = 1
