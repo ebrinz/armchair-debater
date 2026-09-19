@@ -2196,6 +2196,8 @@ Added after end-to-end evals showed the user was never scored: Task B.4's `on_us
 
 # Part C — UI (Session 2, worktree `../armchair-debater-ui`, branch `debate-ui`)
 
+> **SUPERSEDED.** The UI was redesigned as a purpose-built arcade-style screen. Execute `docs/design/2026-09-19-debate-ui-plan.md` (spec: `docs/design/2026-09-19-debate-ui-design.md`) instead of Tasks C.1–C.3 below, which are kept only as a record of the original baseline.
+
 Session 2 owns `client/` and nothing else. It needs no running server: everything is built against a mock that replays `docs/design/debate-state-fixtures.json`.
 
 ### Task C.1: Contract types, store, and mock
