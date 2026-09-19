@@ -15,6 +15,12 @@ MAX_DAMAGE = 25
 MAX_RECOVERY = 15
 DRAW_MARGIN = 5
 
+# The judge's raw scores, applied one-for-one, let each side heal most of what
+# it had just taken, and debates stalled near 80-80. Damage is now doubled,
+# and a rebuttal can heal at most half of the last hit the speaker took.
+DAMAGE_SCALE = 2
+RECOVERY_SHARE = 0.5
+
 _SIDES = ("user", "bot")
 
 
@@ -61,9 +67,15 @@ class DebateState:
         opponent = "bot" if by == "user" else "user"
         damage = max(0, min(MAX_DAMAGE, damage))
         recovery = max(0, min(MAX_RECOVERY, recovery))
-        self.health[opponent] = max(0, self.health[opponent] - damage)
-        self.health[by] = min(MAX_HEALTH, self.health[by] + recovery)
-        self.hits.append({"by": by, "damage": damage, "recovery": recovery, "reason": reason})
+        dealt = damage * DAMAGE_SCALE
+        last_hit_taken = next(
+            (hit["damage"] for hit in reversed(self.hits) if hit["by"] == opponent), 0
+        )
+        healed = int(last_hit_taken * RECOVERY_SHARE * recovery / MAX_RECOVERY + 0.5)
+        healed = min(healed, MAX_HEALTH - self.health[by])
+        self.health[opponent] = max(0, self.health[opponent] - dealt)
+        self.health[by] += healed
+        self.hits.append({"by": by, "damage": dealt, "recovery": healed, "reason": reason})
         await self._changed()
 
     def winner(self) -> str:
