@@ -1,0 +1,222 @@
+/* Fight HUD + decision banner. Uses tokens/utilities from arcade.css. */
+
+.hp-bar {
+  display: flex;
+  flex-direction: column;
+  width: 38%;
+  gap: 2px;
+}
+
+.hp-bar--bot {
+  align-items: flex-end;
+}
+
+.hp-bar__labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.hp-bar__label {
+  font-size: 10px;
+  color: var(--ink);
+}
+
+.hp-bar__theory {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hp-bar__track {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  background: var(--bar-track);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.hp-bar__ghost,
+.hp-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+}
+
+.hp-bar__ghost {
+  background: var(--bar-ghost);
+  transition: width 600ms steps(6) 500ms;
+}
+
+.hp-bar__fill {
+  background: var(--bar-fill);
+  transition: width 250ms steps(5);
+}
+
+.hp-bar__fill--danger {
+  background: var(--bar-danger);
+}
+
+/* Anchor the fill/ghost to the CENTRE side so the outer edge empties first. */
+.hp-bar--user .hp-bar__ghost,
+.hp-bar--user .hp-bar__fill {
+  right: 0;
+}
+
+.hp-bar--bot .hp-bar__ghost,
+.hp-bar--bot .hp-bar__fill {
+  left: 0;
+}
+
+.hp-bar__number {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.hp-bar--bot .hp-bar__number {
+  align-self: flex-end;
+}
+
+/* --------------------------------------------------------------- fight HUD */
+
+.fight-hud {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  position: relative;
+}
+
+.fight-hud__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+}
+
+.fight-hud__round {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--bg-panel);
+  border: 4px solid var(--accent);
+  padding: 8px 12px;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.fight-hud__battle-text {
+  margin: 16px;
+  padding: 16px;
+  font-family: var(--font-body);
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.4;
+  min-height: 4em;
+}
+
+.fight-hud__battle-line {
+  animation: fight-line-in 200ms ease-out;
+}
+
+@keyframes fight-line-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fight-hud__damage {
+  position: absolute;
+  top: 60px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  animation: float-up 900ms ease-out forwards;
+}
+
+.fight-hud__damage--user {
+  left: 8%;
+  color: var(--bar-danger);
+}
+
+.fight-hud__damage--bot {
+  right: 8%;
+  color: var(--bar-danger);
+}
+
+.fight-hud__damage--heal {
+  color: var(--heal);
+}
+
+.fight-hud__damage--heal.fight-hud__damage--user {
+  left: 20%;
+}
+
+.fight-hud__damage--heal.fight-hud__damage--bot {
+  right: 20%;
+}
+
+.fight-hud--shake {
+  animation: shake 300ms linear;
+}
+
+/* ---------------------------------------------------------- decision screen */
+
+.decision-hud {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+  padding: 16px;
+}
+
+.decision-hud__bars {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.decision-hud__banner {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.decision-hud__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.decision-hud__result {
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--ink);
+  margin: 16px 0;
+}
+
+.decision-hud__score {
+  font-family: var(--font-body);
+  font-size: 24px;
+  color: var(--ink-dim);
+}
+
+.decision-hud__rationale {
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--ink);
+  margin: 24px auto 0;
+  max-width: 60ch;
+  padding: 16px;
+}
