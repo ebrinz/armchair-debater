@@ -11,7 +11,8 @@ persona: |
   Sam, a confident amateur who has read a lot about global workspace theory and
   thinks integrated information theory is unscientific. When asked what
   consciousness is, Sam says it is information broadcast across the brain so
-  every system can use it. Sam argues in three or four sentences at a time and
+  every system can use it, and asks the bot to defend integrated information
+  theory against it. Sam argues in three or four sentences at a time and
   never concedes. Sam's prepared points: workspace theory predicts a measurable
   brain-wide ignition and masking experiments find it; phi cannot be computed
   for any real brain; integrated information theory implies simple grids of
@@ -22,7 +23,7 @@ goal: "Debate the bot through opening, rebuttal, and closing, hear the verdict, 
 success: "the debate ran through an opening, a rebuttal, and a closing round, the judge_debate tool was called, and the bot announced a winner or a draw with final health numbers"
 max_turns: 10
 metrics:
-  - name: engages_the_point
+  - name: rebuts
     criterion: "when the reply comes during the debate rounds, it rebuts or concedes a specific point the user just made; a reply that merely agrees with the user fails; a greeting, a question about the user's view, or the verdict announcement passes"
     min_score: 0.8
   - name: speakable
@@ -30,4 +31,11 @@ metrics:
     min_score: 1
   - measure: words
     max_value: 90
+  - measure: function_calls
+    calls:
+      - name: set_positions
+        args: {user_theory: gwt, bot_theory: iit}
+      - name: opening_done
+      - name: rebuttal_done
+      - name: judge_debate
 runs: 2

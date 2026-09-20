@@ -29,11 +29,12 @@ scenarios:
           - event: response
             eval: "the bot asks the user what they think consciousness is"
 
-      - user: "It's a global workspace. Information gets broadcast across the brain."
+      - user: "It's a global workspace. Information gets broadcast across the brain. I'd like you to defend integrated information theory against it."
         expect:
           - event: function_call
             calls:
               - name: set_positions
+                args: {user_theory: gwt, bot_theory: iit}
 
       - user: "Before I start, what's the key paper for your side? Give me an author and a year."
         expect:
@@ -46,11 +47,12 @@ scenarios:
           - event: response
             eval: "the bot asks the user what they think consciousness is"
 
-      - user: "Consciousness is a global workspace: whatever wins the competition for attention gets broadcast brain-wide."
+      - user: "Consciousness is a global workspace: whatever wins the competition for attention gets broadcast brain-wide. I want you to defend integrated information theory against it."
         expect:
           - event: function_call
             calls:
               - name: set_positions
+                args: {user_theory: gwt, bot_theory: iit}
           - event: response
             eval: "the bot gives an opening argument and invites the user's opening statement"
             text_excludes: "*"
@@ -97,3 +99,18 @@ scenarios:
           - event: function_call
             absent: true
             within_ms: 15000
+
+  - name: matches_a_non_workspace_view
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot asks the user what they think consciousness is"
+
+      - user: "Honestly I think consciousness is a kind of trick the brain plays on itself; there's nothing extra there to explain."
+        expect:
+          - event: function_call
+            calls:
+              - name: set_positions
+                args: {user_theory: illusionism}
+          - event: response
+            eval: "the bot says which theory it will defend, and that theory is one of property dualism, panpsychism, or orchestrated objective reduction"
