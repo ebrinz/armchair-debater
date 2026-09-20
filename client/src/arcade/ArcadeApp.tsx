@@ -1,6 +1,7 @@
 import { RTVIEvent } from '@pipecat-ai/client-js';
 import {
   PipecatClientProvider,
+  usePipecatClientMediaTrack,
   usePipecatClientTransportState,
   useRTVIClientEvent,
 } from '@pipecat-ai/client-react';
@@ -17,8 +18,10 @@ import { battleLines } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
 import { Stage } from './components/Stage';
+import { useAudioLevel } from './hooks/useAudioLevel';
+import { useSuperFlare } from './hooks/useHitEffects';
 import { startMockReplay } from './mock';
-import { ROUND_LABELS, screenFor } from './screen';
+import { ROUND_LABELS, announcerText, screenFor } from './screen';
 import { DecisionScreen } from './screens/DecisionScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
@@ -43,9 +46,12 @@ const announce = (
   if (screen === 'title') return '';
   if (!snapshot) return ROUND_LABELS.setup;
   const lines = [ROUND_LABELS[snapshot.stage]];
+  // The announcer's banners are read here rather than from a second live
+  // region: the same words, once, in the order they appear on screen.
+  if (screen === 'fight') lines.unshift(announcerText(snapshot.stage));
   if (screen === 'fight' && snapshot.last_hit) lines.push(...battleLines(snapshot.last_hit));
   if (screen === 'decision' && snapshot.verdict) lines.push(snapshot.verdict.rationale);
-  return lines.join('. ');
+  return lines.filter(Boolean).join('. ');
 };
 
 interface ViewProps {
@@ -53,26 +59,50 @@ interface ViewProps {
   busy: boolean;
   error: string | null;
   onStart: () => void;
+  /** Live audio levels, 0..1. Zero on every path with no Pipecat client. */
+  userLevel?: number;
+  botLevel?: number;
+  mock?: boolean;
 }
 
 /**
  * The arcade root: the stage, whichever screen the server's state calls for,
  * and the CRT. The screen is never stored — `screenFor` derives it.
  */
-const ArcadeView = ({ connected, busy, error, onStart }: ViewProps) => {
+const ArcadeView = ({
+  connected,
+  busy,
+  error,
+  onStart,
+  userLevel = 0,
+  botLevel = 0,
+  mock = false,
+}: ViewProps) => {
   const snapshot = useArcadeStore((s) => s.snapshot);
   const cards = useArcadeStore((s) => s.cards);
   const hitCount = useArcadeStore((s) => s.hitCount);
   const screen = screenFor(connected, snapshot);
+  // The fire belongs to the stage, which is mounted here rather than in the
+  // fight screen, so the super-effective flare is lifted to this level.
+  const flare = useSuperFlare(hitCount, snapshot?.last_hit ?? null);
 
   return (
     <div className="arcade">
-      <Stage dim={screen !== 'fight'} fire={screen === 'decision' ? 'dim' : 'idle'} />
+      <Stage
+        dim={screen !== 'fight'}
+        fire={screen === 'decision' ? 'dim' : flare && screen === 'fight' ? 'flare' : 'idle'}
+      />
       <div className="arcade-screen">
         {screen === 'title' && <TitleScreen onStart={onStart} busy={busy} error={error} />}
         {screen === 'select' && <SelectScreen snapshot={snapshot} cards={cards} />}
         {screen === 'fight' && snapshot && (
-          <FightScreen snapshot={snapshot} hitCount={hitCount} />
+          <FightScreen
+            snapshot={snapshot}
+            hitCount={hitCount}
+            userLevel={userLevel}
+            botLevel={botLevel}
+            mock={mock}
+          />
         )}
         {screen === 'decision' && snapshot && <DecisionScreen snapshot={snapshot} />}
       </div>
@@ -108,13 +138,28 @@ const ArcadeSession = ({
   const connected = LIVE_STATES.includes(transportState);
   const busy = BUSY_STATES.includes(transportState);
 
+  // usePipecatClientMediaTrack(trackType, participantType) -> MediaStreamTrack | null
+  // (node_modules/@pipecat-ai/client-react/dist/index.d.ts:363; the scaffold
+  // uses the same call for the bot at src/components/pipecat/bot-audio.tsx:60).
+  // These hooks need the provider, so they live here and not in ArcadeView,
+  // which also renders on the ?mock and still-booting paths.
+  const userLevel = useAudioLevel(usePipecatClientMediaTrack('audio', 'local'));
+  const botLevel = useAudioLevel(usePipecatClientMediaTrack('audio', 'bot'));
+
   useEffect(() => {
     if (!connected) clear();
   }, [connected, clear]);
 
   return (
     <>
-      <ArcadeView connected={connected} busy={busy} error={error} onStart={onStart} />
+      <ArcadeView
+        connected={connected}
+        busy={busy}
+        error={error}
+        onStart={onStart}
+        userLevel={userLevel}
+        botLevel={botLevel}
+      />
       <BotAudioOutput />
     </>
   );
@@ -145,7 +190,7 @@ export const ArcadeApp = () => {
 
   // ?mock replays the fixtures with no server and no client of any kind.
   if (mock) {
-    return <ArcadeView connected busy={false} error={null} onStart={() => {}} />;
+    return <ArcadeView connected busy={false} error={null} onStart={() => {}} mock />;
   }
 
   // The transport module is still loading; show the title screen, mid-boot.

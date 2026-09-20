@@ -1,43 +1,125 @@
-/* Fight HUD + decision banner. Uses tokens/utilities from arcade.css. */
+/*
+ * The fight screen: health bars, round plate, the two wingback fighters, the
+ * tiered hit effects, the battle text box, and the announcer. Tokens, the
+ * pixel kit, and the shared keyframes (shake, slam, float-up, bob) come from
+ * arcade.css; everything here is additive and scoped to the fight.
+ *
+ * Every animation is a one-shot triggered by a class that is removed again
+ * between hits, so re-adding it restarts the animation with no remount and no
+ * JavaScript per frame. arcade.css's single prefers-reduced-motion block kills
+ * all of it at once.
+ */
+
+.fight {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.fight--shake {
+  animation: shake 300ms steps(2, end) 3;
+}
+
+/* The solid tier gets one short pass, the super tier three long ones. */
+.fight--solid.fight--shake {
+  animation: shake 150ms steps(2, end) 2;
+}
+
+/* ------------------------------------------------------------- health bars */
+
+.fight__bars {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(8px, 2vw, 28px);
+  padding: clamp(10px, 1.6vh, 20px) clamp(10px, 2vw, 26px) 0;
+}
 
 .hp-bar {
   display: flex;
   flex-direction: column;
-  width: 38%;
-  gap: 2px;
-}
-
-.hp-bar--bot {
-  align-items: flex-end;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 4px;
 }
 
 .hp-bar__labels {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  width: 100%;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hp-bar--bot .hp-bar__labels {
+  flex-direction: row-reverse;
 }
 
 .hp-bar__label {
-  font-size: 10px;
-  color: var(--ink);
+  flex: none;
+  font-size: clamp(8px, 0.95vw, 12px);
+  color: var(--accent);
+  text-shadow: 2px 2px 0 var(--shadow);
 }
 
 .hp-bar__theory {
+  min-width: 0;
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: clamp(14px, 1.3vw, 20px);
+  line-height: 1;
   color: var(--ink-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.hp-bar__row {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1vw, 14px);
+}
+
+.hp-bar--bot .hp-bar__row {
+  flex-direction: row-reverse;
+}
+
+/*
+ * The number is the one thing a player glances at mid-sentence, so it is set
+ * in the display face at bar height and sits on the OUTER side, where the bar
+ * empties towards it.
+ */
+.hp-bar__number {
+  flex: none;
+  min-width: 3.4ch;
+  font-size: clamp(14px, 1.7vw, 26px);
+  line-height: 1;
+  text-align: right;
+  color: var(--bar-fill);
+  text-shadow:
+    2px 2px 0 var(--oxblood),
+    4px 4px 0 var(--shadow);
+}
+
+.hp-bar--bot .hp-bar__number {
+  text-align: left;
+}
+
+.hp-bar--danger .hp-bar__number {
+  color: var(--bar-danger);
+  animation: hp-pulse 620ms steps(1, end) infinite;
 }
 
 .hp-bar__track {
+  --pixel-border-color: var(--wood-light);
   position: relative;
-  width: 100%;
-  height: 22px;
+  flex: 1 1 auto;
+  height: clamp(14px, 2.2vh, 24px);
   background: var(--bar-track);
-  border-radius: 0;
   overflow: hidden;
 }
 
@@ -49,21 +131,38 @@
   height: 100%;
 }
 
+/* Holds the old value for a beat after a hit, then catches up. */
 .hp-bar__ghost {
   background: var(--bar-ghost);
-  transition: width 600ms steps(6) 500ms;
+  transition: width 600ms steps(6, end) 500ms;
+}
+
+/* Healing runs the ghost the other way, which would read as damage. Snap it. */
+.hp-bar__ghost--snap {
+  transition: none;
 }
 
 .hp-bar__fill {
-  background: var(--bar-fill);
-  transition: width 250ms steps(5);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--bar-fill) 70%, #fff) 0 28%,
+    var(--bar-fill) 28% 72%,
+    color-mix(in srgb, var(--bar-fill) 74%, #000) 72% 100%
+  );
+  transition: width 250ms steps(5, end);
 }
 
-.hp-bar__fill--danger {
-  background: var(--bar-danger);
+.hp-bar--danger .hp-bar__fill {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--bar-danger) 72%, #fff) 0 28%,
+    var(--bar-danger) 28% 72%,
+    color-mix(in srgb, var(--bar-danger) 74%, #000) 72% 100%
+  );
+  animation: hp-pulse 620ms steps(1, end) infinite;
 }
 
-/* Anchor the fill/ghost to the CENTRE side so the outer edge empties first. */
+/* Anchor the fill and ghost to the CENTRE side, so the outer edge empties first. */
 .hp-bar--user .hp-bar__ghost,
 .hp-bar--user .hp-bar__fill {
   right: 0;
@@ -74,102 +173,431 @@
   left: 0;
 }
 
-.hp-bar__number {
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--ink);
+@keyframes hp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
 
-.hp-bar--bot .hp-bar__number {
-  align-self: flex-end;
-}
+/* ------------------------------------------------------------- round plate */
 
-/* --------------------------------------------------------------- fight HUD */
-
-.fight-hud {
+.round-plate {
+  flex: none;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
-  position: relative;
-}
-
-.fight-hud__top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-}
-
-.fight-hud__round {
-  font-family: var(--font-display);
-  font-size: 12px;
-  color: var(--accent);
+  align-items: center;
+  gap: 5px;
+  padding: clamp(6px, 0.9vh, 11px) clamp(10px, 1.4vw, 20px) clamp(5px, 0.7vh, 9px);
   background: var(--bg-panel);
   border: 4px solid var(--accent);
-  padding: 8px 12px;
+  box-shadow:
+    0 4px 0 0 var(--oxblood),
+    0 8px 0 0 var(--shadow);
+  text-align: center;
   white-space: nowrap;
-  align-self: center;
 }
 
-.fight-hud__battle-text {
-  margin: 16px;
-  padding: 16px;
-  font-family: var(--font-body);
-  font-size: 22px;
-  color: var(--ink);
-  line-height: 1.4;
-  min-height: 4em;
+.round-plate__title {
+  font-size: clamp(9px, 1.15vw, 15px);
+  color: var(--bar-fill);
 }
 
-.fight-hud__battle-line {
-  animation: fight-line-in 200ms ease-out;
+.round-plate__stage {
+  font-size: clamp(6px, 0.72vw, 9px);
+  color: var(--ink-dim);
 }
 
-@keyframes fight-line-in {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.round-plate__pips {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
 }
 
-.fight-hud__damage {
+.round-plate__pip {
+  width: 8px;
+  height: 8px;
+  background: var(--bar-track);
+  box-shadow: inset 0 0 0 2px var(--wood-light);
+}
+
+.round-plate__pip--on {
+  background: var(--bar-fill);
+  box-shadow: inset 0 0 0 2px var(--oxblood);
+}
+
+/* ----------------------------------------------------------- the fighters */
+
+.fight__arena {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+/*
+ * The chairs stand on the rug either side of the fire. Offsets are plain
+ * viewport clamps rather than the stage's scene metrics: in portrait the scene
+ * is much wider than the viewport, and anything pinned to a scene x would walk
+ * off a phone screen.
+ */
+.fighter {
   position: absolute;
-  top: 60px;
+  bottom: clamp(96px, 20vh, 184px);
+  width: clamp(104px, 19vw, 244px);
+  transform: translateX(-50%);
+}
+
+.fighter--user {
+  left: calc(50% - clamp(104px, 24vw, 330px));
+}
+
+.fighter--bot {
+  left: calc(50% + clamp(104px, 24vw, 330px));
+}
+
+.armchair {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  shape-rendering: crispEdges;
+}
+
+/* Worn green leather, and the patches that come with it. */
+.armchair--challenger {
+  --chair-base: #4a6b3a;
+  --chair-light: #64894c;
+  --chair-dark: #33502a;
+  --chair-deep: #22361c;
+  --chair-patch: #7d7f56;
+  --chair-stud: #9a8b5a;
+}
+
+/* Immaculate oxblood, brass studs. */
+.armchair--champion {
+  --chair-base: #7a2229;
+  --chair-light: #9c3138;
+  --chair-dark: #55171d;
+  --chair-deep: #370e13;
+  --chair-patch: #9c3138;
+  --chair-stud: #d8ae3c;
+}
+
+/*
+ * The card-portrait variant: the caller sets --chair-base to a theory's type
+ * colour and the rest of the palette is mixed from it, so all twelve portraits
+ * differ at no extra drawing cost.
+ */
+.armchair--type {
+  --chair-light: color-mix(in srgb, var(--chair-base) 74%, #f6e9cc);
+  --chair-dark: color-mix(in srgb, var(--chair-base) 68%, #000);
+  --chair-deep: color-mix(in srgb, var(--chair-base) 44%, #000);
+  --chair-patch: color-mix(in srgb, var(--chair-base) 58%, #c2ad86);
+  --chair-stud: var(--accent);
+}
+
+.armchair__rock {
+  transform-box: fill-box;
+  transform-origin: 22% 100%;
+}
+
+/* Below 30 health the chair sags on its frame; the tear is drawn in the SVG. */
+.armchair--low .armchair__rock {
+  transform: rotate(2.2deg) translateY(1.4%);
+}
+
+/*
+ * Hit. How far it rocks back is the hit's tier, passed in as --rock-deg by the
+ * fight screen: a 4° flinch, a 9° rock, a 17° hard rock onto the rear legs.
+ * The rotation is negative because the pivot is the outer foot — and the
+ * house's chair is inside a mirrored group, so the same value tips it the
+ * other way, always away from the fire.
+ */
+.armchair--hurt .armchair__rock {
+  animation: chair-rock 400ms steps(5, end) 1;
+}
+
+@keyframes chair-rock {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(calc(var(--rock-deg, 9deg) * -1)) translateX(-3%);
+  }
+  55% {
+    transform: rotate(calc(var(--rock-deg, 9deg) * -0.35)) translateX(-1%);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* The white flash. --flash is 0 for a glance or a miss, which stops it playing. */
+.armchair__flash,
+.armchair__heal {
+  opacity: 0;
+}
+
+.armchair--hurt .armchair__flash {
+  animation: chair-flash 200ms steps(2, end) var(--flash, 1);
+}
+
+@keyframes chair-flash {
+  0%,
+  45% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.armchair--healed .armchair__heal {
+  animation: chair-heal 600ms steps(3, end) 1;
+}
+
+@keyframes chair-heal {
+  0% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The decision screen's poses (task U.5). */
+.armchair--win .armchair__rock {
+  animation: chair-hop 480ms steps(2, end) 3;
+}
+
+@keyframes chair-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8%);
+  }
+}
+
+.armchair--lose .armchair__rock {
+  transform: rotate(3.4deg) translateY(3%) scaleY(0.93);
+}
+
+/* Hit-stop: the target lights up white and nothing moves for four frames. */
+.fight--frozen .armchair__rock,
+.fight--frozen .armchair__bob {
+  animation-play-state: paused;
+}
+
+/* ------------------------------------------------------- damage numbers */
+
+.damage-number {
+  position: absolute;
+  left: 50%;
+  bottom: 62%;
+  transform: translateX(-50%);
   font-family: var(--font-display);
-  font-size: 20px;
-  animation: float-up 900ms ease-out forwards;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: float-up 1100ms steps(9, end) forwards;
+  text-shadow:
+    3px 3px 0 var(--shadow),
+    -1px -1px 0 var(--shadow);
 }
 
-.fight-hud__damage--user {
-  left: 8%;
+.damage-number--glancing {
+  font-size: clamp(11px, 1.2vw, 16px);
+  color: var(--ink-dim);
+}
+
+.damage-number--solid {
+  font-size: clamp(16px, 2vw, 28px);
+  color: var(--bar-fill);
+}
+
+.damage-number--super {
+  font-size: clamp(24px, 3.6vw, 52px);
   color: var(--bar-danger);
+  text-shadow:
+    4px 4px 0 var(--shadow),
+    0 0 14px rgba(224, 58, 46, 0.55);
+  animation:
+    damage-pop 180ms steps(3, end) 1,
+    float-up 1400ms steps(11, end) 180ms forwards;
 }
 
-.fight-hud__damage--bot {
-  right: 8%;
-  color: var(--bar-danger);
+@keyframes damage-pop {
+  0% {
+    transform: translateX(-50%) scale(0.4);
+  }
+  60% {
+    transform: translateX(-50%) scale(1.45);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
 }
 
-.fight-hud__damage--heal {
+.damage-number--heal {
+  bottom: 48%;
+  font-size: clamp(13px, 1.5vw, 22px);
   color: var(--heal);
 }
 
-.fight-hud__damage--heal.fight-hud__damage--user {
-  left: 20%;
+/* A heal and a hit can land on the same beat; keep them off each other. */
+.damage-number--heal.damage-number--user {
+  left: 26%;
 }
 
-.fight-hud__damage--heal.fight-hud__damage--bot {
-  right: 20%;
+.damage-number--heal.damage-number--bot {
+  left: 74%;
 }
 
-.fight-hud--shake {
-  animation: shake 300ms linear;
+/* -------------------------------------------------------------- particles */
+
+.puffs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.puffs__bit {
+  position: absolute;
+  left: 50%;
+  bottom: 45%;
+  width: var(--size, 5px);
+  height: var(--size, 5px);
+  background: #f0e4c4;
+  box-shadow: 0 0 0 1px rgba(20, 15, 11, 0.55);
+  animation: puff 640ms steps(6, end) var(--delay, 0ms) forwards;
+  opacity: 0;
+}
+
+.puffs--dust .puffs__bit {
+  bottom: 12%;
+  background: var(--ink-dim);
+  opacity: 0;
+  animation: puff 520ms steps(5, end) var(--delay, 0ms) forwards;
+}
+
+@keyframes puff {
+  0% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx, 0), var(--dy, -30px));
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------- battle text box */
+
+.battle-box {
+  position: relative;
+  z-index: 3;
+  /*
+   * Bottom clearance keeps the box clear of the CRT toggle in the corner
+   * (right: 10px; bottom: 10px), which used to sit on top of its border.
+   */
+  margin: 0 auto clamp(48px, 7vh, 62px);
+  padding: 0 clamp(10px, 2vw, 24px);
+  width: min(100%, 62rem);
+}
+
+.battle-box__panel {
+  position: relative;
+  min-height: 5.6em;
+  padding: clamp(10px, 1.4vh, 18px) clamp(112px, 12vw, 176px) clamp(10px, 1.4vh, 18px)
+    clamp(12px, 1.6vw, 22px);
+  background: rgba(22, 15, 10, 0.94);
+}
+
+.battle-box__panel--slam {
+  animation: slam 200ms steps(3, end) 1;
+}
+
+.battle-box__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.battle-box__line {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(16px, 1.55vw, 24px);
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.battle-box__line:first-child {
+  color: var(--bar-fill);
+}
+
+/*
+ * The turn cue. It is derived from last_hit.by and the stage and nothing else
+ * — the contract cannot tell us the house is "thinking", so the box does not
+ * claim it does.
+ */
+.battle-box__cue {
+  margin: 0.5em 0 0;
+  font-size: clamp(7px, 0.82vw, 10px);
+  color: var(--accent);
+}
+
+.battle-box__cue::before {
+  content: '▶ ';
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+.battle-box__transcript {
+  position: absolute;
+  top: clamp(10px, 1.4vh, 18px);
+  right: clamp(12px, 1.6vw, 22px);
+}
+
+.battle-box__drawer {
+  margin-bottom: 10px;
+  height: min(46vh, 340px);
+  padding: 0;
+  overflow: hidden;
+  background: rgba(22, 15, 10, 0.97);
+  color: var(--ink);
+}
+
+.battle-box__drawer > * {
+  height: 100%;
+}
+
+/* --------------------------------------------------------------- announcer */
+
+.announcer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.announcer__banner {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5.4vw, 64px);
+  color: var(--bar-fill);
+  letter-spacing: 0.04em;
+  text-shadow:
+    4px 4px 0 var(--oxblood),
+    8px 8px 0 var(--shadow);
+  animation: slam 420ms steps(5, end) 1;
 }
 
 /* ---------------------------------------------------------- decision screen */
@@ -219,4 +647,33 @@
   margin: 24px auto 0;
   max-width: 60ch;
   padding: 16px;
+}
+
+/* ------------------------------------------------------------ small screens */
+
+/* Mobile is deprioritised for this pass; this keeps the fight legible and
+   scroll-free at phone width rather than laying it out properly. */
+@media (max-width: 640px) {
+  .fighter {
+    bottom: clamp(88px, 16vh, 140px);
+    width: clamp(84px, 26vw, 130px);
+  }
+
+  .fighter--user {
+    left: calc(50% - clamp(66px, 22vw, 110px));
+  }
+
+  .fighter--bot {
+    left: calc(50% + clamp(66px, 22vw, 110px));
+  }
+
+  .battle-box__panel {
+    padding-right: clamp(12px, 1.6vw, 22px);
+    padding-top: 42px;
+  }
+
+  .battle-box__transcript {
+    top: 8px;
+    right: 8px;
+  }
 }
