@@ -394,6 +394,7 @@
 }
 
 .card__move {
+  position: relative;
   padding-left: 0.6em;
   border-left: 4px solid var(--type, var(--type-neutral));
 }
@@ -413,14 +414,12 @@
   cursor: pointer;
 }
 
-.card__move-head::after {
+/* Only while closed: once a move is open its text can be clicked and selected
+   without folding it shut again; the name still toggles it. */
+.card__move:not(.card__move--open) .card__move-head::after {
   content: '';
   position: absolute;
   inset: 0;
-}
-
-.card__move {
-  position: relative;
 }
 
 /* The caret appears only where the sentence is actually cut off. */

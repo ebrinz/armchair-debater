@@ -15,7 +15,7 @@ export const typeOf = (card: Pick<TheoryCard, 'kuhn_category'>): { label: string
   return { label: segments.at(-1) ?? '', colorVar: TYPE_COLORS[segments[0]] ?? '--type-neutral' };
 };
 
-/** Grid-slot names, six characters at most, fighting-game style. */
+/** Short codes for the card's rival chips, six characters at most, fighting-game style. */
 const SHORT_NAMES: Record<string, string> = {
   gwt: 'GWT',
   iit: 'IIT',
