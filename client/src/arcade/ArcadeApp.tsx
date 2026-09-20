@@ -1,6 +1,7 @@
 import { RTVIEvent } from '@pipecat-ai/client-js';
 import {
   PipecatClientProvider,
+  usePipecatClient,
   usePipecatClientMediaTrack,
   usePipecatClientTransportState,
   useRTVIClientEvent,
@@ -27,6 +28,7 @@ import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
 import { TitleScreen } from './screens/TitleScreen';
 import { useArcadeStore } from './store';
+import type { TheoryCard } from './types';
 
 /**
  * Transport states that mean the bot is live, and the ones that mean an
@@ -54,6 +56,9 @@ const announce = (
   return lines.filter(Boolean).join('. ');
 };
 
+/** What clicking a theory card says, as if the player had typed it. */
+const pickLine = (card: TheoryCard) => `My view is ${card.name}.`;
+
 interface ViewProps {
   connected: boolean;
   busy: boolean;
@@ -63,6 +68,8 @@ interface ViewProps {
   userLevel?: number;
   botLevel?: number;
   mock?: boolean;
+  /** Sends the select screen's pick. */
+  onPick: (card: TheoryCard) => void;
 }
 
 /**
@@ -74,6 +81,7 @@ const ArcadeView = ({
   busy,
   error,
   onStart,
+  onPick,
   userLevel = 0,
   botLevel = 0,
   mock = false,
@@ -94,7 +102,9 @@ const ArcadeView = ({
       />
       <div className="arcade-screen">
         {screen === 'title' && <TitleScreen onStart={onStart} busy={busy} error={error} />}
-        {screen === 'select' && <SelectScreen snapshot={snapshot} cards={cards} />}
+        {screen === 'select' && (
+          <SelectScreen snapshot={snapshot} cards={cards} onPick={onPick} />
+        )}
         {screen === 'fight' && snapshot && (
           <FightScreen
             snapshot={snapshot}
@@ -134,6 +144,19 @@ const ArcadeSession = ({
     useCallback((data: unknown) => receive(data), [receive])
   );
 
+  // usePipecatClient() -> PipecatClient | undefined
+  // (node_modules/@pipecat-ai/client-react/dist/index.d.ts:360); sendText is
+  // PipecatClient.sendText(content, options?) => Promise<void>
+  // (node_modules/@pipecat-ai/client-js/dist/index.d.ts:1278), called the same
+  // way by the scaffold at src/components/pipecat/text-input.tsx:187.
+  const client = usePipecatClient();
+  const onPick = useCallback(
+    (card: TheoryCard) => {
+      void client?.sendText(pickLine(card));
+    },
+    [client]
+  );
+
   const transportState = usePipecatClientTransportState();
   const connected = LIVE_STATES.includes(transportState);
   const busy = BUSY_STATES.includes(transportState);
@@ -157,6 +180,7 @@ const ArcadeSession = ({
         busy={busy}
         error={error}
         onStart={onStart}
+        onPick={onPick}
         userLevel={userLevel}
         botLevel={botLevel}
       />
@@ -190,12 +214,24 @@ export const ArcadeApp = () => {
 
   // ?mock replays the fixtures with no server and no client of any kind.
   if (mock) {
-    return <ArcadeView connected busy={false} error={null} onStart={() => {}} mock />;
+    // No provider on this path, so nothing is sent: the pick is logged instead.
+    return (
+      <ArcadeView
+        connected
+        busy={false}
+        error={null}
+        onStart={() => {}}
+        onPick={(card) => console.info(pickLine(card))}
+        mock
+      />
+    );
   }
 
   // The transport module is still loading; show the title screen, mid-boot.
   if (!app.client) {
-    return <ArcadeView connected={false} busy error={app.error} onStart={() => {}} />;
+    return (
+      <ArcadeView connected={false} busy error={app.error} onStart={() => {}} onPick={() => {}} />
+    );
   }
 
   return (

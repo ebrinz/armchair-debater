@@ -1,0 +1,534 @@
+/*
+ * SELECT — the character select.
+ *
+ * Two objects on a dimmed study: a roster of twelve pressed-plastic slots, and
+ * one trading card held up beside it. Everything type-coloured reads `--type`
+ * and `--type-ink`, which the components set per card, so no category is ever
+ * named here.
+ *
+ * All motion is a `steps()` blink or flash; arcade.css's single
+ * prefers-reduced-motion block turns the lot off.
+ */
+
+.select {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: clamp(8px, 1.5vh, 18px);
+  justify-content: center;
+  padding: clamp(8px, 1.8vh, 20px) clamp(12px, 2.5vw, 36px) clamp(10px, 1.6vh, 18px);
+}
+
+/* ------------------------------------------------------------------- header */
+
+.select__head {
+  text-align: center;
+}
+
+.select__title {
+  margin: 0;
+  color: var(--bar-fill);
+  font-size: clamp(12px, 1.8vw, 21px);
+  text-shadow:
+    3px 3px 0 var(--oxblood),
+    6px 6px 0 var(--shadow);
+}
+
+.select__sub {
+  margin: 0.3em 0 0;
+  color: var(--ink-dim);
+  font-size: clamp(15px, 1.4vw, 21px);
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------- the layout */
+
+.select__body {
+  display: grid;
+  /* The card is the reading matter, so it takes the larger column: at 1280 it
+     is ~576 px, wide enough for a whole argument sentence in three lines. */
+  grid-template-columns: clamp(300px, 48vw, 620px) minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 30px);
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: 1232px;
+  margin: 0 auto;
+}
+
+.select__card {
+  grid-area: 1 / 1;
+}
+
+.select__roster {
+  grid-area: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.8vh, 20px);
+  justify-content: center;
+  min-width: 0;
+}
+
+/* The roster's two lines of copy sit at the foot of the column, on the study. */
+.select__foot {
+  display: flex;
+  margin-top: auto;
+  flex-direction: column;
+  gap: clamp(6px, 1.1vh, 14px);
+  /* A scrim: the foot sits straight on the study, and one of the shelves runs
+     right behind it. Clear of the CRT toggle in the bottom-right corner. */
+  padding: 0.5em 0.7em clamp(32px, 4.4vh, 44px);
+  background: linear-gradient(
+    to right,
+    rgb(10 7 5 / 82%) 0%,
+    rgb(10 7 5 / 62%) 62%,
+    rgb(10 7 5 / 0%) 100%
+  );
+}
+
+.select__hint {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(16px, 1.35vw, 21px);
+  /* The foot sits straight on the study, so both lines carry the stage's own
+     stepped shadow to stay readable over a bookshelf. */
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.select__status {
+  margin: 0;
+  font-size: clamp(8px, 0.82vw, 11px);
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.select__prompt {
+  color: var(--ink-dim);
+}
+
+.select__locked {
+  color: var(--bar-fill);
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+/* ---------------------------------------------------------------- the grid */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(6px, 0.9vw, 12px) clamp(5px, 0.7vw, 10px);
+}
+
+/*
+ * A slot is a pressed plastic key: the type colour, a light top edge and a
+ * dark bottom one cut straight into it with inset shadows, and a stepped
+ * shadow on the floor. Slots the cursor is not on are dimmed, so the roster
+ * reads as one lit key among eleven — the cursor is the brightness, not just
+ * the marker.
+ */
+.slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(52px, 10.5vh, 88px);
+  padding: 0.5em 0.2em;
+  border: 0;
+  border-radius: 0;
+  background: var(--type, var(--type-neutral));
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 22%),
+    inset 4px 0 0 rgb(255 255 255 / 10%),
+    inset 0 -5px 0 rgb(0 0 0 / 34%),
+    inset -4px 0 0 rgb(0 0 0 / 22%),
+    4px 4px 0 0 var(--shadow);
+  color: var(--type-ink, var(--ink));
+  font-family: var(--font-display);
+  cursor: pointer;
+  /* A hint of "unlit", not a disabled state: every label stays at its full
+     --ink-on-* strength and above 4.5:1 on its own type colour. */
+  filter: brightness(0.9);
+}
+
+.slot__name {
+  font-size: clamp(8px, 0.82vw, 11px);
+  letter-spacing: 0.04em;
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 30%);
+}
+
+/* No separate :hover state — the pointer MOVES the cursor (CardGrid listens for
+   mouseenter), so lighting a hovered slot as well would show two lit keys. */
+.slot--focused {
+  filter: none;
+}
+
+/* The choice is made: the rest of the roster steps back. This is the one place
+   a slot is dimmed, and it means "no longer choosable", not "unavailable". */
+.grid--locked .slot:not(.slot--focused) {
+  filter: brightness(0.55) saturate(0.7);
+}
+
+/* The cursor: lifted off the floor, ringed in cream, at full brightness. */
+.slot--focused {
+  z-index: 2;
+  outline: 4px solid var(--ink);
+  transform: translate(-3px, -3px);
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 30%),
+    inset 4px 0 0 rgb(255 255 255 / 14%),
+    inset 0 -5px 0 rgb(0 0 0 / 34%),
+    inset -4px 0 0 rgb(0 0 0 / 22%),
+    8px 8px 0 0 var(--shadow);
+}
+
+/* The 1P flag, planted on the focused slot's shoulder. */
+.slot__cursor {
+  position: absolute;
+  top: -0.9em;
+  left: -0.5em;
+  padding: 3px 4px;
+  border: 2px solid var(--bar-fill);
+  background: var(--bg);
+  color: var(--bar-fill);
+  font-size: clamp(7px, 0.8vw, 10px);
+  line-height: 1;
+  /* It inverts rather than disappears: a cursor you can miss in a still frame
+     is not a cursor. */
+  animation: cursor-blink 0.9s steps(1, end) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    background: var(--bar-fill);
+    color: var(--bg);
+  }
+}
+
+/* The server has confirmed this one. It flashes, then keeps a brass ring. */
+.slot--locked {
+  outline: 4px solid var(--bar-fill);
+  animation: slot-lock 0.36s steps(1, end) 4;
+}
+
+@keyframes slot-lock {
+  0%,
+  50% {
+    background: var(--ink);
+    filter: none;
+  }
+}
+
+.slot--empty,
+.slot:disabled {
+  cursor: default;
+}
+
+.slot--empty {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--bar-track) 0 6px,
+    var(--bg-panel) 6px 12px
+  );
+  box-shadow:
+    inset 0 0 0 2px rgb(0 0 0 / 40%),
+    4px 4px 0 0 var(--shadow);
+  filter: none;
+}
+
+/* ---------------------------------------------------------------- the card */
+
+/*
+ * The card is one physical object: a thick frame in the type colour with a
+ * bevel cut into it, a deep brown face inside, and every panel on the face set
+ * a shade apart so the moves sit in a well rather than floating on a slab.
+ */
+.card {
+  position: relative;
+  padding: clamp(8px, 0.9vw, 12px);
+  background: var(--type, var(--type-neutral));
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 26%),
+    inset 4px 0 0 rgb(255 255 255 / 12%),
+    inset 0 -5px 0 rgb(0 0 0 / 38%),
+    inset -4px 0 0 rgb(0 0 0 / 26%),
+    6px 6px 0 0 var(--shadow);
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(5px, 0.7vh, 8px);
+  padding: clamp(7px, 0.8vw, 10px);
+  background: var(--bg-panel);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
+}
+
+.card__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6em;
+  align-items: start;
+}
+
+.card__name {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(8px, 0.86vw, 12px);
+  line-height: 1.45;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card__hp {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(7px, 0.72vw, 9px);
+  white-space: nowrap;
+}
+
+.card__hp-value {
+  margin-left: 0.5em;
+  color: var(--bar-fill);
+  font-size: clamp(10px, 1.05vw, 14px);
+}
+
+/* The portrait window: a lit niche, recessed into the card face. */
+.card__window {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: clamp(74px, 13vh, 104px);
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--type) 70%, #000) 0 5px,
+      transparent 5px
+    ),
+    radial-gradient(
+      ellipse 54% 62% at 50% 92%,
+      color-mix(in srgb, var(--type) 78%, transparent) 0%,
+      transparent 72%
+    ),
+    linear-gradient(to bottom, #090603 0%, #140d08 62%, #241811 100%);
+  box-shadow:
+    inset 0 0 0 3px rgb(0 0 0 / 65%),
+    inset 0 5px 0 rgb(0 0 0 / 40%);
+}
+
+.card__chair {
+  height: 100%;
+  width: auto;
+  overflow: visible;
+}
+
+/* The category, set as a caption strip across the foot of the art. */
+.card__category {
+  margin: 0;
+  padding: 0.25em 0.5em;
+  background: color-mix(in srgb, var(--type) 26%, #0d0906);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 40%);
+  color: var(--ink);
+  font-size: clamp(15px, 1.45vw, 20px);
+  font-style: italic;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.card__moves {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.6vh, 7px);
+  justify-content: center;
+  /* Fixed, so the card is the same height on every theory and with any move
+     open. One expanded argument and two collapsed ones fit; if a very long one
+     overruns, this scrolls rather than clipping. */
+  height: clamp(176px, 46vh, 372px);
+  margin: 0;
+  padding: clamp(4px, 0.5vw, 7px);
+  overflow-y: auto;
+  background: #1d1309;
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
+  list-style: none;
+  scrollbar-color: var(--type) #120c07;
+  scrollbar-width: thin;
+}
+
+.card__move {
+  padding-left: 0.5em;
+  border-left: 4px solid var(--type, var(--type-neutral));
+}
+
+/* The whole row is the hit target: the caret and name are the button, and it
+   stretches over the argument beneath through this overlay. */
+.card__move-head {
+  display: flex;
+  gap: 0.5em;
+  align-items: baseline;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card__move-head::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.card__move {
+  position: relative;
+}
+
+/* The caret appears only where the sentence is actually cut off. */
+.card__move-caret {
+  color: var(--ink-dim);
+  font-size: clamp(11px, 1vw, 14px);
+  /* Hidden, not removed: the move name does not shift when a caret appears. */
+  visibility: hidden;
+}
+
+.card__move[data-clipped] .card__move-caret,
+.card__move--open .card__move-caret {
+  visibility: visible;
+}
+
+.card__move-name {
+  margin: 0;
+  color: var(--bar-fill);
+  font-size: clamp(7px, 0.82vw, 11px);
+  line-height: 1.5;
+}
+
+/*
+ * Two lines on the card. Hover or focus opens it to the whole argument — the
+ * text is also in `title`, so nothing here is mouse-only.
+ */
+.card__move-text {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.12em 0 0;
+  color: var(--ink);
+  font-size: clamp(16px, 1.62vw, 21px);
+  line-height: 1.32;
+  /* Three lines, not the spec's two: at a size this readable two lines lost
+     most of the sentence. Three holds a typical argument whole; the longer ones
+     get a caret and open on a click. */
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.card__move--open .card__move-text {
+  -webkit-line-clamp: none;
+}
+
+.card__weak {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  align-items: center;
+  margin: 0;
+}
+
+.card__weak-label {
+  color: var(--ink-dim);
+  font-size: clamp(7px, 0.68vw, 9px);
+}
+
+.card__chip {
+  padding: 0.35em 0.45em;
+  background: var(--type);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
+  color: var(--type-ink);
+  font-size: clamp(6px, 0.64vw, 9px);
+  line-height: 1;
+}
+
+.card__claim {
+  margin: 0;
+  padding-top: 0.3em;
+  border-top: 2px dashed color-mix(in srgb, var(--type) 55%, transparent);
+  color: var(--ink-dim);
+  font-size: clamp(14px, 1.3vw, 18px);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* The pick the server confirmed: the frame strobes brass, twice. */
+.card--locked {
+  animation: card-lock 0.36s steps(1, end) 4;
+}
+
+@keyframes card-lock {
+  0%,
+  50% {
+    background: var(--bar-fill);
+  }
+}
+
+/* No cards yet: the card's own silhouette, empty. */
+.card--blank {
+  background: var(--type-neutral);
+}
+
+.card__waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(280px, 52vh, 520px);
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(9px, 1.1vw, 14px);
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+/* ------------------------------------------------------- narrow screens */
+
+@media (max-width: 760px) {
+  .select__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One column, roster above the card — the explicit desktop placement would
+     otherwise leave the card in a second, implicit column a few pixels wide. */
+  .select__roster {
+    grid-area: 1 / 1;
+  }
+
+  .select__card {
+    grid-area: 2 / 1;
+  }
+
+  /* The roster becomes one scrolling row, per the spec's small-screen note. */
+  .grid {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 84px;
+    padding: 0.7em 0.4em;
+    overflow-x: auto;
+  }
+
+  .select__card {
+    justify-self: center;
+    width: min(100%, 384px);
+  }
+}
+
+/* A pixel scrollbar for the moves panel, for the rare overrun. */
+.card__moves::-webkit-scrollbar {
+  width: 8px;
+}
+
+.card__moves::-webkit-scrollbar-track {
+  background: #120c07;
+}
+
+.card__moves::-webkit-scrollbar-thumb {
+  border: 2px solid #120c07;
+  background: var(--type, var(--type-neutral));
+}

@@ -32,3 +32,9 @@ const SHORT_NAMES: Record<string, string> = {
 };
 
 export const shortName = (id: string): string => SHORT_NAMES[id] ?? id.toUpperCase().slice(0, 6);
+
+/**
+ * The ink token that stays legible on a type colour. arcade.css defines the
+ * pairs (`--type-quantum` → `--ink-on-quantum`), so the mapping is a rename.
+ */
+export const inkOn = (colorVar: string): string => colorVar.replace('--type-', '--ink-on-');
