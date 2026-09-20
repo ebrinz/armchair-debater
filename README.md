@@ -138,6 +138,52 @@ open-licensed (Press Start 2P, VT323).
 cross-examination round, a distinct judge voice, bot-vs-bot, and retrieval over
 PhilPapers for long-tail theories.
 
+## Swapping providers (for example, an all-OpenAI pipeline)
+
+Nothing in the debate logic is tied to a provider. Speech runs on Gradium and the
+LLM on General Compute, but the LLM leg already goes through Pipecat's
+`OpenAILLMService` — General Compute is simply an OpenAI-compatible endpoint — and
+the `openai` extra is already installed. Moving to OpenAI is a change to three
+service constructors and three lines of plain client code:
+
+| Piece | Where | Today | For OpenAI |
+|---|---|---|---|
+| Debater LLM | `server/bot.py` | `OpenAILLMService(base_url="https://api.generalcompute.com/v1", …)` | drop `base_url`; `OPENAI_API_KEY`; a current chat model |
+| Judge | `server/judge.py` (`BASE_URL`, `AsyncOpenAI(...)`) | same endpoint, same model | drop `base_url`, same key and model change |
+| Warm-up | `server/warmup.py` | imports `BASE_URL` from `judge.py` | follows the judge |
+| Speech-to-text | `server/bot.py` | `GradiumSTTService` | `OpenAISTTService` from `pipecat.services.openai.stt` |
+| Text-to-speech | `server/bot.py` | `GradiumTTSService` | `OpenAITTSService` from `pipecat.services.openai.tts` |
+
+Notes for whoever (or whichever agent) makes the change:
+
+- **Verify, don't recall.** Confirm class names, import paths, and `Settings` fields
+  against the installed Pipecat (`pipecat context-hub search-api "OpenAITTSService"`,
+  or read `.venv/.../pipecat/services/openai/`). Model and voice go in
+  `settings=Service.Settings(...)`; the bare `model=` / `voice=` keyword arguments
+  are deprecated. Ask the user for model names and voices rather than guessing.
+- **Leave the pipeline alone.** Only the three constructors change. The order
+  (`stt → user aggregator → llm → tts → transport.output() → assistant aggregator`),
+  the `TurnObserver`, the scorer, and the Flows wiring are provider-agnostic.
+- **Speech-to-text latency.** `OpenAISTTService` transcribes a whole utterance after
+  the speaker stops, so turns feel slower than Gradium's streaming recognition.
+  `OpenAIRealtimeSTTService` in the same module streams; prefer it for a live demo.
+- **Text-to-speech sample rate.** OpenAI voices come out at 24 kHz; leave
+  `sample_rate` unset and the service says so if the pipeline disagrees.
+- **Keys and config.** Rename the variables in `server/.env.example`, in any tests
+  that set `GENERAL_COMPUTE_API_KEY`, and in the Pipecat Cloud secret set. If
+  Gradium goes entirely, drop `gradium` from the extras in `server/pyproject.toml`
+  and `uv sync`.
+- **Re-tune, then trust.** The prompts in `server/flow.yaml` (70-word turns, no
+  markdown, never assign a view the user did not give) and the judge's JSON reply
+  were tuned against `deepseek-v3.2`. A different model will drift. Run
+  `uv run pytest`, then the eval suite from "Tests and evals" above, and fix
+  prompts from the failing assertions. The evals run in text mode with a local
+  Ollama judge, so they exercise the new LLM but not the new speech services —
+  finish with one spoken debate in the browser.
+
+The same recipe works for any provider Pipecat ships a service for
+(`pipecat init --list-options` lists them).
+
 ## Deploying to Pipecat Cloud
 
 This project is configured for deployment to Pipecat Cloud. You can learn how to deploy to Pipecat Cloud in the [Pipecat Quickstart Guide](https://docs.pipecat.ai/getting-started/quickstart#step-2-deploy-to-production).
