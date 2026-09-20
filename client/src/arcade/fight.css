@@ -109,9 +109,10 @@
   text-align: left;
 }
 
+/* The fill pulses; the number does not. A number that blinks out is a number
+   you cannot read at a glance, which is the only reason it is there. */
 .hp-bar--danger .hp-bar__number {
   color: var(--bar-danger);
-  animation: hp-pulse 620ms steps(1, end) infinite;
 }
 
 .hp-bar__track {
@@ -131,15 +132,14 @@
   height: 100%;
 }
 
-/* Holds the old value for a beat after a hit, then catches up. */
+/*
+ * Holds the old value for a beat after a hit, then catches up. A heal needs no
+ * special case: the ghost lags on the way up too, but it is then narrower than
+ * the fill painted over it, so no red is ever seen growing.
+ */
 .hp-bar__ghost {
   background: var(--bar-ghost);
   transition: width 600ms steps(6, end) 500ms;
-}
-
-/* Healing runs the ghost the other way, which would read as damage. Snap it. */
-.hp-bar__ghost--snap {
-  transition: none;
 }
 
 .hp-bar__fill {
@@ -244,8 +244,8 @@
  */
 .fighter {
   position: absolute;
-  bottom: clamp(96px, 20vh, 184px);
-  width: clamp(104px, 19vw, 244px);
+  bottom: clamp(84px, 15vh, 132px);
+  width: clamp(104px, 20vw, 262px);
   transform: translateX(-50%);
 }
 
@@ -271,7 +271,7 @@
   --chair-light: #64894c;
   --chair-dark: #33502a;
   --chair-deep: #22361c;
-  --chair-patch: #7d7f56;
+  --chair-patch: #9c9163;
   --chair-stud: #9a8b5a;
 }
 
@@ -324,10 +324,10 @@
     transform: rotate(0deg);
   }
   20% {
-    transform: rotate(calc(var(--rock-deg, 9deg) * -1)) translateX(-3%);
+    transform: rotate(calc(var(--rock-deg, 8deg) * -1)) translateX(-2%);
   }
   55% {
-    transform: rotate(calc(var(--rock-deg, 9deg) * -0.35)) translateX(-1%);
+    transform: rotate(calc(var(--rock-deg, 8deg) * -0.35)) translateX(-1%);
   }
   100% {
     transform: rotate(0deg);
@@ -341,13 +341,19 @@
 }
 
 .armchair--hurt .armchair__flash {
-  animation: chair-flash 200ms steps(2, end) var(--flash, 1);
+  animation: chair-flash 170ms steps(4, end) var(--flash, 1);
 }
 
+/* Four hard steps down rather than a fade: it should strobe, not dissolve. */
 @keyframes chair-flash {
-  0%,
-  45% {
-    opacity: 0.92;
+  0% {
+    opacity: 0.88;
+  }
+  33% {
+    opacity: 0.56;
+  }
+  66% {
+    opacity: 0.24;
   }
   100% {
     opacity: 0;
@@ -358,9 +364,13 @@
   animation: chair-heal 600ms steps(3, end) 1;
 }
 
+/* A wash of green over the leather, not a repaint: it has to read as a glow. */
 @keyframes chair-heal {
   0% {
-    opacity: 0.55;
+    opacity: 0.38;
+  }
+  50% {
+    opacity: 0.2;
   }
   100% {
     opacity: 0;
@@ -397,7 +407,7 @@
 .damage-number {
   position: absolute;
   left: 50%;
-  bottom: 62%;
+  bottom: 70%;
   transform: translateX(-50%);
   font-family: var(--font-display);
   line-height: 1;
@@ -422,9 +432,14 @@
 .damage-number--super {
   font-size: clamp(24px, 3.6vw, 52px);
   color: var(--bar-danger);
+  /* A full keyline, so a red number stays legible over the oxblood chair. */
   text-shadow:
-    4px 4px 0 var(--shadow),
-    0 0 14px rgba(224, 58, 46, 0.55);
+    -2px 0 0 var(--shadow),
+    2px 0 0 var(--shadow),
+    0 -2px 0 var(--shadow),
+    0 2px 0 var(--shadow),
+    5px 5px 0 var(--shadow),
+    0 0 16px rgba(224, 58, 46, 0.5);
   animation:
     damage-pop 180ms steps(3, end) 1,
     float-up 1400ms steps(11, end) 180ms forwards;
@@ -473,7 +488,7 @@
   height: var(--size, 5px);
   background: #f0e4c4;
   box-shadow: 0 0 0 1px rgba(20, 15, 11, 0.55);
-  animation: puff 640ms steps(6, end) var(--delay, 0ms) forwards;
+  animation: puff 640ms steps(8, end) var(--delay, 0ms) forwards;
   opacity: 0;
 }
 
@@ -481,7 +496,7 @@
   bottom: 12%;
   background: var(--ink-dim);
   opacity: 0;
-  animation: puff 520ms steps(5, end) var(--delay, 0ms) forwards;
+  animation: puff 520ms steps(6, end) var(--delay, 0ms) forwards;
 }
 
 @keyframes puff {
@@ -514,7 +529,7 @@
 
 .battle-box__panel {
   position: relative;
-  min-height: 5.6em;
+  min-height: 4.4em;
   padding: clamp(10px, 1.4vh, 18px) clamp(112px, 12vw, 176px) clamp(10px, 1.4vh, 18px)
     clamp(12px, 1.6vw, 22px);
   background: rgba(22, 15, 10, 0.94);
@@ -538,8 +553,25 @@
   color: var(--ink);
 }
 
-.battle-box__line:first-child {
+/* The move line is the quote; the effectiveness line is the verdict on it. */
+.battle-box__line--move {
+  color: var(--ink);
+}
+
+.battle-box__line--effect {
   color: var(--bar-fill);
+}
+
+/* Super effective earns the display face — it is the loudest line in the game. */
+.fight--super .battle-box__line--effect {
+  font-family: var(--font-display);
+  font-size: clamp(10px, 1.02vw, 15px);
+  letter-spacing: 0.04em;
+  padding: 0.25em 0;
+}
+
+.battle-box__line--recovery {
+  color: var(--heal);
 }
 
 /*

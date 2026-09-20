@@ -299,15 +299,19 @@
   animation: firelight 0.62s steps(1, end) infinite;
 }
 
-/* fire="flare" — a brief blaze, for a super-effective hit. */
+/* fire="flare" — a brief blaze, for a super-effective hit.
+   The flame keyframes animate `transform`, and an animated property beats a
+   static one, so the blaze uses the independent `scale` property (which
+   composes with the animation's transform) and the firelight drops its
+   flicker for the half second it is pinned at full. */
 .stage--flare .flame {
   animation-duration: 0.28s;
-  transform: scaleY(1.32);
+  scale: 1 1.35;
 }
 
 .stage--flare .firelight {
+  animation: none;
   opacity: 1;
-  animation-duration: 0.28s;
 }
 
 /* fire="dim" — banked to embers, for the decision screen. */
@@ -512,10 +516,8 @@
     transition: none !important;
   }
 
-  /* The fire still has to look like fire when it cannot move. */
-  .stage--flare .flame {
-    transform: scaleY(1.32);
-  }
+  /* The flare's blaze is on the independent `scale` property, which is not an
+     animation, so it survives this block on its own — no override needed. */
 }
 
 /* ------------------------------------------------------------ title screen */

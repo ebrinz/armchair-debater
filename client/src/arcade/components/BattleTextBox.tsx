@@ -17,6 +17,9 @@ export interface BattleTextBoxProps {
   mock?: boolean;
 }
 
+/** battleLines always returns the move, then the effectiveness, then a heal. */
+const LINE_ROLES = ['move', 'effect', 'recovery'] as const;
+
 /**
  * Whose turn it is, derived only from the snapshot: the house opens, and after
  * that each hit hands the floor to the other side. Nothing here guesses at
@@ -55,9 +58,9 @@ export const BattleTextBox = ({ hit, hitCount, stage, mock = false }: BattleText
       <div className={`battle-box__panel pixel-panel${tier === 'super' ? ' battle-box__panel--slam' : ''}`}>
         <div className="battle-box__lines">
           {typed.map((line, i) => (
-            // Keyed by position: the lines are a fixed shape per hit, and
-            // keeping the node lets the text grow without a re-mount.
-            <p className="battle-box__line" key={i}>
+            // Keyed by position: the lines are a fixed shape per hit (move,
+            // effectiveness, recovery), so the node survives as the text grows.
+            <p className={`battle-box__line battle-box__line--${LINE_ROLES[i] ?? 'move'}`} key={i}>
               {line}
               {' '}
             </p>

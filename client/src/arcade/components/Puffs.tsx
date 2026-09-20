@@ -10,16 +10,16 @@ import type { Side } from '../types';
  * same every time it is replayed and nothing has to re-render to animate.
  */
 const SPREAD: Array<[dx: number, dy: number, delay: number, size: number]> = [
-  [-34, -30, 0, 6],
-  [28, -38, 20, 5],
-  [-18, -46, 40, 7],
-  [42, -22, 10, 6],
-  [-46, -14, 60, 5],
-  [12, -52, 30, 6],
-  [-8, -34, 70, 4],
-  [52, -40, 50, 5],
-  [-56, -36, 90, 6],
-  [22, -14, 80, 4],
+  [-58, -46, 0, 11],
+  [44, -60, 20, 9],
+  [-28, -74, 40, 13],
+  [68, -34, 10, 10],
+  [-76, -20, 60, 9],
+  [18, -84, 30, 12],
+  [-12, -54, 70, 8],
+  [86, -62, 50, 9],
+  [-92, -56, 90, 11],
+  [36, -22, 80, 8],
 ];
 
 export interface PuffsProps {

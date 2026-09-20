@@ -27,7 +27,7 @@ export interface FightScreenProps {
 }
 
 /** How hard the target rocks back, per tier: a flinch, a rock, a hard rock. */
-const ROCK_DEG: Record<HitTier, number> = { miss: 0, glancing: 4, solid: 9, super: 17 };
+const ROCK_DEG: Record<HitTier, number> = { miss: 0, glancing: 4, solid: 8, super: 14 };
 /** The white flash is for a hit you feel — not for a glance, and not for a miss. */
 const FLASH: Record<HitTier, 0 | 1> = { miss: 0, glancing: 0, solid: 1, super: 1 };
 /** Stuffing bursting out of the seams. A miss throws dust at the attacker instead. */

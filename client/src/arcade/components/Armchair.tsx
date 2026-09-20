@@ -4,14 +4,16 @@ import type { Side } from '../types';
 
 /**
  * The fighters: two rival wingbacks, drawn as inline SVG rects on a coarse
- * 32 x 40 grid so every edge stays hard at any scale.
+ * 32 x 44 grid so every edge stays hard at any scale.
  *
  * The anatomy is the joke, and it comes straight from the Style guide: the
- * wings are shoulders, two button-tufts on the backrest are the eyes, and the
- * seam across the seat cushion is the mouth. The chair is turned a few degrees
- * toward the centre of the room — the far wing is wide and shaded, the near
- * one foreshortened and rim-lit by the fire, and the eyes sit off-centre,
- * looking at the opponent.
+ * wings are shoulders — they stand proud of the arched backrest, which is why
+ * the silhouette reads as a wingback and not a slab — two button-tufts on the
+ * backrest are the eyes, and the seam across the seat cushion is the mouth.
+ * The chair is turned toward the centre of the room: the far wing shows its
+ * outer thickness and carries the shadow, the near one is foreshortened and
+ * rim-lit by the fire, the arms roll forward past both, and the face sits off
+ * to the near side, looking at the opponent.
  *
  * Every colour is a CSS custom property (`--chair-base` and friends, set per
  * variant in fight.css), so the same sprite serves the worn green challenger,
@@ -19,17 +21,21 @@ import type { Side } from '../types';
  * chair upholstered in any theory's type colour.
  *
  * What the component draws vs. what CSS drives: the props here decide which
- * PIXELS are drawn (eyes, tear, stuffing). How hard the chair rocks and
- * whether it flashes white are set by the caller as `--rock-deg` and
+ * PIXELS are drawn (eyes, tear, stuffing, mouth). How hard the chair rocks
+ * back and whether it flashes white are set by the caller as `--rock-deg` and
  * `--flash` on an ancestor, because those scale with the hit's tier and the
  * props the plan fixed for this component have no room for one.
  */
 
 type Rect = [x: number, y: number, w: number, h: number];
 
-const rects = (list: Rect[], fill: string, opacity?: number): JSX.Element[] =>
-  list.map(([x, y, w, h]) => (
-    <rect key={`${x},${y},${w},${h}`} x={x} y={y} width={w} height={h} fill={fill} opacity={opacity} />
+/**
+ * One layer of the sprite. Every call needs an `id`, because the layers are
+ * spliced into the same parent as siblings and a bare index would collide.
+ */
+const rects = (id: string, list: Rect[], fill: string, opacity?: number): JSX.Element[] =>
+  list.map(([x, y, w, h], i) => (
+    <rect key={`${id}${i}`} x={x} y={y} width={w} height={h} fill={fill} opacity={opacity} />
   ));
 
 const BASE = 'var(--chair-base)';
@@ -38,197 +44,228 @@ const DARK = 'var(--chair-dark)';
 const DEEP = 'var(--chair-deep)';
 const PATCH = 'var(--chair-patch)';
 const STUD = 'var(--chair-stud)';
-const WOOD = '#2a1a10';
 const STUFFING = '#f0e4c4';
-const VOID = '#160e09';
+const VOID = '#130d08';
 const FIRELIGHT = '#e0662a';
 
 /* ---------------------------------------------------------------- the masses */
 
-/** The chair's outline, reused for the white hit flash and the heal glow. */
+/**
+ * The chair's outline. Drawn three times: grown by a pixel in near-black as a
+ * keyline that lifts the sprite off the busy bookshelves behind it, then in
+ * white for the hit flash and in green for the heal glow.
+ */
 const SILHOUETTE: Rect[] = [
-  [3, 3, 4, 1],
-  [2, 4, 6, 21],
-  [10, 4, 12, 1],
-  [12, 3, 8, 1],
-  [8, 5, 16, 20],
-  [24, 5, 3, 1],
-  [24, 6, 4, 19],
-  [6, 24, 20, 4],
-  [1, 21, 6, 10],
-  [26, 22, 5, 9],
-  [5, 27, 22, 6],
-  [5, 33, 22, 2],
-  [6, 35, 3, 4],
-  [23, 35, 3, 4],
+  [12, 4, 8, 1],
+  [10, 5, 12, 2],
+  [8, 7, 16, 20],
+  [4, 2, 6, 21],
+  [3, 5, 1, 18],
+  [23, 3, 5, 20],
+  [1, 21, 9, 14],
+  [22, 22, 9, 13],
+  [9, 24, 14, 11],
+  [5, 35, 22, 3],
+  [7, 38, 4, 5],
+  [21, 38, 4, 5],
+  [6, 42, 6, 1],
+  [20, 42, 6, 1],
 ];
 
-const REAR_LEGS: Rect[] = [
-  [10, 33, 2, 5],
-  [21, 33, 2, 5],
-];
+/** The same shapes, grown a pixel all round: the sprite's keyline. */
+const OUTLINE: Rect[] = SILHOUETTE.map(([x, y, w, h]) => [x - 1, y - 1, w + 2, h + 2]);
 
-const FRONT_LEGS: Rect[] = [
-  [6, 35, 3, 4],
-  [23, 35, 3, 4],
-];
-
-/** Far wing: wide, and turned away from the fire, so it carries the shadow. */
+/** Far wing: standing proud of the back, showing its outer thickness, in shade. */
 const FAR_WING: JSX.Element[] = [
-  ...rects([[3, 3, 4, 1]], DARK),
-  ...rects([[2, 4, 6, 21]], DARK),
-  ...rects(
-    [
-      [3, 5, 4, 19],
-      [3, 4, 4, 1],
-    ],
-    DEEP
-  ),
-  ...rects([[7, 5, 1, 20]], VOID, 0.55),
+  ...rects('L1', [[5, 2, 5, 1]], BASE),
+  ...rects('L2', [[4, 3, 6, 20]], DARK),
+  ...rects('L3', [[3, 5, 1, 18]], DEEP),
+  ...rects('L4', [[4, 4, 1, 19]], DEEP),
+  ...rects('L5', [[9, 7, 1, 16]], VOID, 0.5),
 ];
 
-/** Near wing: foreshortened, and catching the fire down its outer edge. */
+/** Near wing: foreshortened, catching the fire down its outer edge. */
 const NEAR_WING: JSX.Element[] = [
-  ...rects([[24, 5, 3, 1]], BASE),
-  ...rects([[24, 6, 4, 19]], BASE),
-  ...rects([[26, 6, 2, 19]], LIGHT),
-  ...rects([[27, 7, 1, 17]], FIRELIGHT, 0.5),
+  ...rects('L6', [[23, 3, 4, 1]], LIGHT),
+  ...rects('L7', [[23, 4, 5, 19]], BASE),
+  ...rects('L8', [[26, 4, 2, 19]], LIGHT),
+  ...rects('L9', [[27, 5, 1, 17]], FIRELIGHT, 0.5),
+  ...rects('L10', [[23, 7, 1, 16]], VOID, 0.4),
 ];
 
-/** The backrest: the face. Shaded left, lit right, so it reads as turned. */
+/** The backrest: the face, under a camel arch. Shaded left, lit right. */
 const BACK_PANEL: JSX.Element[] = [
   ...rects(
+    'L11',
     [
-      [12, 3, 8, 1],
-      [10, 4, 12, 1],
-      [8, 5, 16, 20],
+      [12, 4, 8, 1],
+      [10, 5, 12, 1],
+      [8, 6, 16, 1],
     ],
-    BASE
+    LIGHT,
   ),
-  ...rects([[8, 5, 3, 20]], DARK),
-  ...rects([[19, 5, 5, 20]], LIGHT),
-  ...rects([[23, 6, 1, 18]], FIRELIGHT, 0.34),
-  // quilting, kept to the lit side and well below the eyes so it never
-  // competes with them for "face"
+  ...rects('L12', [[8, 7, 16, 20]], BASE),
+  ...rects('L13', [[8, 7, 3, 20]], DARK),
+  ...rects('L14', [[22, 7, 2, 20]], LIGHT),
+  ...rects('L15', [[23, 8, 1, 18]], FIRELIGHT, 0.26),
+  // quilting, kept off the face so it never competes with the eyes
   ...rects(
+    'L16',
     [
-      [17, 17, 1, 1],
-      [21, 18, 1, 1],
-      [19, 21, 1, 1],
+      [11, 22, 1, 1],
+      [21, 23, 1, 1],
     ],
     VOID,
-    0.5
+    0.45,
   ),
 ];
 
 const SEAT: JSX.Element[] = [
-  ...rects([[6, 24, 20, 4]], LIGHT),
-  ...rects([[6, 24, 20, 1]], BASE),
-  ...rects([[5, 27, 22, 6]], BASE),
-  ...rects([[5, 27, 22, 1]], DARK),
-  ...rects([[5, 32, 22, 1]], DEEP),
-  ...rects([[5, 33, 22, 2]], DEEP),
-  ...rects([[5, 33, 22, 1]], DARK),
+  // the cushion top, drawn as a shallow trapezoid so it sits in perspective
+  ...rects('L17', [[10, 24, 12, 1]], LIGHT),
+  ...rects('L18', [[9, 25, 14, 2]], LIGHT),
+  ...rects('L19', [[9, 25, 14, 1]], BASE),
+  ...rects('L20', [[9, 27, 14, 1]], DARK),
+  ...rects('L21', [[9, 28, 14, 7]], BASE),
+  ...rects('L22', [[9, 34, 14, 1]], DEEP),
 ];
 
 const ARMS: JSX.Element[] = [
-  // far arm, in shade
-  ...rects([[2, 20, 4, 1]], DARK),
-  ...rects([[1, 21, 6, 10]], DARK),
-  ...rects([[1, 22, 2, 9]], DEEP),
+  // far arm, rolling forward past the wing above it
+  ...rects('L23', [[1, 21, 9, 2]], DARK),
+  ...rects('L24', [[1, 21, 9, 1]], BASE),
+  ...rects('L25', [[1, 23, 9, 12]], DARK),
+  ...rects('L26', [[1, 23, 2, 12]], DEEP),
+  ...rects('L27', [[9, 23, 1, 12]], VOID, 0.4),
   // near arm, lit
-  ...rects([[27, 21, 3, 1]], LIGHT),
-  ...rects([[26, 22, 5, 9]], BASE),
-  ...rects([[29, 22, 2, 9]], LIGHT),
-  ...rects([[30, 23, 1, 7]], FIRELIGHT, 0.45),
+  ...rects('L28', [[22, 22, 9, 2]], LIGHT),
+  ...rects('L29', [[22, 24, 9, 11]], BASE),
+  ...rects('L30', [[28, 24, 3, 11]], LIGHT),
+  ...rects('L31', [[30, 25, 1, 9]], FIRELIGHT, 0.45),
+  ...rects('L32', [[22, 24, 1, 11]], VOID, 0.35),
+];
+
+const SKIRT: JSX.Element[] = [
+  ...rects('L33', [[5, 35, 22, 3]], DEEP),
+  ...rects('L34', [[5, 35, 22, 1]], DARK),
+];
+
+const LEGS: JSX.Element[] = [
+  ...rects('L35', [[3, 36, 2, 5]], '#1d120b'),
+  ...rects(
+    'L36',
+    [
+      [7, 38, 4, 4],
+      [21, 38, 4, 4],
+      [6, 42, 6, 1],
+      [20, 42, 6, 1],
+    ],
+    '#6b4a28',
+  ),
+  ...rects(
+    'L37',
+    [
+      [7, 38, 1, 4],
+      [21, 38, 1, 4],
+      [6, 42, 1, 1],
+      [20, 42, 1, 1],
+    ],
+    '#2a1a10',
+  ),
 ];
 
 const PATCHES: JSX.Element[] = [
-  ...rects([[9, 17, 5, 5]], PATCH),
+  ...rects('L38', [[2, 26, 5, 4]], PATCH),
   ...rects(
+    'L39',
     [
-      [9, 17, 1, 1],
-      [11, 17, 1, 1],
-      [13, 17, 1, 1],
-      [9, 19, 1, 1],
-      [13, 19, 1, 1],
-      [9, 21, 1, 1],
-      [11, 21, 1, 1],
-      [13, 21, 1, 1],
-    ],
-    VOID,
-    0.7
-  ),
-  ...rects([[2, 24, 4, 3]], PATCH),
-  ...rects(
-    [
-      [2, 24, 1, 1],
-      [4, 24, 1, 1],
       [2, 26, 1, 1],
       [4, 26, 1, 1],
+      [6, 26, 1, 1],
+      [2, 29, 1, 1],
+      [4, 29, 1, 1],
+      [6, 29, 1, 1],
     ],
     VOID,
-    0.7
+    0.75,
+  ),
+  ...rects('L40', [[24, 16, 4, 4]], PATCH),
+  ...rects(
+    'L41',
+    [
+      [24, 16, 1, 1],
+      [27, 16, 1, 1],
+      [24, 19, 1, 1],
+      [27, 19, 1, 1],
+    ],
+    VOID,
+    0.75,
   ),
   // scuffed leather
   ...rects(
+    'L42',
     [
-      [8, 30, 2, 1],
-      [17, 31, 3, 1],
+      [19, 29, 3, 1],
+      [11, 33, 3, 1],
     ],
     LIGHT,
-    0.5
+    0.38,
   ),
 ];
 
 const STUDS: JSX.Element[] = rects(
+  'L43',
   [
-    [2, 6, 1, 1],
-    [2, 9, 1, 1],
-    [2, 12, 1, 1],
-    [2, 15, 1, 1],
-    [2, 18, 1, 1],
-    [2, 21, 1, 1],
-    [27, 8, 1, 1],
-    [27, 11, 1, 1],
-    [27, 14, 1, 1],
-    [27, 17, 1, 1],
-    [27, 20, 1, 1],
-    [7, 28, 1, 1],
-    [11, 28, 1, 1],
-    [15, 28, 1, 1],
-    [19, 28, 1, 1],
-    [23, 28, 1, 1],
-    [2, 25, 1, 1],
-    [2, 28, 1, 1],
-    [29, 25, 1, 1],
-    [29, 28, 1, 1],
+    [4, 6, 1, 1],
+    [4, 9, 1, 1],
+    [4, 12, 1, 1],
+    [4, 15, 1, 1],
+    [4, 18, 1, 1],
+    [4, 21, 1, 1],
+    [27, 6, 1, 1],
+    [27, 9, 1, 1],
+    [27, 12, 1, 1],
+    [27, 15, 1, 1],
+    [27, 18, 1, 1],
+    [27, 21, 1, 1],
+    [10, 27, 1, 1],
+    [13, 27, 1, 1],
+    [16, 27, 1, 1],
+    [19, 27, 1, 1],
+    [22, 27, 1, 1],
+    [2, 26, 1, 1],
+    [2, 31, 1, 1],
+    [29, 27, 1, 1],
+    [29, 32, 1, 1],
   ],
-  STUD
+  STUD,
 );
 
 /** Split leather with the stuffing coming out of it — shown below 30 health. */
 const TEAR: JSX.Element[] = [
   ...rects(
+    'L44',
     [
-      [16, 16, 2, 1],
-      [17, 17, 2, 1],
-      [16, 18, 3, 1],
+      [17, 18, 2, 1],
       [18, 19, 2, 1],
-      [17, 20, 2, 1],
-      [13, 30, 3, 1],
+      [16, 20, 3, 1],
+      [18, 21, 2, 1],
+      [17, 22, 2, 1],
+      [18, 23, 2, 1],
+      [11, 33, 4, 1],
     ],
-    VOID
+    VOID,
   ),
   ...rects(
+    'L45',
     [
-      [18, 15, 2, 2],
-      [19, 17, 1, 1],
-      [14, 18, 2, 1],
-      [20, 19, 2, 2],
-      [13, 29, 2, 1],
+      [19, 17, 2, 2],
+      [14, 19, 2, 1],
+      [20, 21, 2, 2],
+      [15, 22, 2, 1],
+      [11, 32, 3, 1],
     ],
-    STUFFING
+    STUFFING,
   ),
 ];
 
@@ -236,69 +273,76 @@ const TEAR: JSX.Element[] = [
 
 type EyeShape = 'open' | 'squeezed' | 'weary' | 'happy' | 'dead';
 
-const EYE_Y = 11;
-const EYE_X: [number, number] = [13, 19];
+const EYE_Y = 13;
+const EYE_X: [number, number] = [13, 20];
 
-/** `inward` mirrors the chevron so a pair reads as `> <` rather than `> >`. */
+/** `inward` mirrors the chevron so a squeezed pair reads `> <`, not `> >`. */
 const eye = (cx: number, shape: EyeShape, inward: 1 | -1): JSX.Element[] => {
-  const dot = (dx: number, dy: number, fill: string) => ({ x: cx + dx, y: EYE_Y + dy, fill });
-  const pixels =
-    shape === 'squeezed'
-      ? [
-          dot(-2 * inward, -2, VOID),
-          dot(-1 * inward, -1, VOID),
-          dot(0, 0, VOID),
-          dot(-1 * inward, 1, VOID),
-          dot(-2 * inward, 2, VOID),
-        ]
-      : shape === 'happy'
-        ? [dot(-2, 1, VOID), dot(-1, 0, VOID), dot(0, -1, VOID), dot(1, 0, VOID), dot(2, 1, VOID)]
-        : shape === 'dead'
-          ? [
-              dot(-2, -2, VOID),
-              dot(-1, -1, VOID),
-              dot(0, 0, VOID),
-              dot(1, 1, VOID),
-              dot(1, -2, VOID),
-              dot(0, -1, VOID),
-              dot(-1, 0, VOID),
-              dot(-2, 1, VOID),
-            ]
-          : [];
+  const at = (dx: number, dy: number): Rect => [cx + dx * inward, EYE_Y + dy, 2, 1];
+  const flat = (dx: number, dy: number): Rect => [cx + dx, EYE_Y + dy, 2, 1];
 
-  if (pixels.length) {
-    return pixels.map((p, i) => (
-      <rect key={`${cx}-${shape}-${i}`} x={p.x} y={p.y} width={1} height={1} fill={p.fill} />
-    ));
+  if (shape === 'squeezed') {
+    return rects(`L46-${cx}`, [at(-2, -2), at(-1, -1), at(0, 0), at(-1, 1), at(-2, 2)], VOID);
   }
-
+  if (shape === 'happy') {
+    return rects(`L47-${cx}`, [flat(-2, 1), flat(-1, 0), flat(0, -1), flat(1, 0), flat(2, 1)], VOID);
+  }
+  if (shape === 'dead') {
+    return rects(
+      `L48-${cx}`,
+      [
+        flat(-2, -2),
+        flat(-1, -1),
+        flat(0, 0),
+        flat(1, 1),
+        flat(1, -2),
+        flat(0, -1),
+        flat(-1, 0),
+        flat(-2, 1),
+      ],
+      VOID,
+    );
+  }
   if (shape === 'weary') {
     return [
-      <rect key={`${cx}-lid`} x={cx - 2} y={EYE_Y - 2} width={4} height={2} fill={DARK} />,
-      <rect key={`${cx}-slit`} x={cx - 2} y={EYE_Y} width={4} height={1} fill={VOID} />,
+      ...rects(`L49-${cx}`, [[cx - 2, EYE_Y - 2, 5, 2]], DARK),
+      ...rects(`L50-${cx}`, [[cx - 2, EYE_Y, 5, 1]], VOID),
+      ...rects(`L51-${cx}`, [[cx - 2, EYE_Y + 1, 5, 1]], DEEP),
     ];
   }
 
-  // Idle: a button sunk into a dimple, with one pixel of firelight on it.
+  // Idle: a button sunk into a dimple, the leather bunching below it.
   return [
-    <rect key={`${cx}-dimple`} x={cx - 2} y={EYE_Y - 2} width={4} height={4} fill={DARK} />,
-    <rect key={`${cx}-ring`} x={cx - 2} y={EYE_Y + 1} width={4} height={1} fill={LIGHT} opacity={0.5} />,
-    <rect key={`${cx}-pupil`} x={cx - 1} y={EYE_Y - 1} width={2} height={2} fill={VOID} />,
-    <rect key={`${cx}-glint`} x={cx - 1} y={EYE_Y - 1} width={1} height={1} fill="#f6e9cc" />,
+    ...rects(`L52-${cx}`, [[cx - 2, EYE_Y - 2, 5, 5]], DARK),
+    ...rects(`L53-${cx}`, [[cx - 2, EYE_Y - 2, 5, 1]], DEEP),
+    ...rects(`L54-${cx}`, [[cx - 1, EYE_Y - 1, 3, 3]], VOID),
+    ...rects(`L55-${cx}`, [[cx - 1, EYE_Y - 1, 1, 1]], '#f6e9cc'),
+    ...rects(`L56-${cx}`, [[cx - 2, EYE_Y + 3, 5, 1]], LIGHT, 0.45),
+    // a lit edge on the dimple, so the button sits proud of the leather
+    ...rects(`L57-${cx}`, [[cx + 2, EYE_Y - 1, 1, 4]], LIGHT, 0.55),
   ];
 };
 
 /* ------------------------------------------------------------------ the mouth */
 
+const MOUTH_Y = 31;
+
 /** The seat-cushion seam. It parts when that side's voice is coming through. */
 const mouth = (open: number): JSX.Element[] => {
-  const y = 30 - Math.floor(open / 2);
+  const y = MOUTH_Y - Math.floor(open / 2);
   const h = 1 + open;
   return [
-    <rect key="seam" x={10} y={y} width={12} height={h} fill={VOID} />,
-    <rect key="lip-l" x={9} y={y} width={1} height={1} fill={VOID} opacity={0.7} />,
-    <rect key="lip-r" x={22} y={y} width={1} height={1} fill={VOID} opacity={0.7} />,
-    ...(open > 0 ? rects([[11, y + h - 1, 10, 1]], '#3a1712') : []),
+    ...rects('L57', [[12, y, 10, h]], VOID),
+    ...rects(
+      'L58',
+      [
+        [11, y + h - 1, 1, 1],
+        [22, y + h - 1, 1, 1],
+      ],
+      VOID,
+      0.75,
+    ),
+    ...(open > 0 ? rects('L59', [[13, y + h - 1, 8, 1]], '#42180f') : []),
   ];
 };
 
@@ -320,7 +364,7 @@ export interface ArmchairProps {
   className?: string;
 }
 
-/** At most three sprite pixels of bob — about 24 screen pixels at desktop size. */
+/** At most three sprite pixels of bob — around 24 screen pixels at fight size. */
 const MAX_BOB = 3;
 const MAX_MOUTH = 3;
 
@@ -336,8 +380,9 @@ export const Armchair = ({
 }: ArmchairProps) => {
   const typed = typeof variant === 'object';
   const low = health < 30 || pose === 'lose';
-  const bob = Math.round(Math.max(0, Math.min(1, level)) * MAX_BOB);
-  const open = Math.round(Math.max(0, Math.min(1, level)) * MAX_MOUTH);
+  const clamped = Math.max(0, Math.min(1, level));
+  const bob = Math.round(clamped * MAX_BOB);
+  const open = Math.round(clamped * MAX_MOUTH);
 
   const eyeShape: EyeShape = hurt
     ? 'squeezed'
@@ -369,7 +414,7 @@ export const Armchair = ({
     <svg
       className={classes}
       style={style}
-      viewBox="0 0 32 40"
+      viewBox="0 0 32 44"
       preserveAspectRatio="xMidYMax meet"
       aria-hidden="true"
       focusable="false"
@@ -377,28 +422,24 @@ export const Armchair = ({
       <g transform={side === 'bot' ? 'translate(32,0) scale(-1,1)' : undefined}>
         <g className="armchair__rock">
           <g className="armchair__bob" transform={bob ? `translate(0 ${-bob})` : undefined}>
-            {rects([[3, 38, 26, 2]], '#090604', 0.45)}
-            {rects(REAR_LEGS, '#1d120b')}
+            {rects('L60', [[4, 42, 24, 2]], '#090604', 0.5)}
+            {rects('L61', OUTLINE, '#120c08')}
             {FAR_WING}
             {BACK_PANEL}
-            {typed ? null : variant === 'challenger' ? PATCHES : STUDS}
-            {low ? TEAR : null}
             {eye(EYE_X[0], eyeShape, 1)}
             {eye(EYE_X[1], eyeShape, -1)}
             {NEAR_WING}
             {SEAT}
             {ARMS}
+            {/* Trim last: the patches and studs sit ON the arms, the wings and
+                the seat welt, so they have to be painted after them. */}
+            {typed ? null : variant === 'challenger' ? PATCHES : STUDS}
+            {low ? TEAR : null}
             {mouth(open)}
-            {rects(FRONT_LEGS, WOOD)}
-            {rects(
-              [
-                [6, 35, 1, 4],
-                [23, 35, 1, 4],
-              ],
-              '#170e07'
-            )}
-            <g className="armchair__flash">{rects(SILHOUETTE, '#ffffff')}</g>
-            <g className="armchair__heal">{rects(SILHOUETTE, 'var(--heal)')}</g>
+            {SKIRT}
+            {LEGS}
+            <g className="armchair__flash">{rects('L62', SILHOUETTE, '#ffffff')}</g>
+            <g className="armchair__heal">{rects('L63', SILHOUETTE, 'var(--heal)')}</g>
           </g>
         </g>
       </g>
