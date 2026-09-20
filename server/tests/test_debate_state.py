@@ -29,6 +29,11 @@ async def test_initial_snapshot_matches_first_fixture():
     assert DebateState().snapshot() == FIXTURES[0]
 
 
+async def test_lock_in_snapshot_matches_second_fixture():
+    # Positions are set while the stage is still "setup": the UI locks the card in on this.
+    assert (await started()).snapshot() == FIXTURES[1]
+
+
 async def test_snapshot_shape_matches_final_fixture():
     state = await started()
     await state.set_stage("closing")
@@ -194,7 +199,9 @@ async def test_replaying_the_fixture_debate_reproduces_the_fixture_healths():
         ("bot", 10, 5, "closing bot"),
         ("user", 14, 0, "closing user"),
     ]
-    fixture_snapshots = FIXTURES[2:8]
+    # One snapshot per scored turn: those with a hit and no verdict yet. Picked
+    # by content, not position, so adding a non-hit snapshot cannot shift them.
+    fixture_snapshots = [f for f in FIXTURES if f["last_hit"] and not f["verdict"]]
     for (by, damage, recovery, reason), fixture in zip(turns, fixture_snapshots, strict=True):
         await state.apply_hit(by, damage, recovery, reason)
         assert state.health["user"] == fixture["user"]["health"]

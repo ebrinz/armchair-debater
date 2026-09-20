@@ -240,6 +240,8 @@ one; there are no diffs to apply.
 `docs/design/debate-state-fixtures.json` holds an ordered list of example snapshots
 covering a whole debate. It is the contract: a server test asserts `snapshot()`
 produces exactly these keys, and the client's mock replays the same file.
+The second snapshot is the lock-in: positions are set while the stage is still
+`setup`, so the UI sees both theories before the first round begins.
 
 ## Client UI
 
