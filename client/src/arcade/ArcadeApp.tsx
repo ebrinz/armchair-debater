@@ -44,18 +44,17 @@ const BUSY_STATES = ['initializing', 'authenticating', 'authenticated', 'connect
 /**
  * What the polite live region says on each screen. On the fight screen the
  * round banner and the hit lines are read here rather than from a second live
- * region — the same words, once, in the order they appear on screen — with
- * `announced` (what was last read out) deciding whether the banner repeats.
+ * region — the same words, once, in the order they appear on screen;
+ * `fightText` is worked out by the view, which knows what was last read out.
  */
 const announce = (
   screen: ReturnType<typeof screenFor>,
   snapshot: ReturnType<typeof useArcadeStore.getState>['snapshot'],
-  hitCount: number,
-  announced: Announced | null
+  fightText: string
 ): string => {
   if (screen === 'title') return '';
   if (!snapshot) return ROUND_LABELS.setup;
-  if (screen === 'fight') return fightAnnouncement(announced, snapshot, hitCount);
+  if (screen === 'fight') return fightText;
   const lines = [ROUND_LABELS[snapshot.stage]];
   if (screen === 'decision' && snapshot.verdict) lines.push(snapshot.verdict.rationale);
   return lines.filter(Boolean).join('. ');
@@ -99,16 +98,25 @@ const ArcadeView = ({
   // fight screen, so the super-effective flare is lifted to this level.
   const flare = useSuperFlare(hitCount, snapshot?.last_hit ?? null);
 
-  // What the live region last read out, so `announce` below can tell a stage
-  // change (the banner) apart from a hit within the same stage (no banner).
-  // Adjusted during render rather than from an effect, so this render's own
-  // `announce` call still sees the value from BEFORE the update below —
-  // React's documented pattern for deriving state from a changing input
-  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
-  const [announced, setAnnounced] = useState<Announced | null>(null);
+  // What the live region last read out, and the words that went with it, so a
+  // stage change reads the banner and a hit within the same stage does not.
+  // The text is worked out in the same render-time update that records what
+  // was announced: React re-renders straight after a state change made during
+  // render, so text derived from `announced` afterwards would always compare
+  // the snapshot with itself and say nothing.
+  const [spoken, setSpoken] = useState<{ announced: Announced | null; text: string }>({
+    announced: null,
+    text: '',
+  });
   const nextAnnounced: Announced | null = snapshot ? { stage: snapshot.stage, hitCount } : null;
-  if (nextAnnounced?.stage !== announced?.stage || nextAnnounced?.hitCount !== announced?.hitCount) {
-    setAnnounced(nextAnnounced);
+  if (
+    nextAnnounced?.stage !== spoken.announced?.stage ||
+    nextAnnounced?.hitCount !== spoken.announced?.hitCount
+  ) {
+    setSpoken({
+      announced: nextAnnounced,
+      text: snapshot ? fightAnnouncement(spoken.announced, snapshot, hitCount) : '',
+    });
   }
 
   return (
@@ -133,7 +141,7 @@ const ArcadeView = ({
         )}
         {screen === 'decision' && snapshot && <DecisionScreen snapshot={snapshot} />}
       </div>
-      <LiveRegion text={announce(screen, snapshot, hitCount, announced)} />
+      <LiveRegion text={announce(screen, snapshot, spoken.text)} />
       <CrtOverlay />
     </div>
   );
