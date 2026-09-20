@@ -64,6 +64,14 @@ scenarios:
             eval: "the bot rebuts the user's point about computability or testability, and invites the user's rebuttal"
             text_excludes: "`"
 
+      - user: "Hang on, before my rebuttal: what's your source for that? Author and year."
+        expect:
+          - event: response
+            eval: "the bot names a paper by one of these authors only: Tononi, Oizumi, Albantakis, Boly, Massimini, Koch, Baars, Dehaene, Naccache, Changeux, Mashour, Roelfsema; or says it does not have a source; it names no other author"
+          - event: function_call
+            absent: true
+            within_ms: 15000
+
       - user: "My rebuttal: saying phi is well defined but intractable doesn't help. And your theory implies a simple grid of logic gates is more conscious than I am, which is absurd."
         expect:
           - event: function_call
