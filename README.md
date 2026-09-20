@@ -99,6 +99,27 @@ npm run dev              # http://localhost:5173
 - `http://localhost:5173/?mock` — replays a recorded debate through the UI with no server.
 - `http://localhost:5173/?console` — the Pipecat debugging console.
 
+### Arcade UI
+
+Four screens, chosen purely from the server's state: **TITLE** (PRESS START
+connects and unlocks the mic), **SELECT** (a twelve-card roster of the theories,
+Pokémon-card style), **FIGHT** (two health bars draining toward the centre, with
+hit-by-hit battle text), and **DECISION** (the judge's verdict and a rematch
+prompt). On SELECT you can click a card or just say what you think consciousness
+is — either one sends the same pick to the bot. `?mock` replays a recorded debate
+through the UI with no server; `?console` swaps in the Pipecat debugging console
+(both above). `prefers-reduced-motion` drops every shake, flash, and slam to an
+instant number and bar change, and a CRT toggle in the bottom corner (remembered
+in `localStorage`) turns the light scanline overlay on or off.
+
+All art is original pixel art, drawn in code as CSS and inline SVG — no
+third-party game assets, names, logos, or sounds. It's an homage, not a copy. The
+two fonts are bundled from `@fontsource` and both SIL Open Font License 1.1:
+Press Start 2P (Copyright 2012 The Press Start 2P Project Authors) for the arcade
+lettering, and VT323 (Copyright 2011 The VT323 Project Authors) for everything
+meant to be read. Full spec:
+[`docs/design/2026-09-19-debate-ui-design.md`](docs/design/2026-09-19-debate-ui-design.md).
+
 ### Tests and evals
 
 ```bash
