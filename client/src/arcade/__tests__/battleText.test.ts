@@ -159,6 +159,12 @@ describe('decisionBanners', () => {
     expect(decisionBanners(finished(49, 15, null))).toEqual([]);
   });
 
+  it('has no banner without a verdict even when both bars are empty', () => {
+    expect(decisionBanners(finished(0, 0, null))).toEqual([]);
+  });
+  it('calls a draw a draw game even with one bar at zero', () => {
+    expect(decisionBanners(finished(0, 4, 'draw'))).toEqual(['DRAW GAME']);
+  });
   it('reads the contract fixture’s final snapshot as YOU WIN', () => {
     const final = (states as DebateSnapshot[]).at(-1) as DebateSnapshot;
     expect(final.stage).toBe('verdict');

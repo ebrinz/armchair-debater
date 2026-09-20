@@ -64,7 +64,11 @@ export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionSc
     // The typing is part of the sequence, so CONTINUE? waits for it to finish.
     const typingMs = (rationale.length / TYPE_CPS) * 1000;
     const marks = [COUNT_AT, BANNER_AT, RATIONALE_AT, RATIONALE_AT + typingMs + CONTINUE_PAD_MS];
-    const timers = marks.map((at, i) => window.setTimeout(() => setStep(i + 1), at));
+    // Forward only: if the rationale changes under the screen the marks are
+    // rescheduled, and they must not walk the sequence back to the count-up.
+    const timers = marks.map((at, i) =>
+      window.setTimeout(() => setStep((step) => Math.max(step, i + 1)), at)
+    );
     return () => timers.forEach(window.clearTimeout);
   }, [reduced, rationale]);
 

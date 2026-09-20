@@ -46,8 +46,8 @@ export const battleLines = (hit: Hit): string[] => {
  */
 export const decisionBanners = (snapshot: DebateSnapshot): string[] => {
   const { user, bot, verdict } = snapshot;
-  if (user.health <= 0 && bot.health <= 0) return ['DOUBLE K.O.'];
   if (!verdict) return [];
+  if (user.health <= 0 && bot.health <= 0) return ['DOUBLE K.O.'];
   if (verdict.winner === 'draw') return ['DRAW GAME'];
 
   const won = verdict.winner === 'user';
