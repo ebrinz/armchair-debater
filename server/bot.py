@@ -154,6 +154,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
 
     @worker.rtvi.event_handler("on_client_ready")
     async def on_client_ready(rtvi):
+        # The select screen needs the cards before the first debate snapshot.
+        await rtvi.send_server_message({"type": "theory_cards", "cards": knowledge.client_cards()})
         await flow_manager.initialize(flow.initial_node)
 
     @transport.event_handler("on_client_connected")

@@ -36,3 +36,9 @@ def test_text_is_speakable():
         for text in (theory.claim, *theory.arguments, *theory.objections):
             assert not any(ch in text for ch in "*#_`[];"), (theory.id, text)
             assert len(text.split()) <= 45, (theory.id, text)
+
+
+def test_all_thirty_six_move_names_are_distinct():
+    moves = [move for theory in knowledge.THEORIES.values() for move in theory.moves]
+    assert len(moves) == 36
+    assert len(set(moves)) == 36

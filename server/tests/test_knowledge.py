@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ def card(**overrides):
         "aliases": ["alpha"],
         "kuhn_category": "Materialism > Test",
         "claim": "Consciousness is alpha.",
+        "moves": ["Move One", "Move Two", "Move Three"],
         "arguments": ["a1", "a2", "a3"],
         "objections": ["o1", "o2", "o3"],
         "rivals": ["beta"],
@@ -99,3 +101,62 @@ def test_brief_contains_claim_arguments_objections_citations():
     assert theory.claim in text
     for item in (*theory.arguments, *theory.objections, *theory.citations):
         assert item in text
+
+
+def test_rejects_missing_moves(tmp_path):
+    bad = card()
+    del bad["moves"]
+    with pytest.raises(CardError, match="moves"):
+        knowledge.load(write(tmp_path, [bad, beta()]))
+
+
+def test_rejects_wrong_moves_count(tmp_path):
+    with pytest.raises(CardError, match="moves"):
+        knowledge.load(write(tmp_path, [card(moves=["Only One"]), beta()]))
+
+
+def test_rejects_over_long_move_name(tmp_path):
+    with pytest.raises(CardError, match="moves"):
+        knowledge.load(
+            write(
+                tmp_path,
+                [card(moves=["A" * 23, "Move Two", "Move Three"]), beta()],
+            )
+        )
+
+
+def test_rejects_four_word_move_name(tmp_path):
+    with pytest.raises(CardError, match="moves"):
+        knowledge.load(
+            write(
+                tmp_path,
+                [card(moves=["One Two Three Four", "Move Two", "Move Three"]), beta()],
+            )
+        )
+
+
+CARDS_FIXTURE = json.loads(
+    (Path(__file__).parents[2] / "docs/design/theory-cards-fixture.json").read_text()
+)
+
+
+def test_client_cards_match_the_contract_fixture_shape():
+    cards = knowledge.client_cards()
+    assert [c["id"] for c in cards] == knowledge.ids()
+    expected_keys = set(CARDS_FIXTURE["cards"][0])
+    for card in cards:
+        assert set(card) == expected_keys
+        assert isinstance(card["arguments"], list) and len(card["arguments"]) == 3
+        assert isinstance(card["moves"], list) and len(card["moves"]) == 3
+        assert isinstance(card["rivals"], list) and card["rivals"]
+
+
+def test_client_cards_never_leak_objections_or_citations():
+    for card in knowledge.client_cards():
+        assert "objections" not in card and "citations" not in card
+
+
+def test_client_cards_are_json_serialisable_and_claims_are_single_line():
+    cards = knowledge.client_cards()
+    json.dumps(cards)
+    assert all("\n" not in card["claim"] for card in cards)

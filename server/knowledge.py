@@ -13,7 +13,7 @@ import yaml
 CARDS_PATH = Path(__file__).parent / "cards" / "theories.yaml"
 
 _TEXT_FIELDS = ("id", "name", "kuhn_category", "claim")
-_LIST_FIELDS = ("aliases", "arguments", "objections", "rivals", "citations")
+_LIST_FIELDS = ("aliases", "moves", "arguments", "objections", "rivals", "citations")
 
 
 class CardError(ValueError):
@@ -27,6 +27,7 @@ class Theory:
     aliases: tuple[str, ...]
     kuhn_category: str
     claim: str
+    moves: tuple[str, ...]
     arguments: tuple[str, ...]
     objections: tuple[str, ...]
     rivals: tuple[str, ...]
@@ -49,6 +50,14 @@ def _parse(raw: dict) -> Theory:
             raise CardError(f"card {label}: '{field}' must have exactly three entries")
     if not 2 <= len(raw["citations"]) <= 4:
         raise CardError(f"card {label}: 'citations' must have two to four entries")
+    moves = raw["moves"]
+    if len(moves) != 3 or not all(m.strip() for m in moves):
+        raise CardError(f"card {label}: 'moves' must be exactly three non-empty strings")
+    for move in moves:
+        if len(move) > 22 or len(move.split()) > 3:
+            raise CardError(
+                f"card {label}: 'moves' entry {move!r} must be at most three words and 22 characters"
+            )
     return Theory(
         **{f: raw[f].strip() for f in _TEXT_FIELDS},
         **{f: tuple(raw[f]) for f in _LIST_FIELDS},
@@ -119,3 +128,23 @@ def brief(theory: Theory) -> str:
         f"Known objections:\n{bullets(theory.objections)}\n"
         f"Papers you may cite:\n{bullets(theory.citations)}"
     )
+
+
+def client_cards() -> list[dict]:
+    """The cards as the client shows them on the select screen.
+
+    Objections and citations stay on the server: the player should not see
+    their opponent's weaknesses before the debate.
+    """
+    return [
+        {
+            "id": t.id,
+            "name": t.name,
+            "kuhn_category": t.kuhn_category,
+            "claim": " ".join(t.claim.split()),
+            "moves": list(t.moves),
+            "arguments": list(t.arguments),
+            "rivals": list(t.rivals),
+        }
+        for t in THEORIES.values()
+    ]
