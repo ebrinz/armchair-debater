@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { battleLines, decisionBanner, hitTier, speakerName } from '../battleText';
-import type { Hit } from '../types';
+import { battleLines, decisionBanner, fightAnnouncement, hitTier, speakerName } from '../battleText';
+import { ROUND_LABELS, announcerText } from '../screen';
+import type { DebateSnapshot, Hit } from '../types';
 
 const hit = (over: Partial<Hit>): Hit => ({ by: 'user', damage: 10, recovery: 0, reason: 'Made a point.', ...over });
+
+const snapshot = (stage: DebateSnapshot['stage'], last_hit: Hit | null): DebateSnapshot => ({
+  type: 'debate_state',
+  stage,
+  user: { theory_id: 't1', theory_name: 'Theory', health: 80 },
+  bot: { theory_id: 't2', theory_name: 'Theory', health: 80 },
+  last_hit,
+  verdict: null,
+});
 
 describe('hitTier', () => {
   it.each([
@@ -70,6 +80,35 @@ describe('battleLines', () => {
   it('adds a recovery line naming the healer', () => {
     expect(battleLines(hit({ by: 'bot', recovery: 8 })).at(-1)).toBe('THE HOUSE shook off the last hit!  +8');
     expect(battleLines(hit({ recovery: 0 })).some((l) => l.includes('shook off'))).toBe(false);
+  });
+});
+
+describe('fightAnnouncement', () => {
+  it('reads the round banner once on a stage change with no hit', () => {
+    const previous = { stage: 'opening' as const, hitCount: 0 };
+    expect(fightAnnouncement(previous, snapshot('rebuttal', null), 0)).toBe(
+      `${announcerText('rebuttal')}. ${ROUND_LABELS.rebuttal}`
+    );
+  });
+
+  it('reads only the hit lines for a hit within the same stage', () => {
+    const previous = { stage: 'opening' as const, hitCount: 1 };
+    const landed = hit({ damage: 24 });
+    expect(fightAnnouncement(previous, snapshot('opening', landed), 2)).toEqual(battleLines(landed).join('. '));
+  });
+
+  it('reads the banner and the hit lines when a stage change arrives with a hit', () => {
+    const previous = { stage: 'opening' as const, hitCount: 1 };
+    const landed = hit({ damage: 24 });
+    expect(fightAnnouncement(previous, snapshot('rebuttal', landed), 2)).toBe(
+      [announcerText('rebuttal'), ROUND_LABELS.rebuttal, ...battleLines(landed)].join('. ')
+    );
+  });
+
+  it('has nothing new to say for an identical repeated snapshot', () => {
+    const previous = { stage: 'opening' as const, hitCount: 1 };
+    const landed = hit({ damage: 24 });
+    expect(fightAnnouncement(previous, snapshot('opening', landed), 1)).toBe('');
   });
 });
 

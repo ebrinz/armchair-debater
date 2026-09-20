@@ -26,6 +26,9 @@ const LINE_ROLES = ['move', 'effect', 'recovery'] as const;
  * state the server does not send — there is no "thinking…", because the
  * contract cannot tell us that.
  */
+// Flips on `last_hit.by` alone, so it relies on the server strictly
+// alternating turns (bot, user, bot, …) — two hits in a row from the same
+// side would leave this cue naming the wrong mover.
 const turnCue = (hit: Hit | null, stage: Stage): string => {
   if (!hit) return stage === 'opening' ? 'THE HOUSE steps up…' : 'YOUR MOVE';
   return hit.by === 'bot' ? 'YOUR MOVE' : 'THE HOUSE steps up…';

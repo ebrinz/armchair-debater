@@ -8,21 +8,22 @@ import {
 } from '@pipecat-ai/client-react';
 import '@fontsource/press-start-2p';
 import '@fontsource/vt323';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { BotAudioOutput } from '@/components/pipecat/bot-audio';
 
 import { DEFAULT_TRANSPORT, TRANSPORT_FACTORIES, TRANSPORT_PROPS } from '../config';
 import { usePipecatApp } from '../hooks/use-pipecat-app';
 import './arcade.css';
-import { battleLines } from './battleText';
+import { fightAnnouncement } from './battleText';
+import type { Announced } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
 import { Stage } from './components/Stage';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
 import { startMockReplay } from './mock';
-import { ROUND_LABELS, announcerText, screenFor } from './screen';
+import { ROUND_LABELS, screenFor } from './screen';
 import { DecisionScreen } from './screens/DecisionScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
@@ -40,18 +41,22 @@ import type { TheoryCard } from './types';
 const LIVE_STATES = ['connected', 'ready'];
 const BUSY_STATES = ['initializing', 'authenticating', 'authenticated', 'connecting'];
 
-/** What the polite live region says on each screen. */
+/**
+ * What the polite live region says on each screen. On the fight screen the
+ * round banner and the hit lines are read here rather than from a second live
+ * region — the same words, once, in the order they appear on screen — with
+ * `announced` (what was last read out) deciding whether the banner repeats.
+ */
 const announce = (
   screen: ReturnType<typeof screenFor>,
-  snapshot: ReturnType<typeof useArcadeStore.getState>['snapshot']
+  snapshot: ReturnType<typeof useArcadeStore.getState>['snapshot'],
+  hitCount: number,
+  announced: Announced | null
 ): string => {
   if (screen === 'title') return '';
   if (!snapshot) return ROUND_LABELS.setup;
+  if (screen === 'fight') return fightAnnouncement(announced, snapshot, hitCount);
   const lines = [ROUND_LABELS[snapshot.stage]];
-  // The announcer's banners are read here rather than from a second live
-  // region: the same words, once, in the order they appear on screen.
-  if (screen === 'fight') lines.unshift(announcerText(snapshot.stage));
-  if (screen === 'fight' && snapshot.last_hit) lines.push(...battleLines(snapshot.last_hit));
   if (screen === 'decision' && snapshot.verdict) lines.push(snapshot.verdict.rationale);
   return lines.filter(Boolean).join('. ');
 };
@@ -94,6 +99,18 @@ const ArcadeView = ({
   // fight screen, so the super-effective flare is lifted to this level.
   const flare = useSuperFlare(hitCount, snapshot?.last_hit ?? null);
 
+  // What the live region last read out, so `announce` below can tell a stage
+  // change (the banner) apart from a hit within the same stage (no banner).
+  // Adjusted during render rather than from an effect, so this render's own
+  // `announce` call still sees the value from BEFORE the update below —
+  // React's documented pattern for deriving state from a changing input
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
+  const [announced, setAnnounced] = useState<Announced | null>(null);
+  const nextAnnounced: Announced | null = snapshot ? { stage: snapshot.stage, hitCount } : null;
+  if (nextAnnounced?.stage !== announced?.stage || nextAnnounced?.hitCount !== announced?.hitCount) {
+    setAnnounced(nextAnnounced);
+  }
+
   return (
     <div className="arcade">
       <Stage
@@ -116,7 +133,7 @@ const ArcadeView = ({
         )}
         {screen === 'decision' && snapshot && <DecisionScreen snapshot={snapshot} />}
       </div>
-      <LiveRegion text={announce(screen, snapshot)} />
+      <LiveRegion text={announce(screen, snapshot, hitCount, announced)} />
       <CrtOverlay />
     </div>
   );

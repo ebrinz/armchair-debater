@@ -51,9 +51,8 @@ const FIRELIGHT = '#e0662a';
 /* ---------------------------------------------------------------- the masses */
 
 /**
- * The chair's outline. Drawn three times: grown by a pixel in near-black as a
- * keyline that lifts the sprite off the busy bookshelves behind it, then in
- * white for the hit flash and in green for the heal glow.
+ * The chair's outline, drawn in white for the hit flash — on top of the body,
+ * so the whole silhouette lights up.
  */
 const SILHOUETTE: Rect[] = [
   [12, 4, 8, 1],
@@ -72,7 +71,11 @@ const SILHOUETTE: Rect[] = [
   [20, 42, 6, 1],
 ];
 
-/** The same shapes, grown a pixel all round: the sprite's keyline. */
+/**
+ * The same shapes, grown a pixel all round: the sprite's keyline, drawn in
+ * near-black under the body fills, and — in `--heal` — the heal glow, drawn
+ * there too so the body layers on top hide everything but the rim.
+ */
 const OUTLINE: Rect[] = SILHOUETTE.map(([x, y, w, h]) => [x - 1, y - 1, w + 2, h + 2]);
 
 /** Far wing: standing proud of the back, showing its outer thickness, in shade. */
@@ -424,6 +427,10 @@ export const Armchair = ({
           <g className="armchair__bob" transform={bob ? `translate(0 ${-bob})` : undefined}>
             {rects('L60', [[4, 42, 24, 2]], '#090604', 0.5)}
             {rects('L61', OUTLINE, '#120c08')}
+            {/* Painted on the outline, under the body fills, so the opaque
+                layers below hide everything but the pixel of rim beyond the
+                silhouette: a halo, not a recolour of the leather. */}
+            <g className="armchair__heal">{rects('L63', OUTLINE, 'var(--heal)')}</g>
             {FAR_WING}
             {BACK_PANEL}
             {eye(EYE_X[0], eyeShape, 1)}
@@ -439,7 +446,6 @@ export const Armchair = ({
             {SKIRT}
             {LEGS}
             <g className="armchair__flash">{rects('L62', SILHOUETTE, '#ffffff')}</g>
-            <g className="armchair__heal">{rects('L63', SILHOUETTE, 'var(--heal)')}</g>
           </g>
         </g>
       </g>

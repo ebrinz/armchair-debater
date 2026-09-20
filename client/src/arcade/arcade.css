@@ -517,7 +517,9 @@
   }
 
   /* The flare's blaze is on the independent `scale` property, which is not an
-     animation, so it survives this block on its own — no override needed. */
+     animation and so isn't caught by the rule above — but useSuperFlare
+     never turns the flare on under reduced motion, so `.stage--flare` is
+     never applied here and no override is needed. */
 }
 
 /* ------------------------------------------------------------ title screen */

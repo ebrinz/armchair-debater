@@ -1,4 +1,5 @@
-import type { Hit, Side, Verdict } from './types';
+import { ROUND_LABELS, announcerText } from './screen';
+import type { DebateSnapshot, Hit, Side, Stage, Verdict } from './types';
 
 export const speakerName = (side: Side): 'YOU' | 'THE HOUSE' => (side === 'user' ? 'YOU' : 'THE HOUSE');
 
@@ -35,3 +36,33 @@ export const battleLines = (hit: Hit): string[] => {
 
 export const decisionBanner = (winner: Verdict['winner']): 'YOU WIN' | 'YOU LOSE' | 'DRAW GAME' =>
   winner === 'user' ? 'YOU WIN' : winner === 'bot' ? 'YOU LOSE' : 'DRAW GAME';
+
+/** What the fight screen's live region last said, so the next snapshot knows
+ * what's already been announced. */
+export interface Announced {
+  stage: Stage;
+  hitCount: number;
+}
+
+/**
+ * The fight screen's live-region text for an incoming snapshot, given what
+ * was last announced. The round banner ("ROUND 1. ROUND 1 · OPENING") reads
+ * once, on the stage that introduces it; a hit that lands within the same
+ * stage announces only its own lines, so a screen reader doesn't hear the
+ * banner replayed on every hit. An unchanged stage and hit count — a repeat
+ * of the same snapshot — has nothing new to say, and returns ''.
+ */
+export const fightAnnouncement = (
+  previous: Announced | null,
+  snapshot: DebateSnapshot,
+  hitCount: number
+): string => {
+  const lines: string[] = [];
+  if (!previous || snapshot.stage !== previous.stage) {
+    lines.push(announcerText(snapshot.stage), ROUND_LABELS[snapshot.stage]);
+  }
+  if (snapshot.last_hit && hitCount !== previous?.hitCount) {
+    lines.push(...battleLines(snapshot.last_hit));
+  }
+  return lines.filter(Boolean).join('. ');
+};

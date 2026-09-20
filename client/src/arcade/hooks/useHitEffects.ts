@@ -119,20 +119,29 @@ export const useHitEffects = (hitCount: number, hit: Hit | null, disabled = fals
 };
 
 /**
+ * Whether the flare should be showing right now. Reduced motion turns it off
+ * outright — the style guide's "every tier reduces to the number and the bar
+ * change" — rather than leaving it to the CSS to catch after the fact.
+ */
+export const flareVisible = (isSuper: boolean, spent: number, hitCount: number, reduced: boolean): boolean =>
+  !reduced && isSuper && spent !== hitCount;
+
+/**
  * True for `ms` after each super-effective hit — what flares the stage's fire.
  * It lives apart from the rest because the fire belongs to the stage, which is
  * mounted above the screens.
  */
 export const useSuperFlare = (hitCount: number, hit: Hit | null, ms = 500): boolean => {
+  const reduced = useReducedMotion();
   // The last hit whose flare has already burnt out.
   const [spent, setSpent] = useState(-1);
   const isSuper = Boolean(hit && hitCount > 0 && hitTier(hit.damage) === 'super');
 
   useEffect(() => {
-    if (!isSuper) return;
+    if (!isSuper || reduced) return;
     const timer = window.setTimeout(() => setSpent(hitCount), ms);
     return () => window.clearTimeout(timer);
-  }, [hitCount, isSuper, ms]);
+  }, [hitCount, isSuper, ms, reduced]);
 
-  return isSuper && spent !== hitCount;
+  return flareVisible(isSuper, spent, hitCount, reduced);
 };
