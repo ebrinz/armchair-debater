@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="Armchair Debater — Arcade Edition: the game's pixel-art logo over a firelit study lined with bookshelves" width="100%">
+</p>
+
 # Armchair Debater
 
 **A voice bot that argues with you about consciousness — and keeps score.**
