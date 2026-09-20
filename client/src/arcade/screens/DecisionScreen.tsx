@@ -1,26 +1,35 @@
 import { decisionBanner } from '../battleText';
+import { HealthBar } from '../components/HealthBar';
+import '../fight.css';
 import type { DebateSnapshot } from '../types';
 
 export interface DecisionScreenProps {
   snapshot: DebateSnapshot;
 }
 
-/** Placeholder. Task U.6 replaces this with the verdict flourishes. */
+/** Judge's decision: final health bars, verdict banner, score, and rationale. */
 export const DecisionScreen = ({ snapshot }: DecisionScreenProps) => (
-  <div className="placeholder">
-    <h2 className="pixel-text placeholder__name">DECISION</h2>
-    <p className="placeholder__prompt">
-      {snapshot.verdict ? decisionBanner(snapshot.verdict.winner) : "JUDGE'S DECISION"}
-    </p>
-    <dl className="pixel-panel placeholder__data">
-      <dt>stage</dt>
-      <dd>{snapshot.stage}</dd>
-      <dt>you</dt>
-      <dd>{snapshot.user.health}</dd>
-      <dt>the house</dt>
-      <dd>{snapshot.bot.health}</dd>
-      <dt>rationale</dt>
-      <dd>{snapshot.verdict?.rationale ?? '—'}</dd>
-    </dl>
+  <div className="decision-hud">
+    <div className="decision-hud__bars">
+      <HealthBar side="user" label="1P YOU" theory={snapshot.user.theory_name} health={snapshot.user.health} />
+      <HealthBar
+        side="bot"
+        label="CPU THE HOUSE"
+        theory={snapshot.bot.theory_name}
+        health={snapshot.bot.health}
+      />
+    </div>
+    <div className="decision-hud__banner">
+      <div className="decision-hud__title pixel-text">JUDGE&apos;S DECISION</div>
+      {snapshot.verdict && (
+        <>
+          <div className="decision-hud__result pixel-text">{decisionBanner(snapshot.verdict.winner)}</div>
+          <div className="decision-hud__score">
+            {snapshot.user.health} — {snapshot.bot.health}
+          </div>
+          <div className="decision-hud__rationale pixel-panel">{snapshot.verdict.rationale}</div>
+        </>
+      )}
+    </div>
   </div>
 );
