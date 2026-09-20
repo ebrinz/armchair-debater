@@ -22,7 +22,6 @@ Run the bot using::
     uv run bot.py
 """
 
-import asyncio
 import os
 from pathlib import Path
 
@@ -51,7 +50,7 @@ import knowledge
 from debate_state import DebateState
 from scorer import TurnScorer
 from turns import TurnObserver
-from warmup import warm_llm
+from warmup import start_warmup
 
 load_dotenv(override=True)
 
@@ -154,8 +153,6 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     # that used to drop bot turns under an interruption.
     worker.add_observer(TurnObserver(llm, scorer.submit))
 
-    warmup_task: asyncio.Task | None = None
-
     @worker.rtvi.event_handler("on_client_ready")
     async def on_client_ready(rtvi):
         # The select screen needs the cards before the first debate snapshot.
@@ -168,10 +165,10 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         # Fire-and-forget: warm the LLM endpoint so the greeting's first
         # request isn't the one paying the cold-start latency. This is plain
         # application code outside any Pipecat BaseObject, so asyncio.create_task
-        # is correct here (not self.create_task). Keep a reference so the task
-        # isn't garbage-collected mid-flight; never awaited by this handler.
-        nonlocal warmup_task
-        warmup_task = asyncio.create_task(warm_llm())
+        # (inside start_warmup) is correct here, not self.create_task. The task
+        # is owned by warmup.py, not by this handler, so it survives a fast
+        # disconnect that tears down this session before the warm-up finishes.
+        start_warmup()
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client):
