@@ -38,6 +38,8 @@ export interface TheoryCard {
   name: string;
   kuhn_category: string;
   claim: string;
+  /** Three move names, one per argument, in the same order. Display only. */
+  moves: string[];
   arguments: string[];
   rivals: string[];
 }
