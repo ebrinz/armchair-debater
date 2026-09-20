@@ -299,7 +299,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: clamp(74px, 13vh, 104px);
+  height: clamp(74px, 12.5vh, 100px);
   background:
     linear-gradient(
       to top,
@@ -340,19 +340,19 @@
   display: flex;
   flex-direction: column;
   gap: clamp(4px, 0.6vh, 7px);
-  justify-content: center;
+  /* `safe` matters: a plain `center` would push the first move's name above the
+     scrollable area when an expanded argument overruns, out of reach. */
+  justify-content: safe center;
   /* Fixed, so the card is the same height on every theory and with any move
      open. One expanded argument and two collapsed ones fit; if a very long one
      overruns, this scrolls rather than clipping. */
-  height: clamp(176px, 46vh, 372px);
+  height: clamp(176px, 43.5vh, 348px);
   margin: 0;
   padding: clamp(4px, 0.5vw, 7px);
   overflow-y: auto;
   background: #1d1309;
   box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
   list-style: none;
-  scrollbar-color: var(--type) #120c07;
-  scrollbar-width: thin;
 }
 
 .card__move {
@@ -454,7 +454,7 @@
   padding-top: 0.3em;
   border-top: 2px dashed color-mix(in srgb, var(--type) 55%, transparent);
   color: var(--ink-dim);
-  font-size: clamp(14px, 1.3vw, 18px);
+  font-size: clamp(15px, 1.45vw, 19px);
   font-style: italic;
   line-height: 1.3;
 }
