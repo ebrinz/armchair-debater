@@ -15,7 +15,7 @@ import { BotAudioOutput } from '@/components/pipecat/bot-audio';
 import { DEFAULT_TRANSPORT, TRANSPORT_FACTORIES, TRANSPORT_PROPS } from '../config';
 import { usePipecatApp } from '../hooks/use-pipecat-app';
 import './arcade.css';
-import { fightAnnouncement } from './battleText';
+import { decisionBanners, fightAnnouncement } from './battleText';
 import type { Announced } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
@@ -56,12 +56,17 @@ const announce = (
   if (!snapshot) return ROUND_LABELS.setup;
   if (screen === 'fight') return fightText;
   const lines = [ROUND_LABELS[snapshot.stage]];
-  if (screen === 'decision' && snapshot.verdict) lines.push(snapshot.verdict.rationale);
+  if (screen === 'decision' && snapshot.verdict) {
+    lines.push(...decisionBanners(snapshot), snapshot.verdict.rationale);
+  }
   return lines.filter(Boolean).join('. ');
 };
 
 /** What clicking a theory card says, as if the player had typed it. */
 const pickLine = (card: TheoryCard) => `My view is ${card.name}.`;
+
+/** What the REMATCH button says, as if the player had asked out loud. */
+const REMATCH_LINE = "I'd like a rematch.";
 
 interface ViewProps {
   connected: boolean;
@@ -74,6 +79,8 @@ interface ViewProps {
   mock?: boolean;
   /** Sends the select screen's pick. */
   onPick: (card: TheoryCard) => void;
+  /** Asks for another debate from the decision screen. */
+  onRematch: () => void;
 }
 
 /**
@@ -86,6 +93,7 @@ const ArcadeView = ({
   error,
   onStart,
   onPick,
+  onRematch,
   userLevel = 0,
   botLevel = 0,
   mock = false,
@@ -139,7 +147,9 @@ const ArcadeView = ({
             mock={mock}
           />
         )}
-        {screen === 'decision' && snapshot && <DecisionScreen snapshot={snapshot} />}
+        {screen === 'decision' && snapshot && (
+          <DecisionScreen snapshot={snapshot} onRematch={onRematch} mock={mock} />
+        )}
       </div>
       <LiveRegion text={announce(screen, snapshot, spoken.text)} />
       <CrtOverlay />
@@ -181,6 +191,9 @@ const ArcadeSession = ({
     },
     [client]
   );
+  const onRematch = useCallback(() => {
+    void client?.sendText(REMATCH_LINE);
+  }, [client]);
 
   const transportState = usePipecatClientTransportState();
   const connected = LIVE_STATES.includes(transportState);
@@ -206,6 +219,7 @@ const ArcadeSession = ({
         error={error}
         onStart={onStart}
         onPick={onPick}
+        onRematch={onRematch}
         userLevel={userLevel}
         botLevel={botLevel}
       />
@@ -232,14 +246,18 @@ export const ArcadeApp = () => {
     void connect();
   }, [connect]);
 
+  // Bumped by the mock rematch: the effect below stops the running replay and
+  // starts a fresh one from the title of the fixture.
+  const [replay, setReplay] = useState(0);
   useEffect(() => {
     if (!mock) return;
     return startMockReplay();
-  }, [mock]);
+  }, [mock, replay]);
 
   // ?mock replays the fixtures with no server and no client of any kind.
   if (mock) {
-    // No provider on this path, so nothing is sent: the pick is logged instead.
+    // No provider on this path, so nothing is sent: the pick is logged, and a
+    // rematch replays the fixture instead of asking the bot for one.
     return (
       <ArcadeView
         connected
@@ -247,6 +265,7 @@ export const ArcadeApp = () => {
         error={null}
         onStart={() => {}}
         onPick={(card) => console.info(pickLine(card))}
+        onRematch={() => setReplay((n) => n + 1)}
         mock
       />
     );
@@ -255,7 +274,14 @@ export const ArcadeApp = () => {
   // The transport module is still loading; show the title screen, mid-boot.
   if (!app.client) {
     return (
-      <ArcadeView connected={false} busy error={app.error} onStart={() => {}} onPick={() => {}} />
+      <ArcadeView
+        connected={false}
+        busy
+        error={app.error}
+        onStart={() => {}}
+        onPick={() => {}}
+        onRematch={() => {}}
+      />
     );
   }
 

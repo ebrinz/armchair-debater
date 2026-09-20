@@ -24,6 +24,11 @@ export interface FightScreenProps {
   botLevel?: number;
   /** No Pipecat client at all, so no transcript to open. */
   mock?: boolean;
+  /** End-of-match poses, per side: the winner hops, the loser slumps. */
+  poses?: Partial<Record<Side, 'win' | 'lose'>>;
+  /** Fixed text for the battle box — the decision screen's rationale — with
+   *  the turn cue it should carry (`null` for none). */
+  text?: { lines: string[]; cue?: string | null };
 }
 
 /** How hard the target rocks back, per tier: a flinch, a rock, a hard rock. */
@@ -50,6 +55,8 @@ export const FightScreen = ({
   userLevel = 0,
   botLevel = 0,
   mock = false,
+  poses,
+  text,
 }: FightScreenProps) => {
   const hit = snapshot.last_hit;
   const fx = useHitEffects(hitCount, hit, frozen);
@@ -106,6 +113,7 @@ export const FightScreen = ({
                 hurt={hurt}
                 healed={fx.healed === side}
                 health={debater[side].health}
+                pose={poses?.[side]}
               />
 
               {hit && fx.target === side && tier && tier !== 'miss' && (
@@ -125,7 +133,14 @@ export const FightScreen = ({
         })}
       </div>
 
-      <BattleTextBox hit={hit} hitCount={hitCount} stage={snapshot.stage} mock={mock} />
+      <BattleTextBox
+        hit={hit}
+        hitCount={hitCount}
+        stage={snapshot.stage}
+        mock={mock}
+        lines={text?.lines}
+        cue={text?.cue}
+      />
 
       {!frozen && <Announcer stage={snapshot.stage} />}
     </div>
