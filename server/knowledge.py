@@ -56,7 +56,8 @@ def _parse(raw: dict) -> Theory:
     for move in moves:
         if len(move) > 22 or len(move.split()) > 3:
             raise CardError(
-                f"card {label}: 'moves' entry {move!r} must be at most three words and 22 characters"
+                f"card {label}: 'moves' entry {move!r} must be at most "
+                "three words and 22 characters"
             )
     return Theory(
         **{f: raw[f].strip() for f in _TEXT_FIELDS},

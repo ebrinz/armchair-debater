@@ -167,6 +167,9 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client):
         logger.info("Client disconnected")
+        # A turn still with the judge would otherwise be applied, and sent, to
+        # a session that no longer exists.
+        scorer.abandon()
         await runner.cancel()
 
     await runner.run()

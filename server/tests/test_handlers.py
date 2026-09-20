@@ -1,4 +1,3 @@
-import pytest
 from pipecat.flows import TRANSITION_IN_YAML
 from pipecat.frames.frames import TTSSpeakFrame
 
@@ -121,3 +120,41 @@ async def test_judge_debate_falls_back_to_the_biggest_hit_when_the_judge_fails(m
 
 def test_fallback_rationale_with_no_hits():
     assert "could not" in handlers.fallback_rationale([])
+
+
+async def test_judge_debate_called_twice_decides_once(monkeypatch):
+    import asyncio
+
+    calls = []
+
+    async def write_rationale(**kwargs):
+        calls.append(kwargs)
+        await asyncio.sleep(0)
+        return "The challenger closed strongly."
+
+    fm = await ready_for_verdict(monkeypatch, write_rationale)
+    (first, _), (second, _) = await asyncio.gather(
+        handlers.judge_debate(fm), handlers.judge_debate(fm)
+    )
+    third, nxt = await handlers.judge_debate(fm)
+
+    assert len(calls) == 1
+    assert len(fm.worker.frames) == 1
+    assert fm.state["scorer"].log == ["close", "drain"]
+    assert first == second == third and first["status"] == "ok"
+    assert nxt is TRANSITION_IN_YAML
+
+
+async def test_a_rematch_is_judged_afresh(monkeypatch):
+    calls = []
+
+    async def write_rationale(**kwargs):
+        calls.append(kwargs)
+        return "A rationale."
+
+    fm = await ready_for_verdict(monkeypatch, write_rationale)
+    await handlers.judge_debate(fm)
+    await handlers.set_positions(fm, user_theory="iit", bot_theory="gwt")
+    await handlers.judge_debate(fm)
+
+    assert len(calls) == 2

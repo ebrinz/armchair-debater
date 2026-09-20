@@ -136,3 +136,38 @@ async def test_reset_discards_turns_still_in_flight():
     await rig.scorer.drain()
     assert [h["reason"] for h in rig.state.hits] == ["scored fresh"]
     assert rig.calls[-1]["history"] == []
+
+
+async def test_a_failure_reading_the_theories_skips_that_turn_and_never_escapes_drain():
+    rig = Rig()
+    broken = {"second"}
+
+    def theories():
+        if rig.scorer._transcript[-1][1] in broken:
+            raise KeyError("user_theory_name")
+        return ("Global Workspace Theory", "Integrated Information Theory")
+
+    rig.scorer._theories = theories
+    rig.scorer.submit("bot", "first")
+    await rig.scorer.drain()
+    # The LAST queued turn is the one drain() awaits directly.
+    rig.scorer.submit("user", "second")
+
+    await rig.scorer.drain()  # must not raise: judge_debate awaits this before the verdict
+
+    assert [h["reason"] for h in rig.state.hits] == ["scored first"]
+
+
+async def test_abandon_discards_the_turn_in_flight_and_refuses_new_ones():
+    rig = Rig()
+    rig.gates["first"] = asyncio.Event()
+    rig.scorer.submit("bot", "first")
+    await asyncio.sleep(0)
+
+    rig.scorer.abandon()
+    rig.gates["first"].set()
+    rig.scorer.submit("user", "second")
+    await rig.scorer.drain()
+
+    assert rig.state.hits == []
+    assert [call["turn"] for call in rig.calls] == ["first"]

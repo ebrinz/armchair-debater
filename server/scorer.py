@@ -33,7 +33,7 @@ class TurnScorer:
         self._generation = 0
 
     def submit(self, by: str, text: str) -> None:
-        """Queue a turn for background scoring; must be called from a running event loop, and never blocks."""
+        """Queue a turn for background scoring. Never blocks; needs a running event loop."""
         text = text.strip()
         if self._closed or not text or self._current_stage() not in DEBATE_ROUNDS:
             return
@@ -58,8 +58,8 @@ class TurnScorer:
                 await previous
         if generation != self._generation:
             return
-        user_theory, bot_theory = self._theories()
         try:
+            user_theory, bot_theory = self._theories()
             score = await self._score(
                 speaker=by,
                 user_theory=user_theory,
@@ -86,11 +86,18 @@ class TurnScorer:
             logger.exception(f"scorer: unexpected error applying a {by} hit")
 
     async def drain(self) -> None:
+        # Nothing a scored turn does may stop the verdict that waits on this.
         if self._tail:
-            await self._tail
+            with contextlib.suppress(Exception):
+                await self._tail
 
     def close(self) -> None:
         self._closed = True
+
+    def abandon(self) -> None:
+        """The session is over: take no more turns and drop the one in flight."""
+        self._closed = True
+        self._generation += 1
 
     def reset(self) -> None:
         self._transcript = []

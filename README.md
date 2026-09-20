@@ -217,6 +217,19 @@ This project is configured for deployment to Pipecat Cloud. You can learn how to
 
 Refer to the [Pipecat Cloud Documentation](https://docs.pipecat.ai/deployment/pipecat-cloud/introduction) to learn more about configuring, deploying, and managing your agents in Pipecat Cloud.
 
+A deployed bot sees none of your local `.env`, so its keys go up as a secret set.
+One trap: `server/.env.example` refers to your shell's variables as `${GRADIUM_API_KEY}`,
+which `python-dotenv` expands locally but `pipecat cloud secrets set --file` uploads
+literally — the bot would boot and then fail every service call. Expand first:
+
+```bash
+cd server
+uv run python -c "from dotenv import dotenv_values; print('\n'.join(f'{k}={v}' for k, v in dotenv_values('.env').items() if v))" > .env.deploy
+pipecat cloud secrets set <secret_set from pcc-deploy.toml> --file .env.deploy --skip
+rm .env.deploy            # holds real keys; .env.* is git-ignored
+pipecat cloud deploy --yes
+```
+
 ## Building with an AI coding agent
 
 Extending this bot with Claude Code, Codex, or another AI coding assistant? Give it live, accurate Pipecat context instead of stale training data with the **Pipecat Context Hub** — a local index of Pipecat docs, examples, and API source your agent queries over MCP:

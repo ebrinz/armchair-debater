@@ -8,6 +8,8 @@ bot.py puts the session's DebateState and TurnScorer in ``flow_manager.state``
 under "debate" and "scorer".
 """
 
+import asyncio
+
 from pipecat.flows import TRANSITION_IN_YAML, FlowManager
 from pipecat.frames.frames import TTSSpeakFrame
 
@@ -50,6 +52,7 @@ async def set_positions(flow_manager: FlowManager, user_theory: str, bot_theory:
         bot_theory_name=bot.name,
     )
     state["scorer"].reset()
+    state.pop("verdict_task", None)
     await state["debate"].set_positions(user.id, user.name, bot.id, bot.name)
     return {"status": "ok", "user_theory": user.name, "bot_theory": bot.name}, TRANSITION_IN_YAML
 
@@ -68,6 +71,16 @@ async def judge_debate(flow_manager: FlowManager):
     Call this exactly once, as soon as the user has given their closing
     statement. Do not reply to the closing statement first.
     """
+    # "Exactly once" is the LLM's promise, not a guarantee: a second call in the
+    # same response, or a repeat, gets the first call's decision rather than a
+    # second announcement, a second judge call, and a second verdict snapshot.
+    state = flow_manager.state
+    if "verdict_task" not in state:
+        state["verdict_task"] = asyncio.ensure_future(_decide(flow_manager))
+    return await state["verdict_task"], TRANSITION_IN_YAML
+
+
+async def _decide(flow_manager: FlowManager) -> dict:
     state = flow_manager.state
     debate, scorer = state["debate"], state["scorer"]
 
@@ -99,4 +112,4 @@ async def judge_debate(flow_manager: FlowManager):
         "winner": winner,
         "user_health": debate.health["user"],
         "bot_health": debate.health["bot"],
-    }, TRANSITION_IN_YAML
+    }
