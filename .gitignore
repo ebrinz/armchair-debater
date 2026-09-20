@@ -233,3 +233,6 @@ client/.turbo/
 client/.vercel
 client/.env*.local
 client/*.tsbuildinfo
+
+# Browser-automation scratch output (screenshots, page snapshots)
+.playwright-mcp/
