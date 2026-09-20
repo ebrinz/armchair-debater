@@ -1,0 +1,578 @@
+/*
+ * SELECT — the character select.
+ *
+ * Two objects on a dimmed study: a vertical roster of twelve pressed-plastic
+ * tiles down the left, and one wide trading card held up beside it. Everything
+ * type-coloured reads `--type` and `--type-ink`, which the components set per
+ * card, so no category is ever named here.
+ *
+ * List-left / detail-right is a pair of `grid-area` values on .select__card and
+ * .select__roster: swap 1 / 1 and 1 / 2 to flip the screen.
+ *
+ * All motion is a `steps()` blink or flash; arcade.css's single
+ * prefers-reduced-motion block turns the lot off.
+ */
+
+.select {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: clamp(6px, 1.2vh, 14px);
+  padding: clamp(8px, 1.6vh, 18px) clamp(12px, 2vw, 30px) clamp(6px, 1vh, 12px);
+}
+
+/* ------------------------------------------------------------------- header */
+
+.select__head {
+  text-align: center;
+}
+
+.select__title {
+  margin: 0;
+  color: var(--bar-fill);
+  font-size: clamp(12px, 1.8vw, 21px);
+  text-shadow:
+    3px 3px 0 var(--oxblood),
+    6px 6px 0 var(--shadow);
+}
+
+.select__sub {
+  margin: 0.3em 0 0;
+  color: var(--ink-dim);
+  font-size: clamp(15px, 1.4vw, 21px);
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------- the layout */
+
+.select__body {
+  display: grid;
+  /* The roster is a fixed reading column; every pixel left over is the card's,
+     which at 1280 makes it about 900 px wide — enough for a whole argument on
+     one or two lines. */
+  grid-template-columns: clamp(220px, 23vw, 300px) minmax(0, 1fr);
+  gap: clamp(12px, 1.8vw, 26px);
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  max-width: 1256px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.select__roster {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.select__card {
+  grid-area: 1 / 2;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* A slim bar across the foot of the screen, clear of the CRT toggle. */
+.select__foot {
+  display: flex;
+  gap: 1.2em;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1256px;
+  margin: 0 auto;
+  padding: 0.35em 0.6em;
+  padding-right: clamp(120px, 12vw, 160px);
+  background: linear-gradient(
+    to right,
+    rgb(10 7 5 / 82%) 0%,
+    rgb(10 7 5 / 62%) 70%,
+    rgb(10 7 5 / 0%) 100%
+  );
+}
+
+.select__hint {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(14px, 1.25vw, 19px);
+  /* The bar sits straight on the study, so its copy carries the stage's own
+     stepped shadow to stay readable over a bookshelf. */
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.select__status {
+  margin: 0;
+  font-size: clamp(8px, 0.8vw, 11px);
+  white-space: nowrap;
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.select__prompt {
+  color: var(--ink-dim);
+}
+
+.select__locked {
+  color: var(--bar-fill);
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+/* ---------------------------------------------------------------- the grid */
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, 0.55vh, 6px);
+  /* Twelve tiles fit an 800 px viewport; a shorter one scrolls, and CardGrid
+     keeps the cursor in view. */
+  min-height: 0;
+  padding-right: 2px;
+  overflow-y: auto;
+}
+
+/*
+ * A tile is a pressed plastic key: the type colour, a light top edge and a
+ * dark bottom one cut straight into it with inset shadows, and a stepped
+ * shadow on the floor. It carries the theory's whole name, so it is left-set
+ * with a little room to wrap to a second line rather than centred.
+ */
+.slot {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: clamp(34px, 5.2vh, 44px);
+  padding: 0.45em 0.7em;
+  border: 0;
+  border-radius: 0;
+  background: var(--type, var(--type-neutral));
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 22%),
+    inset 4px 0 0 rgb(255 255 255 / 10%),
+    inset 0 -5px 0 rgb(0 0 0 / 34%),
+    inset -4px 0 0 rgb(0 0 0 / 22%),
+    4px 4px 0 0 var(--shadow);
+  color: var(--type-ink, var(--ink));
+  font-family: var(--font-display);
+  text-align: left;
+  cursor: pointer;
+  /* A hint of "unlit", not a disabled state: every label stays at its full
+     --ink-on-* strength and above 4.5:1 on its own type colour. */
+  filter: brightness(0.9);
+}
+
+.slot__name {
+  font-size: clamp(6px, 0.64vw, 9px);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 30%);
+}
+
+/* No separate :hover state — the pointer MOVES the cursor (CardGrid listens for
+   mouseenter), so lighting a hovered slot as well would show two lit keys. */
+.slot--focused {
+  filter: none;
+}
+
+/* The choice is made: the rest of the roster steps back. This is the one place
+   a slot is dimmed, and it means "no longer choosable", not "unavailable". */
+.grid--locked .slot:not(.slot--focused) {
+  filter: brightness(0.55) saturate(0.7);
+}
+
+/* The cursor: lifted off the floor, ringed in cream, at full brightness. */
+.slot--focused {
+  z-index: 2;
+  outline: 4px solid var(--ink);
+  transform: translateX(-3px);
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 30%),
+    inset 4px 0 0 rgb(255 255 255 / 14%),
+    inset 0 -5px 0 rgb(0 0 0 / 34%),
+    inset -4px 0 0 rgb(0 0 0 / 22%),
+    8px 8px 0 0 var(--shadow);
+}
+
+/* The 1P flag, planted on the focused tile's outer edge. */
+.slot__cursor {
+  position: absolute;
+  top: 50%;
+  right: -0.4em;
+  transform: translateY(-50%);
+  padding: 3px 4px;
+  border: 2px solid var(--bar-fill);
+  background: var(--bg);
+  color: var(--bar-fill);
+  font-size: clamp(7px, 0.8vw, 10px);
+  line-height: 1;
+  /* It inverts rather than disappears: a cursor you can miss in a still frame
+     is not a cursor. */
+  animation: cursor-blink 0.9s steps(1, end) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    background: var(--bar-fill);
+    color: var(--bg);
+  }
+}
+
+/* The server has confirmed this one. It flashes, then keeps a brass ring. */
+.slot--locked {
+  outline: 4px solid var(--bar-fill);
+  animation: slot-lock 0.36s steps(1, end) 4;
+}
+
+@keyframes slot-lock {
+  0%,
+  50% {
+    background: var(--ink);
+    filter: none;
+  }
+}
+
+.slot--empty,
+.slot:disabled {
+  cursor: default;
+}
+
+.slot--empty {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--bar-track) 0 6px,
+    var(--bg-panel) 6px 12px
+  );
+  box-shadow:
+    inset 0 0 0 2px rgb(0 0 0 / 40%),
+    4px 4px 0 0 var(--shadow);
+  filter: none;
+}
+
+/* ---------------------------------------------------------------- the card */
+
+/*
+ * The card is one physical object: a thick frame in the type colour with a
+ * bevel cut into it, a deep brown face inside, and every panel on the face set
+ * a shade apart so the moves sit in a well rather than floating on a slab.
+ */
+.card {
+  position: relative;
+  display: flex;
+  height: 100%;
+  padding: clamp(8px, 0.9vw, 12px);
+  background: var(--type, var(--type-neutral));
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 26%),
+    inset 4px 0 0 rgb(255 255 255 / 12%),
+    inset 0 -5px 0 rgb(0 0 0 / 38%),
+    inset -4px 0 0 rgb(0 0 0 / 26%),
+    6px 6px 0 0 var(--shadow);
+}
+
+.card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: clamp(5px, 0.7vh, 8px);
+  min-width: 0;
+  padding: clamp(7px, 0.8vw, 10px);
+  background: var(--bg-panel);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
+}
+
+/* The landscape band: portrait left, titling right. */
+.card__band {
+  display: grid;
+  grid-template-columns: clamp(140px, 17vw, 218px) minmax(0, 1fr);
+  gap: clamp(8px, 1vw, 14px);
+  align-items: stretch;
+}
+
+.card__titling {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 0.8vh, 10px);
+  justify-content: center;
+  min-width: 0;
+}
+
+.card__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8em;
+  align-items: baseline;
+}
+
+.card__name {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(9px, 1.08vw, 15px);
+  line-height: 1.45;
+}
+
+.card__hp {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(7px, 0.78vw, 11px);
+  white-space: nowrap;
+}
+
+.card__hp-value {
+  margin-left: 0.5em;
+  color: var(--bar-fill);
+  font-size: clamp(11px, 1.35vw, 18px);
+}
+
+/* The portrait window: a lit niche, recessed into the card face. */
+.card__window {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: clamp(96px, 16vh, 136px);
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--type) 70%, #000) 0 5px,
+      transparent 5px
+    ),
+    radial-gradient(
+      ellipse 54% 62% at 50% 92%,
+      color-mix(in srgb, var(--type) 78%, transparent) 0%,
+      transparent 72%
+    ),
+    linear-gradient(to bottom, #090603 0%, #140d08 62%, #241811 100%);
+  box-shadow:
+    inset 0 0 0 3px rgb(0 0 0 / 65%),
+    inset 0 5px 0 rgb(0 0 0 / 40%);
+}
+
+.card__chair {
+  height: 100%;
+  width: auto;
+  overflow: visible;
+}
+
+/* The category, a caption strip across the titling column. */
+.card__category {
+  margin: 0;
+  padding: 0.3em 0.6em;
+  background: color-mix(in srgb, var(--type) 26%, #0d0906);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 40%);
+  color: var(--ink);
+  font-size: clamp(15px, 1.45vw, 20px);
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+.card__moves {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.4vh, 14px);
+  /* The three moves share the well's height evenly rather than bunching in the
+     middle. `safe` matters: when an expanded argument overruns, it falls back
+     to the top so the first move's name stays within the scrollable area. */
+  justify-content: safe space-evenly;
+  /* It takes whatever the card has left, so at desktop width all three
+     arguments show whole; on a narrow card it scrolls rather than clipping. */
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: clamp(5px, 0.6vw, 9px);
+  overflow-y: auto;
+  background: #1d1309;
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
+  list-style: none;
+}
+
+/* There is more below: a hard shadow off the bottom lip, plus the scrollbar. */
+.card__moves[data-scrollable] {
+  box-shadow:
+    inset 0 0 0 2px rgb(0 0 0 / 45%),
+    inset 0 -20px 14px -12px rgb(0 0 0 / 95%);
+}
+
+.card__move {
+  position: relative;
+  padding-left: 0.6em;
+  border-left: 4px solid var(--type, var(--type-neutral));
+}
+
+/* The whole row is the hit target: the caret and name are the button, and it
+   stretches over the argument beneath through this overlay. */
+.card__move-head {
+  display: flex;
+  gap: 0.5em;
+  align-items: baseline;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Only while closed: once a move is open its text can be clicked and selected
+   without folding it shut again; the name still toggles it. */
+.card__move:not(.card__move--open) .card__move-head::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* The caret appears only where the sentence is actually cut off. */
+.card__move-caret {
+  color: var(--ink-dim);
+  font-size: clamp(11px, 1vw, 14px);
+  /* Hidden, not removed: the move name does not shift when a caret appears. */
+  visibility: hidden;
+}
+
+.card__move[data-clipped] .card__move-caret,
+.card__move--open .card__move-caret {
+  visibility: visible;
+}
+
+.card__move-name {
+  margin: 0;
+  color: var(--bar-fill);
+  font-size: clamp(7px, 0.82vw, 11px);
+  line-height: 1.5;
+}
+
+/*
+ * Three lines. On the wide card that is the whole sentence for all thirty-six
+ * arguments in the deck; on a narrower one the overspill gets a caret and opens
+ * on a click. The text is also in `title`, so nothing is mouse-only.
+ */
+.card__move-text {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.12em 0 0;
+  color: var(--ink);
+  font-size: clamp(16px, 1.62vw, 21px);
+  line-height: 1.32;
+  /* Three, not the spec's two: at a size this readable two lines lost most of
+     the sentence, and at the card's full width three hold all of it. */
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.card__move--open .card__move-text {
+  -webkit-line-clamp: none;
+}
+
+.card__weak {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  align-items: center;
+  margin: 0;
+}
+
+.card__weak-label {
+  color: var(--ink-dim);
+  font-size: clamp(7px, 0.68vw, 9px);
+}
+
+.card__chip {
+  padding: 0.35em 0.45em;
+  background: var(--type);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
+  color: var(--type-ink);
+  font-size: clamp(6px, 0.64vw, 9px);
+  line-height: 1;
+}
+
+.card__claim {
+  margin: 0;
+  padding-top: 0.3em;
+  border-top: 2px dashed color-mix(in srgb, var(--type) 55%, transparent);
+  color: var(--ink-dim);
+  font-size: clamp(15px, 1.45vw, 19px);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* The pick the server confirmed: the frame strobes brass, twice. */
+.card--locked {
+  animation: card-lock 0.36s steps(1, end) 4;
+}
+
+@keyframes card-lock {
+  0%,
+  50% {
+    background: var(--bar-fill);
+  }
+}
+
+/* No cards yet: the card's own silhouette, empty. */
+.card--blank {
+  background: var(--type-neutral);
+}
+
+.card__waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(280px, 56vh, 560px);
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(9px, 1.1vw, 14px);
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+/* ------------------------------------------------------- narrow screens */
+
+@media (max-width: 860px) {
+  .select__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One column, roster above the card — the explicit desktop placement would
+     otherwise leave the card in a second, implicit column a few pixels wide. */
+  .select__roster {
+    grid-area: 1 / 1;
+  }
+
+  .select__card {
+    grid-area: 2 / 1;
+  }
+
+  /* The roster becomes a wrapped band of tiles above the card. */
+  .grid {
+    flex-flow: row wrap;
+    max-height: 34vh;
+  }
+
+  .slot {
+    flex: 1 1 15ch;
+  }
+
+  .card__band {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .select__foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3em;
+    padding-right: 0.6em;
+  }
+}
+
+/* A pixel scrollbar for the moves panel, for the rare overrun. */
+.card__moves::-webkit-scrollbar {
+  width: 8px;
+}
+
+.card__moves::-webkit-scrollbar-track {
+  background: #120c07;
+}
+
+.card__moves::-webkit-scrollbar-thumb {
+  border: 2px solid #120c07;
+  background: var(--type, var(--type-neutral));
+}

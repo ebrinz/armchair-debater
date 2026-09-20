@@ -15,7 +15,7 @@ export const typeOf = (card: Pick<TheoryCard, 'kuhn_category'>): { label: string
   return { label: segments.at(-1) ?? '', colorVar: TYPE_COLORS[segments[0]] ?? '--type-neutral' };
 };
 
-/** Grid-slot names, six characters at most, fighting-game style. */
+/** Short codes for the card's rival chips, six characters at most, fighting-game style. */
 const SHORT_NAMES: Record<string, string> = {
   gwt: 'GWT',
   iit: 'IIT',
@@ -32,3 +32,9 @@ const SHORT_NAMES: Record<string, string> = {
 };
 
 export const shortName = (id: string): string => SHORT_NAMES[id] ?? id.toUpperCase().slice(0, 6);
+
+/**
+ * The ink token that stays legible on a type colour. arcade.css defines the
+ * pairs (`--type-quantum` → `--ink-on-quantum`), so the mapping is a rename.
+ */
+export const inkOn = (colorVar: string): string => colorVar.replace('--type-', '--ink-on-');

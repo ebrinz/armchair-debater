@@ -5,30 +5,41 @@ export interface HealthBarProps {
   health: number;
 }
 
-/** A fighting-game health bar: yellow fill over a red "ghost" that catches up
- *  after a delay, anchored so the OUTER edge of the screen empties first. */
+/**
+ * A fighting-game health bar. The fill is anchored to the CENTRE end of its
+ * track, so the outer end of the screen empties first; behind it a red ghost
+ * on a delayed transition holds the previous value for a beat after a hit,
+ * then shrinks to meet it.
+ *
+ * A heal needs no special case: the ghost lags on the way up too, but it is
+ * then NARROWER than the fill painted over it, so it is hidden for the whole
+ * delay and no red is ever seen growing.
+ */
 export const HealthBar = ({ side, label, theory, health }: HealthBarProps) => {
   const clamped = Math.max(0, Math.min(100, health));
-  const fillClass = `hp-bar__fill${clamped < 30 ? ' hp-bar__fill--danger' : ''}`;
+  const danger = clamped < 30;
 
   return (
-    <div className={`hp-bar hp-bar--${side}`}>
+    <div className={`hp-bar hp-bar--${side}${danger ? ' hp-bar--danger' : ''}`}>
       <div className="hp-bar__labels">
         <span className="hp-bar__label pixel-text">{label}</span>
         <span className="hp-bar__theory">{theory ?? '???'}</span>
       </div>
-      <div
-        className="hp-bar__track pixel-border"
-        role="meter"
-        aria-label={`${label} health`}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={clamped}
-      >
-        <div className="hp-bar__ghost" style={{ width: `${clamped}%` }} />
-        <div className={fillClass} style={{ width: `${clamped}%` }} />
+
+      <div className="hp-bar__row">
+        <span className="hp-bar__number pixel-text">{clamped}</span>
+        <div
+          className="hp-bar__track pixel-border"
+          role="meter"
+          aria-label={`${label} health`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={clamped}
+        >
+          <div className="hp-bar__ghost" style={{ width: `${clamped}%` }} />
+          <div className="hp-bar__fill" style={{ width: `${clamped}%` }} />
+        </div>
       </div>
-      <span className="hp-bar__number">{clamped}</span>
     </div>
   );
 };

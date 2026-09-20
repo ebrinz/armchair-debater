@@ -9,6 +9,8 @@ const HOLD_STEPS = 3;
 /** Replays the contract fixtures into the store, looping. Returns a stop function. */
 export const startMockReplay = (): (() => void) => {
   const { receive, clear } = useArcadeStore.getState();
+  // The second fixture is the lock-in: the server pushes it the moment it
+  // matches the player to a theory, while the stage is still `setup`.
   const frames = [
     ...Array<unknown>(HOLD_STEPS).fill(snapshots[0]),
     ...snapshots.slice(1),
