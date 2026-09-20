@@ -1,159 +1,138 @@
-# armchair-debater
+# Armchair Debater
 
-A Pipecat AI voice agent built with a cascade pipeline (STT → LLM → TTS).
+**A voice bot that argues with you about consciousness — and keeps score.**
 
-## Configuration
+Tell it what you think consciousness is, in your own words. It works out which
+theory you're closest to, picks a rival theory, and debates you out loud through
+three rounds — opening, rebuttal, closing. An independent judge scores every turn
+as it lands, moving two fighting-game health bars. Whoever has more health after
+the closings wins, and the bot reads you the judge's verdict.
 
-- **Bot Type**: Web
-- **Transport(s)**: SmallWebRTC
-- **Pipeline**: Cascade
-  - **STT**: Deepgram
-  - **LLM**: OpenAI
-  - **TTS**: Cartesia
+Every paper the bot cites comes from a curated, fact-checked knowledge base — never
+from the LLM's memory.
 
-## Setup
+Built on [Pipecat](https://github.com/pipecat-ai/pipecat) (1.11) with Pipecat Flows.
+
+## How a debate works
+
+| Stage | What happens |
+|---|---|
+| **Setup** | The bot asks what you think consciousness is. It matches your answer to one of twelve theory cards and chooses an opponent from that card's rivals. (Or click a card — typed input works too.) |
+| **Opening → Rebuttal → Closing** | One turn each per round. The bot argues only from its card, uses a different argument each round, keeps turns under ~70 words, concedes good points, and never folds. It may quote *your* theory's papers against you, but never a paper that is on neither card. |
+| **Judging, live** | After each turn a separate LLM call — a fresh context with no memory of having argued a side — scores that turn: damage to the opponent, and how well it recovered from the last hit. Scoring runs off the voice path, so it never delays speech; bars move about a second after a turn ends. |
+| **Verdict** | Bars decide it: higher health wins, within 5 is a draw. The judge writes a two-sentence rationale, which the bot reads out, then offers a rematch. |
+
+**Balance:** damage is doubled, and a rebuttal can heal at most half of the last
+hit you took — so a good comeback blunts a hit but never erases it, close debates
+end with both bars low, and one-sided ones can end in a knockout.
+
+## The knowledge base
+
+Twelve theory cards in [`server/cards/theories.yaml`](server/cards/theories.yaml),
+organised by the taxonomy in Robert Lawrence Kuhn's *A Landscape of Consciousness*
+(2024): Global Workspace, Integrated Information, Higher-Order Thought, Recurrent
+Processing, Predictive Processing, Attention Schema, Illusionism, Biological
+Naturalism, Orch OR, Panpsychism, Property Dualism, Analytic Idealism.
+
+Each card has a claim, three arguments (each with a fighting-game "move name"),
+three objections its real critics press, its rivals, and 2–4 citations. **Every
+citation was checked against a primary source (Crossref / publisher) by an agent
+other than the one that wrote it** — that second check caught two errors the
+first pass had marked "confirmed". A card that breaks the schema stops the bot at
+boot, not mid-debate.
+
+## Architecture
+
+```
+server/
+  bot.py            Pipecat cascade pipeline: Gradium STT → General Compute LLM → Gradium TTS
+  flow.yaml         Pipecat Flows graph: setup → opening → rebuttal → closing → verdict
+  handlers.py       Flow tools: set_positions, judge_debate; emit_stage action
+  knowledge.py      Loads + validates the cards; client_cards() for the UI
+  turns.py          TurnObserver — reads both sides' turns from pipeline frames
+  scorer.py         Ordered background scoring; never blocks the voice path
+  judge.py          The judge's two LLM calls (score a turn; write the rationale)
+  debate_state.py   Health, hits, verdict; emits a full snapshot on every change
+  cards/            The twelve theory cards
+  evals/            Scripted + simulated behavioural evals (pipecat eval)
+  tests/            100 unit tests
+client/
+  src/arcade/       The arcade UI: state → screen logic, stage, theme, screens
+docs/design/        Specs, plans, and the JSON contract fixtures
+```
+
+Two things worth knowing about how it was built:
+
+- **Turns are read from pipeline frames, not aggregator events.** Pipecat's
+  user-turn events only fire on the speech path (typed input skips them), and the
+  assistant-turn event races with interruptions and drops turns at random. A small
+  frame observer (`turns.py`) sees every turn from either side, spoken or typed.
+- **The UI is a pure function of server state.** The server pushes full
+  `debate_state` snapshots (and the cards, once) as RTVI server messages; the
+  client picks its screen with `screenFor(connected, snapshot)` and keeps no state
+  that could drift.
+
+## Run it
 
 ### Server
 
-1. **Navigate to server directory**:
-
-   ```bash
-   cd server
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   uv sync
-   ```
-
-3. **Configure environment variables**:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your API keys
-   ```
-
-4. **Run the bot**:
-
-   ```bash
-   uv run bot.py
-   ```
-
-   The runner serves every transport; the caller selects which one (a web/mobile
-   client picks its transport when it connects; a telephony provider connects to
-   `/ws`).
-
-## Testing with evals
-
-This project includes behavioral evals: scripted conversations that drive the bot headless — no live call needed. Starter scenarios live in `server/evals/`; edit them as your bot takes shape and copy them to add more.
-
-From `server/`, run the bot with the eval transport, then drive scenarios against it from a second terminal (the bot stays up across runs):
-
 ```bash
-uv run bot.py -t eval
-# In another terminal:
-uv run pipecat eval run evals/starter_text.yaml -v    # fast text-mode check
-uv run pipecat eval run evals/starter_audio.yaml -v   # full audio round trip (local models, no API keys)
+cd server
+uv sync
+cp .env.example .env     # GRADIUM_API_KEY, GENERAL_COMPUTE_API_KEY (+ optional voice/model)
+uv run bot.py            # serves SmallWebRTC on http://localhost:7860
 ```
-
-`eval:` criteria are scored by a judge LLM — a local Ollama by default (`ollama pull gemma4:12b`). The comments in the scenario files cover the schema and how to use an OpenAI judge instead.
 
 ### Client
 
-1. **Navigate to client directory**:
-
-   ```bash
-   cd client
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**:
-
-   ```bash
-   cp env.example .env.local
-   # Edit .env.local if needed (defaults to localhost:7860)
-   ```
-
-   > **Note:** Environment variables in Vite are bundled into the client and exposed in the browser. For production applications that require secret protection, consider implementing a backend proxy server to handle API requests and manage sensitive credentials securely.
-
-   The client renders the [Pipecat UI](https://ui.pipecat.ai) console: the connect flow, transcript, metrics, device and session info, and a live event stream. Pipecat UI is a shadcn registry, so its components are installed as source under `src/components/pipecat`, `src/hooks` and `src/lib`, and they are yours to edit and style.
-
-   The console is built from those same components. To build your own UI, replace it with a composition of your own; this is the minimal one:
-
-   ```tsx
-   import { PipecatClientProvider } from '@pipecat-ai/client-react';
-
-   import { BotAudioOutput } from '@/components/pipecat/bot-audio';
-   import { ConnectButton } from '@/components/pipecat/connect-button';
-   import { Conversation } from '@/components/pipecat/conversation';
-   import { UserAudioControl } from '@/components/pipecat/user-audio-control';
-   import {
-     DEFAULT_TRANSPORT,
-     TRANSPORT_FACTORIES,
-     TRANSPORT_PROPS,
-   } from '@/config';
-   import { usePipecatApp } from '@/hooks/use-pipecat-app';
-
-   export const VoiceApp = () => {
-     const { client, connect, disconnect } = usePipecatApp({
-       transportType: DEFAULT_TRANSPORT,
-       transportFactory: TRANSPORT_FACTORIES[DEFAULT_TRANSPORT],
-       ...TRANSPORT_PROPS[DEFAULT_TRANSPORT],
-     });
-     if (!client) return null;
-     return (
-       <PipecatClientProvider client={client}>
-         <Conversation />
-         <UserAudioControl />
-         <ConnectButton onConnect={connect} onDisconnect={disconnect} />
-         <BotAudioOutput />
-       </PipecatClientProvider>
-     );
-   };
-   ```
-
-   To add more components or pull in upstream changes, use the shadcn CLI; the `@pipecat` registry is already configured in `components.json`:
-
-   ```bash
-   npx shadcn@latest add @pipecat/audio-visualizer-wave
-   npx shadcn@latest add @pipecat/conversation --diff
-   ```
-
-4. **Run development server**:
-
-   ```bash
-   npm run dev
-   ```
-
-5. **Open browser**:
-
-   http://localhost:5173
-
-## Project Structure
-
+```bash
+cd client
+npm install
+npm run dev              # http://localhost:5173
 ```
-armchair-debater/
-├── server/              # Python bot server
-│   ├── bot.py           # Main bot implementation
-│   ├── evals/           # Behavioral eval scenarios
-│   ├── pyproject.toml   # Python dependencies
-│   ├── env.example      # Environment variables template
-│   ├── .env             # Your API keys (git-ignored)
-│   ├── Dockerfile       # Container image for Pipecat Cloud
-│   └── pcc-deploy.toml  # Pipecat Cloud deployment config
-├── client/              # React application
-│   ├── src/             # Client source code
-│   ├── package.json     # Node dependencies
-│   └── ...
-├── .gitignore           # Git ignore patterns
-└── README.md            # This file
+
+- `http://localhost:5173/` — the arcade UI. **PRESS START** connects and asks for the mic.
+- `http://localhost:5173/?mock` — replays a recorded debate through the UI with no server.
+- `http://localhost:5173/?console` — the Pipecat debugging console.
+
+### Tests and evals
+
+```bash
+cd server
+uv run pytest -q                                   # 100 unit tests
+ollama pull gemma4:12b                              # local judge + simulated caller for evals
+uv run pipecat eval suite evals/suite.yaml          # scripted + simulated debates, headless
 ```
+
+```bash
+cd client
+npm test && npm run lint && npm run build
+```
+
+The evals drive the real bot end to end: a scripted full debate (rounds advance one
+turn each, the right tools fire with the right arguments, no markdown reaches
+speech, no unrequested rematch, citations stay on the cards), a non-workspace view
+mapping onto the wider roster, and a simulated stubborn opponent played by a local
+model.
+
+## Status
+
+**Working end to end:** the spoken (or typed) debate over all twelve theories, live
+per-turn judging, the balance rules, the verdict and rematch, the evals, and the
+server → client state contract.
+
+**UI:** the shell, the "study at night" stage, the pixel theme, and the title screen
+are done, and the select / fight / decision screens render live debate data on the
+stage. The full arcade treatment — wingback-armchair fighters with faces, tiered hit
+effects, the trading-card theory select with move names, judge's-decision
+flourishes — is specified in
+[`docs/design/2026-09-19-debate-ui-design.md`](docs/design/2026-09-19-debate-ui-design.md)
+and in progress. It is an homage: all art is original CSS/SVG and the fonts are
+open-licensed (Press Start 2P, VT323).
+
+**Parked for later:** a Socratic sparring mode, a theory-explorer mode, a
+cross-examination round, a distinct judge voice, bot-vs-bot, and retrieval over
+PhilPapers for long-tail theories.
 
 ## Deploying to Pipecat Cloud
 
