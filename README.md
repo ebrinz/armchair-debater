@@ -103,7 +103,7 @@ npm run dev              # http://localhost:5173
 
 Four screens, chosen purely from the server's state: **TITLE** (PRESS START
 connects and unlocks the mic), **SELECT** (a twelve-card roster of the theories,
-Pokémon-card style), **FIGHT** (two health bars draining toward the centre, with
+trading-card style), **FIGHT** (two health bars draining toward the centre, with
 hit-by-hit battle text), and **DECISION** (the judge's verdict and a rematch
 prompt). On SELECT you can click a card or just say what you think consciousness
 is — either one sends the same pick to the bot. `?mock` replays a recorded debate
