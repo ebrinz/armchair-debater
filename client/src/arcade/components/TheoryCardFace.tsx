@@ -15,10 +15,11 @@ import { Armchair } from './Armchair';
  * Everything that changes with the theory is a CSS variable set here
  * (`--type`, `--type-ink`), so select.css never names a category.
  *
- * Each move is a button: most arguments fit the card whole, and the ones that
- * do not get a caret and open on a click or on Enter. Only one is open at a
- * time, and the moves panel has a fixed height, so the card is the same size
- * whichever theory the cursor is on and whatever is open. The caller gives this
+ * Each move is a button. At desktop width the card is wide enough that every
+ * argument is shown whole and no caret appears; where the card is narrow enough
+ * to cut one, that move gets a caret and opens on a click or on Enter. Only one
+ * is open at a time, and the moves well has a fixed height, so the card is the
+ * same size whichever theory the cursor is on and whatever is open. The caller gives this
  * component a `key` of the card's id, so moving the cursor closes what was open.
  */
 
@@ -61,8 +62,13 @@ export const TheoryCardFace = ({ card, cards, locked = false }: TheoryCardFacePr
         const text = item.querySelector<HTMLElement>('.card__move-text');
         item.toggleAttribute('data-clipped', !!text && text.scrollHeight > text.clientHeight + 1);
       }
+      // Drives the "there is more below" cue; at desktop widths every argument
+      // fits and this stays off.
+      list.toggleAttribute('data-scrollable', list.scrollHeight > list.clientHeight + 1);
     };
     sync();
+    // Whatever was just opened is brought into view, in case the well scrolls.
+    list.querySelector('.card__move--open')?.scrollIntoView({ block: 'nearest' });
     const observer = new ResizeObserver(sync);
     observer.observe(list);
     return () => observer.disconnect();
@@ -81,26 +87,31 @@ export const TheoryCardFace = ({ card, cards, locked = false }: TheoryCardFacePr
       aria-label={`${card.name}. ${categoryLine(card)}.`}
     >
       <div className="card__body">
-        <header className="card__head">
-          <h3 className="card__name pixel-text">{card.name}</h3>
-          <p className="card__hp pixel-text">
-            HP<span className="card__hp-value">100</span>
-          </p>
+        {/* The landscape band: the portrait stands to the left of the titling,
+            so the wide area below belongs entirely to the three moves. */}
+        <header className="card__band">
+          <div className="card__window">
+            <Armchair
+              variant={{ typeColorVar: colorVar }}
+              side="user"
+              level={0}
+              hurt={false}
+              healed={false}
+              health={100}
+              className="card__chair"
+            />
+          </div>
+
+          <div className="card__titling">
+            <div className="card__head">
+              <h3 className="card__name pixel-text">{card.name}</h3>
+              <p className="card__hp pixel-text">
+                HP<span className="card__hp-value">100</span>
+              </p>
+            </div>
+            <p className="card__category">{categoryLine(card)}</p>
+          </div>
         </header>
-
-        <div className="card__window">
-          <Armchair
-            variant={{ typeColorVar: colorVar }}
-            side="user"
-            level={0}
-            hurt={false}
-            healed={false}
-            health={100}
-            className="card__chair"
-          />
-        </div>
-
-        <p className="card__category">{categoryLine(card)}</p>
 
         <ul className="card__moves" ref={movesRef}>
           {card.moves.map((move, i) => {

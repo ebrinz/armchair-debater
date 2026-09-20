@@ -53,8 +53,9 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
         <p className="select__sub">— or just say what you think —</p>
       </header>
 
-      {/* The roster comes first in the DOM so one Tab lands on the grid; the
-          card is placed to its left by the grid's explicit columns. */}
+      {/* The roster comes first in the DOM so one Tab lands on it; the two
+          columns are placed by explicit grid areas, so list-left/detail-right
+          flips by swapping the two `grid-area` values in select.css. */}
       <div className="select__body">
         <div className="select__roster">
           <CardGrid
@@ -65,23 +66,6 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
             lockedId={lockedId}
             disabled={waiting}
           />
-
-          <div className="select__foot">
-            <p className="select__hint">
-              Your mic is already open. Say what you think consciousness is and the house will
-              take the other side — or pick a card here.
-            </p>
-
-            <p className="select__status pixel-text" role="status">
-              {locked ? (
-                <span className="select__locked">Locked in… {locked.name}</span>
-              ) : sent ? (
-                <span className="select__locked">Locked in…</span>
-              ) : (
-                <span className="select__prompt">Arrow keys move · Enter picks</span>
-              )}
-            </p>
-          </div>
         </div>
 
         <div className="select__card">
@@ -102,6 +86,25 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
           )}
         </div>
       </div>
+
+      {/* A slim bar under both columns, so neither the roster nor the card has
+          to give up room to it. */}
+      <footer className="select__foot">
+        <p className="select__hint">
+          Your mic is already open. Say what you think consciousness is and the house will take the
+          other side — or pick a theory here.
+        </p>
+
+        <p className="select__status pixel-text" role="status">
+          {locked ? (
+            <span className="select__locked">Locked in… {locked.name}</span>
+          ) : sent ? (
+            <span className="select__locked">Locked in…</span>
+          ) : (
+            <span className="select__prompt">Arrow keys move · Enter picks</span>
+          )}
+        </p>
+      </footer>
     </div>
   );
 };

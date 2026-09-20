@@ -6,6 +6,8 @@ import { moveFocus } from '../gridNav';
 const FULL = { count: 12, columns: 6 } as const;
 /** A partial last row: three rows of four, the last holding one slot. */
 const PARTIAL = { count: 9, columns: 4 } as const;
+/** The roster as a single vertical column of twelve. */
+const COLUMN = { count: 12, columns: 1 } as const;
 
 describe('moveFocus — left and right wrap within the row', () => {
   it('steps right', () => {
@@ -54,6 +56,29 @@ describe('moveFocus — up and down keep the column and clamp at the edges', () 
     expect(moveFocus(5, 'ArrowDown', PARTIAL.count, PARTIAL.columns)).toBe(5);
     expect(moveFocus(4, 'ArrowDown', PARTIAL.count, PARTIAL.columns)).toBe(8);
     expect(moveFocus(8, 'ArrowUp', PARTIAL.count, PARTIAL.columns)).toBe(4);
+  });
+});
+
+describe('moveFocus — a single column of twelve', () => {
+  it('steps down the column and clamps at the bottom', () => {
+    expect(moveFocus(0, 'ArrowDown', COLUMN.count, COLUMN.columns)).toBe(1);
+    expect(moveFocus(10, 'ArrowDown', COLUMN.count, COLUMN.columns)).toBe(11);
+    expect(moveFocus(11, 'ArrowDown', COLUMN.count, COLUMN.columns)).toBe(11);
+  });
+  it('steps up the column and clamps at the top', () => {
+    expect(moveFocus(11, 'ArrowUp', COLUMN.count, COLUMN.columns)).toBe(10);
+    expect(moveFocus(1, 'ArrowUp', COLUMN.count, COLUMN.columns)).toBe(0);
+    expect(moveFocus(0, 'ArrowUp', COLUMN.count, COLUMN.columns)).toBe(0);
+  });
+  it('leaves the cursor alone on left and right — every row is one slot wide', () => {
+    for (const i of [0, 5, 11]) {
+      expect(moveFocus(i, 'ArrowLeft', COLUMN.count, COLUMN.columns)).toBe(i);
+      expect(moveFocus(i, 'ArrowRight', COLUMN.count, COLUMN.columns)).toBe(i);
+    }
+  });
+  it('jumps to the ends', () => {
+    expect(moveFocus(6, 'Home', COLUMN.count, COLUMN.columns)).toBe(0);
+    expect(moveFocus(6, 'End', COLUMN.count, COLUMN.columns)).toBe(11);
   });
 });
 

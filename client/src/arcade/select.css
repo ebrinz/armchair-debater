@@ -1,10 +1,13 @@
 /*
  * SELECT — the character select.
  *
- * Two objects on a dimmed study: a roster of twelve pressed-plastic slots, and
- * one trading card held up beside it. Everything type-coloured reads `--type`
- * and `--type-ink`, which the components set per card, so no category is ever
- * named here.
+ * Two objects on a dimmed study: a vertical roster of twelve pressed-plastic
+ * tiles down the left, and one wide trading card held up beside it. Everything
+ * type-coloured reads `--type` and `--type-ink`, which the components set per
+ * card, so no category is ever named here.
+ *
+ * List-left / detail-right is a pair of `grid-area` values on .select__card and
+ * .select__roster: swap 1 / 1 and 1 / 2 to flip the screen.
  *
  * All motion is a `steps()` blink or flash; arcade.css's single
  * prefers-reduced-motion block turns the lot off.
@@ -14,9 +17,8 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: clamp(8px, 1.5vh, 18px);
-  justify-content: center;
-  padding: clamp(8px, 1.8vh, 20px) clamp(12px, 2.5vw, 36px) clamp(10px, 1.6vh, 18px);
+  gap: clamp(6px, 1.2vh, 14px);
+  padding: clamp(8px, 1.6vh, 18px) clamp(12px, 2vw, 30px) clamp(6px, 1vh, 12px);
 }
 
 /* ------------------------------------------------------------------- header */
@@ -45,60 +47,66 @@
 
 .select__body {
   display: grid;
-  /* The card is the reading matter, so it takes the larger column: at 1280 it
-     is ~576 px, wide enough for a whole argument sentence in three lines. */
-  grid-template-columns: clamp(300px, 48vw, 620px) minmax(0, 1fr);
-  gap: clamp(14px, 2vw, 30px);
+  /* The roster is a fixed reading column; every pixel left over is the card's,
+     which at 1280 makes it about 900 px wide — enough for a whole argument on
+     one or two lines. */
+  grid-template-columns: clamp(220px, 23vw, 300px) minmax(0, 1fr);
+  gap: clamp(12px, 1.8vw, 26px);
   align-items: stretch;
   justify-content: center;
   width: 100%;
-  max-width: 1232px;
+  min-height: 0;
+  max-width: 1256px;
   margin: 0 auto;
-}
-
-.select__card {
-  grid-area: 1 / 1;
+  flex: 1;
 }
 
 .select__roster {
-  grid-area: 1 / 2;
+  grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
-  gap: clamp(10px, 1.8vh, 20px);
-  justify-content: center;
   min-width: 0;
+  min-height: 0;
 }
 
-/* The roster's two lines of copy sit at the foot of the column, on the study. */
+.select__card {
+  grid-area: 1 / 2;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* A slim bar across the foot of the screen, clear of the CRT toggle. */
 .select__foot {
   display: flex;
-  margin-top: auto;
-  flex-direction: column;
-  gap: clamp(6px, 1.1vh, 14px);
-  /* A scrim: the foot sits straight on the study, and one of the shelves runs
-     right behind it. Clear of the CRT toggle in the bottom-right corner. */
-  padding: 0.5em 0.7em clamp(32px, 4.4vh, 44px);
+  gap: 1.2em;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1256px;
+  margin: 0 auto;
+  padding: 0.35em 0.6em;
+  padding-right: clamp(120px, 12vw, 160px);
   background: linear-gradient(
     to right,
     rgb(10 7 5 / 82%) 0%,
-    rgb(10 7 5 / 62%) 62%,
+    rgb(10 7 5 / 62%) 70%,
     rgb(10 7 5 / 0%) 100%
   );
 }
 
 .select__hint {
-  max-width: 46ch;
   margin: 0;
   color: var(--ink-dim);
-  font-size: clamp(16px, 1.35vw, 21px);
-  /* The foot sits straight on the study, so both lines carry the stage's own
+  font-size: clamp(14px, 1.25vw, 19px);
+  /* The bar sits straight on the study, so its copy carries the stage's own
      stepped shadow to stay readable over a bookshelf. */
   text-shadow: 2px 2px 0 var(--shadow);
 }
 
 .select__status {
   margin: 0;
-  font-size: clamp(8px, 0.82vw, 11px);
+  font-size: clamp(8px, 0.8vw, 11px);
+  white-space: nowrap;
   text-shadow: 2px 2px 0 var(--shadow);
 }
 
@@ -114,25 +122,29 @@
 /* ---------------------------------------------------------------- the grid */
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: clamp(6px, 0.9vw, 12px) clamp(5px, 0.7vw, 10px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, 0.55vh, 6px);
+  /* Twelve tiles fit an 800 px viewport; a shorter one scrolls, and CardGrid
+     keeps the cursor in view. */
+  min-height: 0;
+  padding-right: 2px;
+  overflow-y: auto;
 }
 
 /*
- * A slot is a pressed plastic key: the type colour, a light top edge and a
+ * A tile is a pressed plastic key: the type colour, a light top edge and a
  * dark bottom one cut straight into it with inset shadows, and a stepped
- * shadow on the floor. Slots the cursor is not on are dimmed, so the roster
- * reads as one lit key among eleven — the cursor is the brightness, not just
- * the marker.
+ * shadow on the floor. It carries the theory's whole name, so it is left-set
+ * with a little room to wrap to a second line rather than centred.
  */
 .slot {
   position: relative;
   display: flex;
+  flex: none;
   align-items: center;
-  justify-content: center;
-  min-height: clamp(52px, 10.5vh, 88px);
-  padding: 0.5em 0.2em;
+  min-height: clamp(34px, 5.2vh, 44px);
+  padding: 0.45em 0.7em;
   border: 0;
   border-radius: 0;
   background: var(--type, var(--type-neutral));
@@ -144,6 +156,7 @@
     4px 4px 0 0 var(--shadow);
   color: var(--type-ink, var(--ink));
   font-family: var(--font-display);
+  text-align: left;
   cursor: pointer;
   /* A hint of "unlit", not a disabled state: every label stays at its full
      --ink-on-* strength and above 4.5:1 on its own type colour. */
@@ -151,8 +164,9 @@
 }
 
 .slot__name {
-  font-size: clamp(8px, 0.82vw, 11px);
-  letter-spacing: 0.04em;
+  font-size: clamp(6px, 0.64vw, 9px);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
   text-shadow: 2px 2px 0 rgb(0 0 0 / 30%);
 }
 
@@ -172,7 +186,7 @@
 .slot--focused {
   z-index: 2;
   outline: 4px solid var(--ink);
-  transform: translate(-3px, -3px);
+  transform: translateX(-3px);
   box-shadow:
     inset 0 4px 0 rgb(255 255 255 / 30%),
     inset 4px 0 0 rgb(255 255 255 / 14%),
@@ -181,11 +195,12 @@
     8px 8px 0 0 var(--shadow);
 }
 
-/* The 1P flag, planted on the focused slot's shoulder. */
+/* The 1P flag, planted on the focused tile's outer edge. */
 .slot__cursor {
   position: absolute;
-  top: -0.9em;
-  left: -0.5em;
+  top: 50%;
+  right: -0.4em;
+  transform: translateY(-50%);
   padding: 3px 4px;
   border: 2px solid var(--bar-fill);
   background: var(--bg);
@@ -244,6 +259,8 @@
  */
 .card {
   position: relative;
+  display: flex;
+  height: 100%;
   padding: clamp(8px, 0.9vw, 12px);
   background: var(--type, var(--type-neutral));
   box-shadow:
@@ -256,42 +273,56 @@
 
 .card__body {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: clamp(5px, 0.7vh, 8px);
+  min-width: 0;
   padding: clamp(7px, 0.8vw, 10px);
   background: var(--bg-panel);
   box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
 }
 
+/* The landscape band: portrait left, titling right. */
+.card__band {
+  display: grid;
+  grid-template-columns: clamp(140px, 17vw, 218px) minmax(0, 1fr);
+  gap: clamp(8px, 1vw, 14px);
+  align-items: stretch;
+}
+
+.card__titling {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 0.8vh, 10px);
+  justify-content: center;
+  min-width: 0;
+}
+
 .card__head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.6em;
-  align-items: start;
+  gap: 0.8em;
+  align-items: baseline;
 }
 
 .card__name {
-  display: -webkit-box;
-  overflow: hidden;
   margin: 0;
   color: var(--ink);
-  font-size: clamp(8px, 0.86vw, 12px);
+  font-size: clamp(9px, 1.08vw, 15px);
   line-height: 1.45;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .card__hp {
   margin: 0;
   color: var(--ink-dim);
-  font-size: clamp(7px, 0.72vw, 9px);
+  font-size: clamp(7px, 0.78vw, 11px);
   white-space: nowrap;
 }
 
 .card__hp-value {
   margin-left: 0.5em;
   color: var(--bar-fill);
-  font-size: clamp(10px, 1.05vw, 14px);
+  font-size: clamp(11px, 1.35vw, 18px);
 }
 
 /* The portrait window: a lit niche, recessed into the card face. */
@@ -299,7 +330,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: clamp(74px, 12.5vh, 100px);
+  height: clamp(96px, 16vh, 136px);
   background:
     linear-gradient(
       to top,
@@ -323,40 +354,47 @@
   overflow: visible;
 }
 
-/* The category, set as a caption strip across the foot of the art. */
+/* The category, a caption strip across the titling column. */
 .card__category {
   margin: 0;
-  padding: 0.25em 0.5em;
+  padding: 0.3em 0.6em;
   background: color-mix(in srgb, var(--type) 26%, #0d0906);
   box-shadow: inset 0 0 0 2px rgb(0 0 0 / 40%);
   color: var(--ink);
   font-size: clamp(15px, 1.45vw, 20px);
   font-style: italic;
   letter-spacing: 0.03em;
-  text-align: center;
 }
 
 .card__moves {
   display: flex;
   flex-direction: column;
-  gap: clamp(4px, 0.6vh, 7px);
-  /* `safe` matters: a plain `center` would push the first move's name above the
-     scrollable area when an expanded argument overruns, out of reach. */
-  justify-content: safe center;
-  /* Fixed, so the card is the same height on every theory and with any move
-     open. One expanded argument and two collapsed ones fit; if a very long one
-     overruns, this scrolls rather than clipping. */
-  height: clamp(176px, 43.5vh, 348px);
+  gap: clamp(8px, 1.4vh, 14px);
+  /* The three moves share the well's height evenly rather than bunching in the
+     middle. `safe` matters: when an expanded argument overruns, it falls back
+     to the top so the first move's name stays within the scrollable area. */
+  justify-content: safe space-evenly;
+  /* It takes whatever the card has left, so at desktop width all three
+     arguments show whole; on a narrow card it scrolls rather than clipping. */
+  flex: 1;
+  min-height: 0;
   margin: 0;
-  padding: clamp(4px, 0.5vw, 7px);
+  padding: clamp(5px, 0.6vw, 9px);
   overflow-y: auto;
   background: #1d1309;
   box-shadow: inset 0 0 0 2px rgb(0 0 0 / 45%);
   list-style: none;
 }
 
+/* There is more below: a hard shadow off the bottom lip, plus the scrollbar. */
+.card__moves[data-scrollable] {
+  box-shadow:
+    inset 0 0 0 2px rgb(0 0 0 / 45%),
+    inset 0 -20px 14px -12px rgb(0 0 0 / 95%);
+}
+
 .card__move {
-  padding-left: 0.5em;
+  padding-left: 0.6em;
   border-left: 4px solid var(--type, var(--type-neutral));
 }
 
@@ -406,8 +444,9 @@
 }
 
 /*
- * Two lines on the card. Hover or focus opens it to the whole argument — the
- * text is also in `title`, so nothing here is mouse-only.
+ * Three lines. On the wide card that is the whole sentence for all thirty-six
+ * arguments in the deck; on a narrower one the overspill gets a caret and opens
+ * on a click. The text is also in `title`, so nothing is mouse-only.
  */
 .card__move-text {
   display: -webkit-box;
@@ -416,9 +455,8 @@
   color: var(--ink);
   font-size: clamp(16px, 1.62vw, 21px);
   line-height: 1.32;
-  /* Three lines, not the spec's two: at a size this readable two lines lost
-     most of the sentence. Three holds a typical argument whole; the longer ones
-     get a caret and open on a click. */
+  /* Three, not the spec's two: at a size this readable two lines lost most of
+     the sentence, and at the card's full width three hold all of it. */
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
@@ -480,7 +518,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(280px, 52vh, 520px);
+  min-height: clamp(280px, 56vh, 560px);
   margin: 0;
   color: var(--ink-dim);
   font-size: clamp(9px, 1.1vw, 14px);
@@ -489,7 +527,7 @@
 
 /* ------------------------------------------------------- narrow screens */
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   .select__body {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -504,18 +542,25 @@
     grid-area: 2 / 1;
   }
 
-  /* The roster becomes one scrolling row, per the spec's small-screen note. */
+  /* The roster becomes a wrapped band of tiles above the card. */
   .grid {
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    grid-auto-columns: 84px;
-    padding: 0.7em 0.4em;
-    overflow-x: auto;
+    flex-flow: row wrap;
+    max-height: 34vh;
   }
 
-  .select__card {
-    justify-self: center;
-    width: min(100%, 384px);
+  .slot {
+    flex: 1 1 15ch;
+  }
+
+  .card__band {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .select__foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3em;
+    padding-right: 0.6em;
   }
 }
 

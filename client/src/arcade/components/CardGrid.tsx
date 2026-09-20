@@ -3,18 +3,20 @@ import { useEffect, useRef } from 'react';
 
 import type { GridKey } from '../gridNav';
 import { moveFocus } from '../gridNav';
-import { inkOn, shortName, typeOf } from '../theme';
+import { inkOn, typeOf } from '../theme';
 import type { TheoryCard } from '../types';
 
 /**
- * The roster: twelve slots in two rows of six, one tab stop with roving focus.
+ * The roster: twelve slots in one vertical column, one tab stop with roving
+ * focus. A column tile is wide and short, so each one carries the theory's
+ * whole name rather than a six-letter code.
  *
  * The cursor (`focused`) is owned by the screen, not by this grid, because the
  * server can move it too — when a snapshot says which theory the player was
  * matched to, the cursor jumps there whether they clicked or just said it.
  */
 
-export const COLUMNS = 6;
+export const COLUMNS = 1;
 export const SLOTS = 12;
 
 const NAV_KEYS: GridKey[] = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
@@ -47,7 +49,11 @@ export const CardGrid = ({
   // focus away from whatever the player was actually using.
   useEffect(() => {
     const grid = gridRef.current;
-    if (!grid || !grid.contains(document.activeElement)) return;
+    if (!grid) return;
+    // The column scrolls on a short viewport, so the cursor is kept in view
+    // however it moved — by key, by pointer, or by a snapshot from the server.
+    slots.current[focused]?.scrollIntoView({ block: 'nearest' });
+    if (!grid.contains(document.activeElement)) return;
     slots.current[focused]?.focus();
   }, [focused]);
 
@@ -99,7 +105,7 @@ export const CardGrid = ({
             onFocus={() => onFocusChange(i)}
             onMouseEnter={() => !disabled && card && onFocusChange(i)}
           >
-            <span className="slot__name">{card ? shortName(card.id) : ''}</span>
+            <span className="slot__name">{card ? card.name : ''}</span>
             {i === focused && (
               <span className="slot__cursor pixel-text" aria-hidden="true">
                 1P
