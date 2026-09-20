@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { Console } from '@/components/pipecat/console/console';
 
+import { ArcadeApp } from './arcade/ArcadeApp';
 import { TransportSelect } from './components/TransportSelect';
 import {
   AVAILABLE_TRANSPORTS,
@@ -20,7 +21,7 @@ import './index.css';
  * under src/components/pipecat, which are yours to build a custom UI from;
  * the README shows the minimal composition.
  */
-export const Main = () => {
+export const ConsoleApp = () => {
   const [transportType, setTransportType] =
     useState<TransportType>(DEFAULT_TRANSPORT);
 
@@ -47,8 +48,9 @@ export const Main = () => {
   );
 };
 
+/** ?console keeps the scaffold's debugging console; everything else is the game. */
+const wantsConsole = new URLSearchParams(window.location.search).has('console');
+
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Main />
-  </StrictMode>
+  <StrictMode>{wantsConsole ? <ConsoleApp /> : <ArcadeApp />}</StrictMode>
 );
