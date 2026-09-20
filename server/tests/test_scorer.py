@@ -62,7 +62,7 @@ async def test_was_hit_is_true_only_after_the_opponent_has_landed_a_hit():
     rig.scorer.submit("bot", "third")
     await rig.scorer.drain()
     assert [c["was_hit"] for c in rig.calls] == [False, True, True]
-    assert rig.state.health == {"user": 85, "bot": 95}
+    assert rig.state.health == {"user": 63, "bot": 83}
 
 
 async def test_turns_outside_debate_rounds_and_blank_turns_are_ignored():

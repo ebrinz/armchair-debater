@@ -33,9 +33,12 @@ interruption to outrun. A bot turn is reported once it actually finishes
 speaking (`BotStoppedSpeakingFrame`, which the base output transport always
 emits). As a failsafe -- that frame is a signal, not a guarantee -- any
 still-pending bot text is also flushed immediately before the next user turn
-is reported, so a bot turn is never lost, including one an interruption cut
-off mid-response: it is reported once, with whatever text the LLM had
-produced up to that point.
+is reported. Text from a response an interruption cut off before its
+`LLMFullResponseEndFrame` is not lost either: it is carried into the pending
+bot turn as soon as the next response's `LLMFullResponseStartFrame` arrives
+(the same fold-forward the End-frame branch does), so it still reaches
+whichever flush -- the next stop event or the next user turn -- reports the
+turn it belongs to.
 """
 
 from collections.abc import Callable
@@ -81,6 +84,12 @@ class TurnObserver(BaseObserver):
 
         if data.source is self._llm:
             if isinstance(frame, LLMFullResponseStartFrame):
+                # The previous response may never have gotten its End frame
+                # (cut off by an interruption); fold whatever it had streamed
+                # so far forward instead of discarding it.
+                text = "".join(self._response_parts).strip()
+                if text:
+                    self._pending_bot_parts.append(text)
                 self._response_parts = []
             elif isinstance(frame, LLMTextFrame):
                 self._response_parts.append(frame.text)

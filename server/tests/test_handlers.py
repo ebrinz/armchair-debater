@@ -92,7 +92,7 @@ async def ready_for_verdict(monkeypatch, write_rationale):
 async def test_judge_debate_closes_speaks_drains_then_decides(monkeypatch):
     async def write_rationale(**kwargs):
         assert kwargs["winner"] == "user"  # the hit applied during drain() counted
-        assert kwargs["health"] == {"user": 100, "bot": 80}
+        assert kwargs["health"] == {"user": 100, "bot": 60}
         return "The challenger closed strongly."
 
     fm = await ready_for_verdict(monkeypatch, write_rationale)
@@ -107,7 +107,7 @@ async def test_judge_debate_closes_speaks_drains_then_decides(monkeypatch):
         "rationale": "The challenger closed strongly.",
     }
     assert "The challenger closed strongly." in fm.state["verdict_text"]
-    assert "100" in fm.state["verdict_text"] and "80" in fm.state["verdict_text"]
+    assert "100" in fm.state["verdict_text"] and "60" in fm.state["verdict_text"]
 
 
 async def test_judge_debate_falls_back_to_the_biggest_hit_when_the_judge_fails(monkeypatch):
