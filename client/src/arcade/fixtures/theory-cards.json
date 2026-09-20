@@ -1,0 +1,189 @@
+{
+  "type": "theory_cards",
+  "cards": [
+    {
+      "id": "gwt",
+      "name": "Global Workspace Theory",
+      "kuhn_category": "Materialism > Neurobiological > Global workspace",
+      "claim": "A mental content becomes conscious when it wins the competition for a limited-capacity workspace and is broadcast across the brain, making it available to memory, language, and action all at once.",
+      "arguments": [
+        "Conscious perception coincides with a sudden brain-wide ignition of activity, while unconscious processing of the same stimulus stays local.",
+        "It explains why consciousness is serial and limited in capacity even though the brain computes massively in parallel.",
+        "It makes predictions that can fail, such as late prefrontal ignition, which masking and attentional blink experiments have repeatedly tested."
+      ],
+      "rivals": [
+        "iit",
+        "rpt",
+        "biological_naturalism"
+      ]
+    },
+    {
+      "id": "iit",
+      "name": "Integrated Information Theory",
+      "kuhn_category": "Integrated Information Theory",
+      "claim": "Consciousness is identical to a system's integrated cause-effect structure. The quantity of consciousness is phi, the amount of information the whole system specifies beyond its parts.",
+      "arguments": [
+        "It starts from the undeniable features of experience itself and derives what a physical system must be like to have them, rather than starting from behavior.",
+        "It explains why the cerebellum, with more neurons than the cortex, contributes almost nothing to consciousness, since its wiring is modular rather than integrated.",
+        "It inspired the perturbational complexity index, which distinguishes conscious from unconscious patients without requiring any report."
+      ],
+      "rivals": [
+        "gwt",
+        "illusionism",
+        "ast"
+      ]
+    },
+    {
+      "id": "hot",
+      "name": "Higher-Order Thought Theory",
+      "kuhn_category": "Materialism > Higher-order",
+      "claim": "A mental state becomes conscious only when it is the target of a further thought representing oneself as being in that state, so consciousness is a relation between two mental states rather than a property either has alone.",
+      "arguments": [
+        "It explains blindsight, where a person reliably uses visual information to guide action with no accompanying sense of seeing, as a first-order state that never becomes the target of a higher-order thought.",
+        "It gives a precise, testable criterion for consciousness, letting researchers ask specifically whether the required higher-order representation is present rather than gesturing at a raw feeling.",
+        "It naturally explains why confidence and subjective certainty track reported awareness so closely, since both draw on the same higher-order monitoring of one's own mental states."
+      ],
+      "rivals": [
+        "rpt",
+        "iit"
+      ]
+    },
+    {
+      "id": "rpt",
+      "name": "Recurrent Processing Theory",
+      "kuhn_category": "Materialism > First-order",
+      "claim": "Consciousness arises from local recurrent processing within sensory cortex, where feedback loops between higher and lower areas sustain a representation. No brain-wide broadcast or further higher-order thought is required.",
+      "arguments": [
+        "It ties consciousness to a well-documented cortical mechanism, feedback loops between visual areas, rather than to a poorly specified global broadcast or an extra higher-order thought.",
+        "It explains why a purely feedforward pass through the visual system, as in fast object recognition, can drive accurate behavior without producing any visual experience.",
+        "It predicts that backward masking, where a second image presented soon after the first disrupts only the feedback sweep, should make the first image invisible while the fast feedforward sweep still drives behavior, which experiments confirm."
+      ],
+      "rivals": [
+        "hot",
+        "gwt"
+      ]
+    },
+    {
+      "id": "predictive_processing",
+      "name": "Predictive Processing",
+      "kuhn_category": "Materialism > Homeostatic and affective",
+      "claim": "The brain is a hierarchical prediction machine that constantly generates top-down expectations about the causes of its sensory input and corrects them using the prediction errors that flow back up. Conscious experience is the brain's best guess about the world and the body.",
+      "arguments": [
+        "It unifies perception, action, and attention under one mechanism, minimizing prediction error, rather than treating them as separate modules bolted together.",
+        "It explains vivid perceptual illusions and hallucinations as cases where strong prior expectations overwhelm weak or noisy sensory evidence, exactly as the framework predicts.",
+        "It gives a principled account of the felt sense of selfhood and embodiment as predictions about interoceptive signals from the body, extending the theory beyond vision to emotion and mood."
+      ],
+      "rivals": [
+        "iit",
+        "property_dualism"
+      ]
+    },
+    {
+      "id": "ast",
+      "name": "Attention Schema Theory",
+      "kuhn_category": "Materialism > Eliminative/Illusionism",
+      "claim": "The brain builds a constantly updated model of its own attention, much as it builds a body schema, and it is this simplified internal model, misread as a nonphysical inner awareness, that we report as subjective experience.",
+      "arguments": [
+        "It explains why we describe our awareness as a ghostly, nonphysical inner light, since the attention schema is a deliberately simplified, physically inaccurate model, the same way the body schema is a simplified, imperfect model of the body.",
+        "It gives attention a clear evolutionary and computational function, since a model of one's own attention helps the brain predict and control that attention rather than letting it drift unmanaged.",
+        "It extends naturally to explain social cognition, since the same modeling machinery that tracks one's own attention is repurposed to attribute awareness and attention to other people."
+      ],
+      "rivals": [
+        "panpsychism",
+        "iit"
+      ]
+    },
+    {
+      "id": "illusionism",
+      "name": "Illusionism",
+      "kuhn_category": "Materialism > Eliminative/Illusionism",
+      "claim": "Phenomenal consciousness, the rich, ineffable, non-physical feel that dualists describe, does not exist as advertised. What exists is a brain that represents itself as having such a feel, and that introspective illusion is the real thing to be explained.",
+      "arguments": [
+        "It dissolves the hard problem instead of trying to solve it, since there is no need to explain how physical processes produce an ineffable extra feel if no such feel actually exists.",
+        "It takes introspection seriously as a real cognitive process while denying it a special authority, treating our confident reports about inner qualia as data about self-representation rather than infallible witness testimony.",
+        "It fits naturally with everything else we know about the brain as a physical information-processing system, without needing to add any new law of nature to bridge matter and experience."
+      ],
+      "rivals": [
+        "property_dualism",
+        "panpsychism",
+        "orch_or"
+      ]
+    },
+    {
+      "id": "biological_naturalism",
+      "name": "Biological Naturalism",
+      "kuhn_category": "Materialism > Neurobiological",
+      "claim": "Consciousness is an ordinary biological process, caused by specific neurobiological mechanisms in the brain the way digestion is caused by the stomach, and it is a genuine, irreducibly subjective feature of the brain rather than a computation any system could run.",
+      "arguments": [
+        "It takes the causal power of real neurons seriously, insisting that whatever produces consciousness must share the specific biochemical properties of brains, not just their abstract functional organization.",
+        "Its Chinese Room thought experiment shows that manipulating symbols according to a program is not enough for understanding, since a person following English instructions to shuffle Chinese symbols would produce correct answers without understanding a word.",
+        "It avoids the extremes of dualism and eliminativism at once, treating consciousness as fully physical and fully real, a genuine biological feature rather than a separate substance or a mere illusion."
+      ],
+      "rivals": [
+        "gwt",
+        "illusionism"
+      ]
+    },
+    {
+      "id": "orch_or",
+      "name": "Orchestrated Objective Reduction",
+      "kuhn_category": "Quantum Theories",
+      "claim": "Consciousness arises from quantum computations inside microtubules within neurons, orchestrated by the cell's structure, and each moment of awareness occurs when a quantum superposition among these microtubules reaches a threshold and collapses on its own, independent of any outside observer.",
+      "arguments": [
+        "It takes seriously the deep, unresolved puzzle of why anything ever collapses from quantum superposition into a single definite outcome, and proposes that this same physical process is the moment consciousness occurs.",
+        "It offers a specific physical mechanism, quantum states in microtubules, rather than leaving the emergence of experience from matter as an unexplained brute fact.",
+        "It could, in principle, explain why consciousness feels unified and non-computable, since the objective reduction it proposes is tied to quantum gravity rather than to any classical, step-by-step algorithm."
+      ],
+      "rivals": [
+        "gwt",
+        "illusionism"
+      ]
+    },
+    {
+      "id": "panpsychism",
+      "name": "Panpsychism",
+      "kuhn_category": "Panpsychisms",
+      "claim": "Consciousness, in some minimal form, is a fundamental and ubiquitous feature of physical reality, present in some small degree even in the basic constituents of matter, rather than something that suddenly switches on only in complex brains.",
+      "arguments": [
+        "It takes the one thing we know with certainty, that consciousness exists, as fundamental rather than trying to build it out of ingredients, like mass or charge, that were never described in experiential terms to begin with.",
+        "It avoids the puzzle of strong emergence, where entirely new, qualitatively different properties like experience would have to leap into existence once matter reaches a certain complexity, for no clear physical reason.",
+        "Physics itself only ever describes the relational, dispositional behavior of matter and stays silent on what matter is like in itself, leaving open exactly the intrinsic nature that experience could fill."
+      ],
+      "rivals": [
+        "illusionism",
+        "ast"
+      ]
+    },
+    {
+      "id": "property_dualism",
+      "name": "Property Dualism",
+      "kuhn_category": "Dualisms",
+      "claim": "Conscious experience is a genuine, non-physical property of certain physical systems, arising from but not reducible to their physical structure, so a complete physical description of the brain would still leave out what it is like to have an experience.",
+      "arguments": [
+        "Zombies, beings physically identical to us in every respect but with no inner experience at all, seem genuinely conceivable, and if they are truly conceivable then consciousness cannot be identical to any physical process.",
+        "Someone who learned every physical fact about color vision while seeing only black and white would still learn something new on first seeing red, showing that physical facts alone do not capture every fact about experience.",
+        "It takes the explanatory gap seriously rather than assuming it will simply dissolve, since no proposed physical mechanism has ever been shown to necessitate why that mechanism should feel like anything."
+      ],
+      "rivals": [
+        "illusionism",
+        "predictive_processing",
+        "analytic_idealism"
+      ]
+    },
+    {
+      "id": "analytic_idealism",
+      "name": "Analytic Idealism",
+      "kuhn_category": "Idealisms",
+      "claim": "Reality is fundamentally mental. There is only one universal field of consciousness, and each of us is a dissociated pattern of excitation within it, with the physical world we perceive being what that mental activity looks like from the outside.",
+      "arguments": [
+        "It avoids the hard problem entirely, since it never needs to explain how experience arises from non-experiential matter, because on this view matter is already an appearance within mind rather than something separate from it.",
+        "It gives a natural account of why brain activity correlates so tightly with reported experience without making the brain the cause of that experience, since a brain image is simply what a mind's activity looks like when observed from outside.",
+        "It draws on real clinical cases of dissociative identity disorder as a working model for how one field of consciousness could give rise to what look like separate, private centers of experience."
+      ],
+      "rivals": [
+        "illusionism",
+        "biological_naturalism"
+      ]
+    }
+  ]
+}

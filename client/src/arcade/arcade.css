@@ -1,0 +1,642 @@
+/*
+ * Arcade Edition — tokens, pixel primitives, keyframes.
+ *
+ * Everything is scoped to `.arcade` rather than `:root` on purpose: the
+ * scaffold's index.css already owns `:root { --accent: … }` for shadcn, and
+ * `?console` must keep rendering exactly as it did. Scoping keeps the two
+ * palettes from ever meeting.
+ *
+ * Palette: a study at night, lit by one fire. Near-black walnut, panel brown,
+ * oxblood leather, brass, candle yellow. Contrast ratios (computed, sRGB):
+ *   --ink on --bg 15.82   --ink on --bg-panel 13.54
+ *   --ink-dim on --bg 8.72   --ink-dim on --bg-panel 7.46
+ *   --accent on --bg 7.87   --bar-fill on --bg 11.35
+ */
+
+.arcade {
+  /* surfaces */
+  --bg: #140f0b;
+  --bg-panel: #2b1d14;
+  --oxblood: #5c1a22;
+  --wood: #3a2717;
+  --wood-light: #5a3a22;
+  --shadow: #070504;
+
+  /* ink */
+  --ink: #f6e9cc;
+  --ink-dim: #c2ad86;
+
+  /* signal */
+  --accent: #c9a227;
+  --bar-fill: #f2c14e;
+  --bar-track: #3a2a1e;
+  --bar-ghost: #b3271f;
+  --bar-danger: #e03a2e;
+  --heal: #5fbf5a;
+
+  /*
+   * One colour per top-level Kuhn category. Each reaches 4.5:1 against one of
+   * the two inks, so card frames can carry text either way:
+   *   materialism  cream 5.65   information  dark 9.22
+   *   quantum      cream 5.81   panpsychism  cream 5.13
+   *   dualism      cream 5.13   idealism     dark 8.89
+   *   neutral      cream 6.30
+   * Minimum pairwise CIE76 ΔE across the seven is 45, so they never blur
+   * into one another.
+   */
+  --type-materialism: #2e5c96;
+  --type-information: #45c7be;
+  --type-quantum: #6b3fb5;
+  --type-panpsychism: #336e25;
+  --type-dualism: #a8356e;
+  --type-idealism: #e0a82e;
+  --type-neutral: #5e5245;
+
+  /* Which ink to set on each type colour. */
+  --ink-on-materialism: var(--ink);
+  --ink-on-information: var(--bg);
+  --ink-on-quantum: var(--ink);
+  --ink-on-panpsychism: var(--ink);
+  --ink-on-dualism: var(--ink);
+  --ink-on-idealism: var(--bg);
+  --ink-on-neutral: var(--ink);
+
+  /* type */
+  --font-display: 'Press Start 2P', monospace;
+  --font-body: 'VT323', monospace;
+
+  /*
+   * The rendered size of the stage's 160 x 100 scene, given that it is painted
+   * with preserveAspectRatio="xMidYMax slice". Anything that has to line up
+   * with the art — a chair standing on the floor, a flame effect — can be
+   * placed from these: the scene's centre is always the viewport's centre, and
+   * its bottom edge is always the viewport's bottom edge. So scene point
+   * (x, y) sits at left: calc(50% + (x - 80) / 160 * var(--scene-w))
+   * and bottom: calc((100 - y) / 100 * var(--scene-h)).
+   */
+  --scene-w: max(100vw, 160vh);
+  --scene-h: max(100vh, 62.5vw);
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: clamp(18px, 1.15vw + 14px, 22px);
+  line-height: 1.35;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  text-rendering: geometricPrecision;
+}
+
+/* The screen content sits above the stage. */
+.arcade-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ---------------------------------------------------------------- pixel kit */
+
+.pixel-text {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+}
+
+.pixel-border {
+  border: 4px solid var(--pixel-border-color, var(--accent));
+  border-radius: 0;
+  box-shadow: 4px 4px 0 0 var(--shadow);
+}
+
+.pixel-panel {
+  border: 4px solid var(--pixel-border-color, var(--accent));
+  border-radius: 0;
+  box-shadow: 4px 4px 0 0 var(--shadow);
+  background: var(--bg-panel);
+  color: var(--ink);
+  padding: 0.6em 0.8em;
+}
+
+/* Every interactive thing in here is a real <button>; this is its focus ring. */
+.arcade :focus-visible {
+  outline: 3px dashed var(--ink);
+  outline-offset: 4px;
+}
+
+/* ------------------------------------------------------------- pixel button */
+
+.pixel-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  border: 4px solid var(--accent);
+  border-radius: 0;
+  background: var(--bg-panel);
+  color: var(--ink);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow:
+    4px 4px 0 0 var(--oxblood),
+    8px 8px 0 0 var(--shadow);
+  transition: none;
+}
+
+.pixel-button--md {
+  font-size: clamp(9px, 1.8vw, 14px);
+  padding: 0.85em 1.2em;
+}
+
+.pixel-button--lg {
+  font-size: clamp(11px, 3vw, 21px);
+  padding: 1em 1.6em;
+}
+
+.pixel-button:hover:not(:disabled) {
+  background: var(--oxblood);
+  color: var(--bar-fill);
+}
+
+.pixel-button:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--shadow);
+}
+
+.pixel-button:disabled {
+  cursor: default;
+  border-color: var(--type-neutral);
+  color: var(--ink-dim);
+  box-shadow: 4px 4px 0 0 var(--shadow);
+}
+
+.pixel-button--blink:not(:disabled) .pixel-button__label {
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+/* ---------------------------------------------------------------- live text */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------- CRT */
+
+.crt-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.22) 2px,
+      rgba(0, 0, 0, 0.22) 3px
+    ),
+    radial-gradient(
+      ellipse 78% 74% at 50% 48%,
+      rgba(0, 0, 0, 0) 40%,
+      rgba(6, 3, 2, 0.28) 78%,
+      rgba(6, 3, 2, 0.72) 100%
+    );
+}
+
+.crt-toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 9;
+  border: 2px solid var(--type-neutral);
+  border-radius: 0;
+  background: rgba(20, 15, 11, 0.8);
+  color: var(--ink-dim);
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.crt-toggle:hover {
+  border-color: var(--accent);
+  color: var(--bar-fill);
+}
+
+/* ------------------------------------------------------------------- stage */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /*
+   * The wall and floor are painted in CSS so that every aspect ratio is
+   * covered in the right colours, even where the SVG's slice crop runs out.
+   */
+  background:
+    linear-gradient(
+      to bottom,
+      var(--bg-panel) 0 72%,
+      var(--wood-light) 72% 72.6%,
+      var(--wood) 72.6% 100%
+    );
+}
+
+.stage__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  shape-rendering: crispEdges;
+}
+
+.stage__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 5, 3, 0.62);
+  z-index: 1;
+}
+
+/* Fire. Three layers on slightly different step cycles so the composite
+   flicker never lands on an obvious loop. No JS runs per frame. */
+.flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.flame--outer {
+  animation: flame-a 0.62s steps(1, end) infinite;
+}
+
+.flame--mid {
+  animation: flame-b 0.78s steps(1, end) infinite;
+}
+
+.flame--core {
+  animation: flame-c 0.5s steps(1, end) infinite;
+}
+
+.firelight {
+  animation: firelight 0.62s steps(1, end) infinite;
+}
+
+/* fire="flare" — a brief blaze, for a super-effective hit. */
+.stage--flare .flame {
+  animation-duration: 0.28s;
+  transform: scaleY(1.32);
+}
+
+.stage--flare .firelight {
+  opacity: 1;
+  animation-duration: 0.28s;
+}
+
+/* fire="dim" — banked to embers, for the decision screen. */
+.stage--dim-fire .flame--outer,
+.stage--dim-fire .flame--mid {
+  opacity: 0;
+}
+
+.stage--dim-fire .flame--core {
+  transform: scaleY(0.34);
+  animation-duration: 1.4s;
+}
+
+.stage--dim-fire .firelight {
+  opacity: 0.25;
+  animation: none;
+}
+
+/* ---------------------------------------------------------------- keyframes */
+
+@keyframes blink {
+  0%,
+  69% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(calc(var(--shake-px, 2px) * -1), var(--shake-px, 2px));
+  }
+  50% {
+    transform: translate(var(--shake-px, 2px), 0);
+  }
+  75% {
+    transform: translate(0, calc(var(--shake-px, 2px) * -1));
+  }
+}
+
+@keyframes slam {
+  0% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  48% {
+    transform: scale(1.12);
+  }
+  56%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes flame-a {
+  0% {
+    transform: scaleY(1) translateY(0);
+  }
+  25% {
+    transform: scaleY(0.84) translateY(1px);
+  }
+  50% {
+    transform: scaleY(1.12) translateY(-1px);
+  }
+  75% {
+    transform: scaleY(0.95) translateY(0);
+  }
+}
+
+@keyframes flame-b {
+  0% {
+    transform: scaleY(0.96) translateX(-1px);
+  }
+  33% {
+    transform: scaleY(1.14) translateX(1px);
+  }
+  66% {
+    transform: scaleY(0.88) translateX(0);
+  }
+}
+
+@keyframes flame-c {
+  0% {
+    transform: scaleY(1.06);
+  }
+  50% {
+    transform: scaleY(0.8) translateX(1px);
+  }
+}
+
+@keyframes firelight {
+  0% {
+    opacity: 0.85;
+  }
+  25% {
+    opacity: 0.62;
+  }
+  50% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.72;
+  }
+}
+
+/* ------------------------------------------------------------------- logo */
+
+.logo {
+  display: block;
+  font-family: var(--font-display);
+  line-height: 1.02;
+  letter-spacing: 0;
+  /* Hard two-tone fill: candle yellow catching the light, brass below. No
+     soft gradient anywhere — the stop is a single pixel row. */
+  background: linear-gradient(
+    to bottom,
+    #fbe9a6 0 46%,
+    var(--bar-fill) 46% 58%,
+    var(--accent) 58% 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Stepped extrusion into oxblood, then into the dark. Offsets are in em so
+     the steps stay in proportion from a phone logo to a desktop one. */
+  filter: drop-shadow(0.05em 0.05em 0 var(--oxblood))
+    drop-shadow(0.1em 0.1em 0 var(--oxblood)) drop-shadow(0.15em 0.15em 0 var(--shadow))
+    drop-shadow(0 0 0.28em rgba(242, 193, 78, 0.3));
+}
+
+/*
+ * Press Start 2P is monospaced, so sizing "DEBATER" (7) at 8/7 of "ARMCHAIR"
+ * (8) makes the two lines the same optical width: the logo sets as a solid
+ * rectangle rather than a ragged stack.
+ */
+.logo__line--1 {
+  font-size: clamp(19px, 5.4vw, 44px);
+}
+
+.logo__line--2 {
+  font-size: clamp(21.7px, 6.17vw, 50.3px);
+}
+
+.logo__rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+}
+
+.logo__rule::before,
+.logo__rule::after {
+  content: '';
+  flex: 1;
+  height: 4px;
+  background: currentColor;
+}
+
+/* ------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .arcade *,
+  .arcade *::before,
+  .arcade *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* The fire still has to look like fire when it cannot move. */
+  .stage--flare .flame {
+    transform: scaleY(1.32);
+  }
+}
+
+/* ------------------------------------------------------------ title screen */
+
+.title {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.8vh, 16px);
+  padding: clamp(24px, 7vh, 72px) 16px clamp(28px, 7vh, 64px);
+  text-align: center;
+}
+
+.title__wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+
+.title__subtitle {
+  width: min(100%, 24em);
+  margin: clamp(6px, 1.4vh, 14px) 0 0;
+  font-size: clamp(9px, 2.1vw, 14px);
+}
+
+.title__start {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 3vh, 26px);
+  width: min(100%, 32rem);
+}
+
+.title__instruction {
+  margin: 0;
+  max-width: 36ch;
+  /* A hard-edged plate, no border: the rug pattern is busy behind it. */
+  background: rgba(8, 5, 3, 0.86);
+  padding: 0.15em 0.6em 0.25em;
+  color: var(--ink);
+}
+
+.title__error {
+  --pixel-border-color: var(--bar-danger);
+  width: 100%;
+  color: var(--ink);
+}
+
+/* Idle wingback silhouettes, standing on the stage floor either side of the
+   fire. Placed from the scene metrics above: scene x 56 and x 104. */
+.title__chair {
+  position: absolute;
+  bottom: clamp(48px, 9vh, 96px);
+  width: clamp(64px, 14vw, 170px);
+  height: auto;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.title__chair--left {
+  left: calc(50% - clamp(96px, 22vw, 300px));
+}
+
+.title__chair--right {
+  left: calc(50% + clamp(96px, 22vw, 300px));
+}
+
+/* ----------------------------------------------------- placeholder screens */
+
+.placeholder {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2.4vh, 22px);
+  padding: 24px 16px 76px;
+  text-align: center;
+}
+
+.placeholder__name {
+  margin: 0;
+  font-size: clamp(20px, 5vw, 40px);
+  color: var(--bar-fill);
+  text-shadow:
+    3px 3px 0 var(--oxblood),
+    6px 6px 0 var(--shadow);
+}
+
+.placeholder__prompt {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(9px, 1.9vw, 13px);
+  line-height: 1.7;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.placeholder__data {
+  width: min(100%, 38rem);
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 14px;
+  text-align: left;
+}
+
+.placeholder__data dt {
+  font-family: var(--font-display);
+  font-size: 0.48em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 0.4em;
+}
+
+.placeholder__data dd {
+  margin: 0;
+  color: var(--ink);
+}
