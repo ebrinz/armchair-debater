@@ -135,6 +135,22 @@ def test_rejects_four_word_move_name(tmp_path):
         )
 
 
+def test_move_names_are_stripped_of_surrounding_whitespace(tmp_path):
+    theories = knowledge.load(
+        write(tmp_path, [card(moves=[" Move One ", "Move Two", "Move Three"]), beta()])
+    )
+    assert theories["alpha"].moves[0] == "Move One"
+
+
+def test_move_length_cap_is_measured_after_stripping(tmp_path):
+    just_fits = " " + "A" * 22 + " "
+    knowledge.load(write(tmp_path, [card(moves=[just_fits, "Move Two", "Move Three"]), beta()]))
+
+    too_long = " " + "A" * 23 + " "
+    with pytest.raises(CardError, match="moves"):
+        knowledge.load(write(tmp_path, [card(moves=[too_long, "Move Two", "Move Three"]), beta()]))
+
+
 CARDS_FIXTURE = json.loads(
     (Path(__file__).parents[2] / "docs/design/theory-cards-fixture.json").read_text()
 )
@@ -160,3 +176,13 @@ def test_client_cards_are_json_serialisable_and_claims_are_single_line():
     cards = knowledge.client_cards()
     json.dumps(cards)
     assert all("\n" not in card["claim"] for card in cards)
+
+
+EXPECTED_CLIENT_CARD_KEYS = {"id", "name", "kuhn_category", "claim", "moves", "arguments", "rivals"}
+
+
+def test_client_cards_and_fixture_pin_the_seven_key_contract():
+    for card in knowledge.client_cards():
+        assert set(card) == EXPECTED_CLIENT_CARD_KEYS
+    for card in CARDS_FIXTURE["cards"]:
+        assert set(card) == EXPECTED_CLIENT_CARD_KEYS

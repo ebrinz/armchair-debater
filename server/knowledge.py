@@ -50,8 +50,8 @@ def _parse(raw: dict) -> Theory:
             raise CardError(f"card {label}: '{field}' must have exactly three entries")
     if not 2 <= len(raw["citations"]) <= 4:
         raise CardError(f"card {label}: 'citations' must have two to four entries")
-    moves = raw["moves"]
-    if len(moves) != 3 or not all(m.strip() for m in moves):
+    moves = [m.strip() for m in raw["moves"]]
+    if len(moves) != 3 or not all(moves):
         raise CardError(f"card {label}: 'moves' must be exactly three non-empty strings")
     for move in moves:
         if len(move) > 22 or len(move.split()) > 3:
@@ -60,7 +60,8 @@ def _parse(raw: dict) -> Theory:
             )
     return Theory(
         **{f: raw[f].strip() for f in _TEXT_FIELDS},
-        **{f: tuple(raw[f]) for f in _LIST_FIELDS},
+        **{f: tuple(raw[f]) for f in _LIST_FIELDS if f != "moves"},
+        moves=tuple(moves),
     )
 
 
