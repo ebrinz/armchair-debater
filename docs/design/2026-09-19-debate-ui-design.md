@@ -182,8 +182,13 @@ Familiar anatomy, original layout. A thick frame in the theory's type colour. To
 row: name left, `HP 100` right. A framed portrait window with that theory's
 wingback. A thin italic strip under the art giving the Kuhn category in words. Then
 the three **moves**: each a short bold move name with its argument text beneath,
-clamped to two lines. Footer: `WEAK vs` with a chip per rival (short names). The
-`claim` as small flavour text at the very bottom.
+shown at a comfortable reading size (the product owner asked for larger text), up
+to three lines. Any text that is cut off with an ellipsis must be readable on the
+card itself: each move is a button (`aria-expanded`) that expands to its full
+argument on click, tap, Enter or Space — accordion style, one open at a time, the
+moves panel scrolling as a fallback — and clicking a move never picks the card.
+Footer: `WEAK vs` with a chip per rival (short names). The `claim` as flavour text
+at the very bottom, never clamped.
 
 Move names are new card data — see Contract additions.
 
