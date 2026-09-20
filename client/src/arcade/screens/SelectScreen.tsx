@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { CardGrid } from '../components/CardGrid';
 import { TheoryCardFace } from '../components/TheoryCardFace';
@@ -25,6 +25,9 @@ export interface SelectScreenProps {
   onPick: (card: TheoryCard) => void;
 }
 
+/** How long a sent pick keeps the roster shut while waiting for the server to lock it in. */
+const PICK_PATIENCE_MS = 12000;
+
 export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => {
   const [focused, setFocused] = useState(0);
   const [sent, setSent] = useState<TheoryCard | null>(null);
@@ -42,6 +45,15 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
     setSent(card);
     onPick(card);
   };
+
+  // A pick is only a request: the bot may answer with a question instead of
+  // locking it in. The roster comes back after a while rather than staying
+  // shut for the rest of the session.
+  useEffect(() => {
+    if (!sent || lockedId) return;
+    const timer = window.setTimeout(() => setSent(null), PICK_PATIENCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [sent, lockedId]);
 
   const shown = cards[cursor];
   const waiting = sent !== null || lockedId !== null;

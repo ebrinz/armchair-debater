@@ -52,8 +52,38 @@ export interface TheoryCardsMessage {
 const hasType = (data: unknown, type: string): boolean =>
   typeof data === 'object' && data !== null && (data as { type?: unknown }).type === type;
 
-export const isDebateSnapshot = (data: unknown): data is DebateSnapshot =>
-  hasType(data, 'debate_state');
+const STAGES: readonly string[] = ['setup', 'opening', 'rebuttal', 'closing', 'verdict'];
+const SIDES: readonly string[] = ['user', 'bot'];
+
+type Loose = Record<string, unknown> | null | undefined;
+
+const isDebater = (d: Loose): boolean => !!d && typeof d.health === 'number';
+
+const isHit = (h: Loose): boolean =>
+  !!h &&
+  SIDES.includes(h.by as string) &&
+  typeof h.damage === 'number' &&
+  typeof h.recovery === 'number' &&
+  typeof h.reason === 'string';
+
+const isVerdict = (v: Loose): boolean =>
+  !!v && typeof v === 'object' && typeof v.winner === 'string' && typeof v.rationale === 'string';
+
+/**
+ * Everything the screens read without checking, so a snapshot that would crash
+ * one is dropped at the door and the last good one stays on screen.
+ */
+export const isDebateSnapshot = (data: unknown): data is DebateSnapshot => {
+  if (!hasType(data, 'debate_state')) return false;
+  const s = data as Record<string, Loose>;
+  return (
+    STAGES.includes(s.stage as unknown as string) &&
+    isDebater(s.user) &&
+    isDebater(s.bot) &&
+    (s.last_hit == null || isHit(s.last_hit)) &&
+    (s.verdict == null || isVerdict(s.verdict))
+  );
+};
 
 export const isTheoryCardsMessage = (data: unknown): data is TheoryCardsMessage =>
   hasType(data, 'theory_cards') && Array.isArray((data as { cards?: unknown }).cards);
