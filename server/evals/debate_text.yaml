@@ -135,7 +135,7 @@ scenarios:
             absent: true
             within_ms: 15000
 
-      - user: "OK, the illusion one. I think it's a trick the brain plays on itself."
+      - user: "The one about it being an illusion. That one."
         expect:
           - event: function_call
             calls:

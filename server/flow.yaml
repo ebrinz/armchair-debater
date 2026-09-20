@@ -43,10 +43,12 @@ nodes:
           one.
 
           Call set_positions only once the user has actually told you what
-          they think consciousness is, in their own words, or named a theory.
-          Small talk, "I don't know", a question, an unfinished or off-topic
-          remark, or mere agreement with something you said are not a view;
-          keep asking instead of calling set_positions on any of these.
+          they think consciousness is, in their own words, or named a theory,
+          or picked one of the options you offered them (below) even in a few
+          words. Small talk, "I don't know", a question, an unfinished or
+          off-topic remark, or agreement with a view you stated unprompted
+          (which you must never do) are not a view; keep asking instead of
+          calling set_positions on any of these.
 
           When they do give a view, match it to the closest theory in this
           index, and choose one of its listed rivals for yourself:
@@ -79,6 +81,10 @@ nodes:
     task_messages:
       - role: developer
         content: |
+          You now hold a position — {{ bot_theory_name }} — so the earlier
+          instructions not to state a view or start arguing no longer apply:
+          your opening turn MUST contain your argument.
+
           The debate begins. This is the OPENING round of three.
           The user holds: {{ user_theory_name }}. You defend: {{ bot_theory_name }}.
 
