@@ -206,6 +206,62 @@ async def test_a_tool_call_response_followed_by_a_spoken_response_reports_one_tu
     assert turns == [("bot", "Here is my answer.")]
 
 
+async def test_text_from_a_response_interrupted_before_its_end_is_not_lost():
+    llm = object()
+    turns = []
+    observer = TurnObserver(llm, lambda by, text: turns.append((by, text)))
+
+    # First response is cut off by an interruption before its End frame.
+    await observer.on_push_frame(
+        push(source=llm, destination=object(), frame=LLMFullResponseStartFrame())
+    )
+    await observer.on_push_frame(
+        push(source=llm, destination=object(), frame=LLMTextFrame("This is the interrupted "))
+    )
+    for event in bot_response(llm, ["This is response two."]):
+        await observer.on_push_frame(event)
+    await observer.on_push_frame(push(destination=object(), frame=BotStoppedSpeakingFrame()))
+
+    assert len(turns) == 1
+    by, text = turns[0]
+    assert by == "bot"
+    assert "This is the interrupted" in text
+    assert "This is response two." in text
+
+
+async def test_interrupted_partial_text_is_flushed_by_the_failsafe_before_the_user_turn():
+    llm = object()
+    turns = []
+    observer = TurnObserver(llm, lambda by, text: turns.append((by, text)))
+
+    await observer.on_push_frame(
+        push(source=llm, destination=object(), frame=LLMFullResponseStartFrame())
+    )
+    await observer.on_push_frame(
+        push(source=llm, destination=object(), frame=LLMTextFrame("partial"))
+    )
+    context = LLMContext(messages=[{"role": "user", "content": "my reply"}])
+    await observer.on_push_frame(context_push(context, destination=llm))
+
+    assert turns == [("bot", "partial"), ("user", "my reply")]
+
+
+async def test_three_completed_responses_fold_into_one_bot_turn():
+    llm = object()
+    turns = []
+    observer = TurnObserver(llm, lambda by, text: turns.append((by, text)))
+
+    for event in bot_response(llm, ["First."]):
+        await observer.on_push_frame(event)
+    for event in bot_response(llm, ["Second."]):
+        await observer.on_push_frame(event)
+    for event in bot_response(llm, ["Third."]):
+        await observer.on_push_frame(event)
+    await observer.on_push_frame(push(destination=object(), frame=BotStoppedSpeakingFrame()))
+
+    assert turns == [("bot", "First. Second. Third.")]
+
+
 async def test_failsafe_flushes_the_pending_bot_turn_before_the_user_turn():
     llm = object()
     turns = []
