@@ -16,14 +16,13 @@
     "@fontsource/press-start-2p": "^5.0.0",
     "@pipecat-ai/client-js": "^1.13.1",
     "@pipecat-ai/client-react": "^1.8.2",
-    "@pipecat-ai/small-webrtc-transport": "^1.10.0",
+    "@pipecat-ai/small-webrtc-transport": "^1.10.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.3.0",
-    "lucide-react": "^1.40.0",
+    "lucide-react": "^1.45.0",
     "react": "^19",
     "react-dom": "^19",
-    "react-is": "^18.3.1",
     "react-resizable-panels": "^4.12.4",
     "recharts": "^3.8.0",
     "shadcn": "^4.21.0",
@@ -46,6 +45,6 @@
     "typescript": "~6",
     "typescript-eslint": "^8",
     "vite": "^8.0.16",
-    "vitest": "^2"
+    "vitest": "^5.0.0"
   }
 }
