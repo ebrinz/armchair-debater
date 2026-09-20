@@ -16,6 +16,11 @@ describe('screenFor', () => {
     expect(screenFor(true, null)).toBe('select');
     expect(screenFor(true, at('setup'))).toBe('select');
   });
+  it('stays on select for the lock-in: theories set while still in setup', () => {
+    const lockIn = snapshots.find((s) => s.stage === 'setup' && s.user.theory_id)!;
+    expect(lockIn.bot.theory_id).toBeTruthy();
+    expect(screenFor(true, lockIn)).toBe('select');
+  });
   it('is fight in every debate round', () => {
     for (const stage of ['opening', 'rebuttal', 'closing']) {
       expect(screenFor(true, at(stage))).toBe('fight');
