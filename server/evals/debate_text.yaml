@@ -114,3 +114,30 @@ scenarios:
                 args: {user_theory: illusionism}
           - event: response
             eval: "the bot says which theory it will defend, and that theory is one of property dualism, panpsychism, or orchestrated objective reduction"
+
+  - name: does_not_assign_a_view_the_user_never_gave
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot introduces itself and asks the user what they think consciousness is"
+
+      - user: "I don't know, I was kind of hoping you'd tell me."
+        expect:
+          - event: response
+            eval: "the bot offers a few plain-language options for what consciousness might be and asks which is closest, without stating a view of its own and without starting a debate"
+          - event: function_call
+            absent: true
+            within_ms: 15000
+
+      - user: "Hmm, hang on a second."
+        expect:
+          - event: function_call
+            absent: true
+            within_ms: 15000
+
+      - user: "OK, the illusion one. I think it's a trick the brain plays on itself."
+        expect:
+          - event: function_call
+            calls:
+              - name: set_positions
+                args: {user_theory: illusionism}
