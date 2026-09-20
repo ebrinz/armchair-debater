@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { battleLines, decisionBanner, fightAnnouncement, hitTier, speakerName } from '../battleText';
+import { battleLines, decisionBanners, fightAnnouncement, hitTier, speakerName } from '../battleText';
+import states from '../fixtures/debate-state.json';
 import { ROUND_LABELS, announcerText } from '../screen';
-import type { DebateSnapshot, Hit } from '../types';
+import type { DebateSnapshot, Hit, Verdict } from '../types';
 
 const hit = (over: Partial<Hit>): Hit => ({ by: 'user', damage: 10, recovery: 0, reason: 'Made a point.', ...over });
 
@@ -113,11 +114,62 @@ describe('fightAnnouncement', () => {
 });
 
 describe('names and banners', () => {
-  it('maps sides and winners to the spec copy', () => {
+  it('maps sides to the spec copy', () => {
     expect(speakerName('user')).toBe('YOU');
     expect(speakerName('bot')).toBe('THE HOUSE');
-    expect(decisionBanner('user')).toBe('YOU WIN');
-    expect(decisionBanner('bot')).toBe('YOU LOSE');
-    expect(decisionBanner('draw')).toBe('DRAW GAME');
+  });
+});
+
+describe('decisionBanners', () => {
+  /** A finished debate: health either side, and who the judge gave it to. */
+  const finished = (user: number, bot: number, winner: Verdict['winner'] | null): DebateSnapshot => ({
+    type: 'debate_state',
+    stage: 'verdict',
+    user: { theory_id: 't1', theory_name: 'Theory', health: user },
+    bot: { theory_id: 't2', theory_name: 'Theory', health: bot },
+    last_hit: null,
+    verdict: winner ? { winner, rationale: 'Because.' } : null,
+  });
+
+  // The Style guide's rule table, one case per row, checked in its order.
+  it('calls both bars at zero a double K.O., whoever the judge named', () => {
+    expect(decisionBanners(finished(0, 0, 'user'))).toEqual(['DOUBLE K.O.']);
+  });
+
+  it('calls a draw a draw game', () => {
+    expect(decisionBanners(finished(40, 40, 'draw'))).toEqual(['DRAW GAME']);
+  });
+
+  it('calls a loser at zero a K.O., with the result beneath', () => {
+    expect(decisionBanners(finished(30, 0, 'user'))).toEqual(['K.O.!', 'YOU WIN']);
+    expect(decisionBanners(finished(0, 30, 'bot'))).toEqual(['K.O.!', 'YOU LOSE']);
+  });
+
+  it('calls an untouched winner perfect, with the result beneath', () => {
+    expect(decisionBanners(finished(100, 22, 'user'))).toEqual(['PERFECT!', 'YOU WIN']);
+    expect(decisionBanners(finished(22, 100, 'bot'))).toEqual(['PERFECT!', 'YOU LOSE']);
+  });
+
+  it('otherwise shows the result alone', () => {
+    expect(decisionBanners(finished(49, 15, 'user'))).toEqual(['YOU WIN']);
+    expect(decisionBanners(finished(15, 49, 'bot'))).toEqual(['YOU LOSE']);
+  });
+
+  it('has no banner without a verdict — the screen shows the title alone', () => {
+    expect(decisionBanners(finished(49, 15, null))).toEqual([]);
+  });
+
+  it('has no banner without a verdict even when both bars are empty', () => {
+    expect(decisionBanners(finished(0, 0, null))).toEqual([]);
+  });
+  it('calls a draw a draw game even with one bar at zero', () => {
+    expect(decisionBanners(finished(0, 4, 'draw'))).toEqual(['DRAW GAME']);
+  });
+  it('reads the contract fixture’s final snapshot as YOU WIN', () => {
+    const final = (states as DebateSnapshot[]).at(-1) as DebateSnapshot;
+    expect(final.stage).toBe('verdict');
+    expect(final.user.health).toBe(49);
+    expect(final.bot.health).toBe(15);
+    expect(decisionBanners(final)).toEqual(['YOU WIN']);
   });
 });

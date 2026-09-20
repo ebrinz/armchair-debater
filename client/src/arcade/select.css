@@ -370,10 +370,11 @@
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 1.4vh, 14px);
-  /* The three moves share the well's height evenly rather than bunching in the
-     middle. `safe` matters: when an expanded argument overruns, it falls back
-     to the top so the first move's name stays within the scrollable area. */
-  justify-content: safe space-evenly;
+  /* The three moves share the well's height evenly rather than bunching up.
+     A distribution value takes no `safe` keyword and needs none: when an
+     expanded argument overruns, it falls back to the top by itself, so the
+     first move's name stays within the scrollable area. */
+  justify-content: space-evenly;
   /* It takes whatever the card has left, so at desktop width all three
      arguments show whole; on a narrow card it scrolls rather than clipping. */
   flex: 1;

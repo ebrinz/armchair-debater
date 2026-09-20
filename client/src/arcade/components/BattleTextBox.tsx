@@ -15,6 +15,11 @@ export interface BattleTextBoxProps {
   stage: Stage;
   /** No Pipecat client behind the UI, so no transcript to open. */
   mock?: boolean;
+  /** Fixed text in place of the hit's lines — the decision screen types the
+   *  judge's rationale in here. An empty array types nothing yet. */
+  lines?: string[];
+  /** Replaces the turn cue; `null` hides it, for a fight that is over. */
+  cue?: string | null;
 }
 
 /** battleLines always returns the move, then the effectiveness, then a heal. */
@@ -44,11 +49,19 @@ const turnCue = (hit: Hit | null, stage: Stage): string => {
  * character: they go through the app's single live region, which is composed
  * from the snapshot in ArcadeApp and so never sees the typing.
  */
-export const BattleTextBox = ({ hit, hitCount, stage, mock = false }: BattleTextBoxProps) => {
+export const BattleTextBox = ({
+  hit,
+  hitCount,
+  stage,
+  mock = false,
+  lines: fixed,
+  cue,
+}: BattleTextBoxProps) => {
   const [open, setOpen] = useState(false);
   const tier = hit ? hitTier(hit.damage) : null;
-  const lines = hit ? battleLines(hit) : [];
-  const typed = useTypewriter(lines, hitCount, tier === 'super');
+  const lines = fixed ?? (hit ? battleLines(hit) : []);
+  const typed = useTypewriter(lines, hitCount, fixed ? false : tier === 'super');
+  const turn = cue === undefined ? turnCue(hit, stage) : cue;
 
   return (
     <div className="battle-box">
@@ -58,7 +71,9 @@ export const BattleTextBox = ({ hit, hitCount, stage, mock = false }: BattleText
         </div>
       )}
 
-      <div className={`battle-box__panel pixel-panel${tier === 'super' ? ' battle-box__panel--slam' : ''}`}>
+      <div
+        className={`battle-box__panel pixel-panel${!fixed && tier === 'super' ? ' battle-box__panel--slam' : ''}`}
+      >
         <div className="battle-box__lines">
           {typed.map((line, i) => (
             // Keyed by position: the lines are a fixed shape per hit (move,
@@ -68,7 +83,7 @@ export const BattleTextBox = ({ hit, hitCount, stage, mock = false }: BattleText
               {' '}
             </p>
           ))}
-          <p className="battle-box__cue pixel-text">{turnCue(hit, stage)}</p>
+          {turn && <p className="battle-box__cue pixel-text">{turn}</p>}
         </div>
 
         {!mock && (

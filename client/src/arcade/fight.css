@@ -634,51 +634,136 @@
 
 /* ---------------------------------------------------------- decision screen */
 
-.decision-hud {
+/*
+ * The finish is played OVER the fight, not in place of it: the frozen HUD —
+ * bars, chairs, battle box — stays exactly where it was, and everything below
+ * is an overlay between the two chairs, above the dimmed fire. Each piece
+ * mounts when its moment comes and then stays, so the one-shot `slam` runs
+ * once per piece with no JavaScript per frame.
+ */
+
+.decision {
+  position: relative;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  gap: 16px;
-  padding: 16px;
+  min-height: 100%;
 }
 
-.decision-hud__bars {
+/* The title below says JUDGE'S DECISION; the HUD's plate would say it a second
+   time. Hidden rather than removed, so the two bars keep their places. */
+.decision .round-plate {
+  visibility: hidden;
+}
+
+.decision__overlay {
+  position: absolute;
+  z-index: 6;
+  /* Clear of the bars at the top and of the battle box at the bottom. */
+  inset: clamp(76px, 12vh, 118px) 0 clamp(190px, 27vh, 250px);
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.decision-hud__banner {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.2vh, 14px);
+  pointer-events: none;
   text-align: center;
-  margin-top: 24px;
 }
 
-.decision-hud__title {
-  font-family: var(--font-display);
-  font-size: 18px;
+.decision__plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.2vh, 14px);
+}
+
+/* The brass plate the judge speaks from: small, steady, and first in. */
+.decision__title {
+  margin: 0;
+  font-size: clamp(10px, 1.5vw, 20px);
   color: var(--accent);
+  text-shadow:
+    3px 3px 0 var(--shadow),
+    0 0 18px rgba(201, 162, 39, 0.35);
+  animation: slam 380ms steps(5, end) 1;
 }
 
-.decision-hud__result {
+/* The two final numbers, side by side across the fire. */
+.decision__score {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 32px;
-  color: var(--ink);
-  margin: 16px 0;
-}
-
-.decision-hud__score {
-  font-family: var(--font-body);
-  font-size: 24px;
+  font-size: clamp(20px, 3.4vw, 46px);
+  line-height: 1.2;
   color: var(--ink-dim);
+  letter-spacing: 0.04em;
 }
 
-.decision-hud__rationale {
-  font-family: var(--font-body);
-  font-size: 20px;
+.decision__num {
+  display: inline-block;
+  min-width: 3ch;
+}
+
+.decision__num--win {
+  color: var(--bar-fill);
+  text-shadow:
+    3px 3px 0 var(--oxblood),
+    6px 6px 0 var(--shadow);
+}
+
+.decision__num--lose {
+  color: var(--ink-dim);
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+.decision__banner {
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1.2;
+  animation: slam 420ms steps(5, end) 1;
+}
+
+/* The result: the loudest line on the screen. */
+.decision__banner--result {
+  font-size: clamp(24px, 5vw, 62px);
+  color: var(--bar-fill);
+  text-shadow:
+    4px 4px 0 var(--oxblood),
+    8px 8px 0 var(--shadow);
+}
+
+/* The flourish above it — K.O.!, PERFECT! — in danger red. */
+.decision__banner--flourish {
+  font-size: clamp(18px, 3.4vw, 42px);
+  color: var(--bar-danger);
+  text-shadow:
+    3px 3px 0 var(--shadow),
+    0 0 20px rgba(224, 58, 46, 0.45);
+}
+
+/* ------------------------------------------------------------ continue? */
+
+.decision__continue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.4vh, 16px);
+  margin-top: clamp(8px, 1.8vh, 22px);
+  /* The overlay lets clicks through to the HUD; this block takes them. */
+  pointer-events: auto;
+}
+
+.decision__prompt {
+  margin: 0;
+  font-size: clamp(10px, 1.4vw, 18px);
   color: var(--ink);
-  margin: 24px auto 0;
-  max-width: 60ch;
-  padding: 16px;
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+/* The number itself, in the danger red of a clock running out. */
+.decision__count {
+  color: var(--bar-danger);
+  font-size: 1.6em;
+  vertical-align: -0.12em;
 }
 
 /* ------------------------------------------------------------ small screens */

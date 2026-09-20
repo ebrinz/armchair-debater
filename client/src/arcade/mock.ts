@@ -3,8 +3,14 @@ import snapshots from './fixtures/debate-state.json';
 import { useArcadeStore } from './store';
 
 const STEP_MS = 3000;
-/** How long to sit on the select screen and the decision screen in the loop. */
+/** How long to sit on the select screen in the loop. */
 const HOLD_STEPS = 3;
+/**
+ * And on the decision screen, which has a sequence to play: the slam, the
+ * count-up, the banners, the rationale typing itself out, and then the
+ * CONTINUE? countdown from 9 — about twenty seconds all told.
+ */
+const VERDICT_HOLD_STEPS = 8;
 
 /** Replays the contract fixtures into the store, looping. Returns a stop function. */
 export const startMockReplay = (): (() => void) => {
@@ -14,7 +20,7 @@ export const startMockReplay = (): (() => void) => {
   const frames = [
     ...Array<unknown>(HOLD_STEPS).fill(snapshots[0]),
     ...snapshots.slice(1),
-    ...Array<unknown>(HOLD_STEPS).fill(snapshots.at(-1)),
+    ...Array<unknown>(VERDICT_HOLD_STEPS).fill(snapshots.at(-1)),
   ];
   let index = 0;
   receive(cards);

@@ -1,5 +1,5 @@
 import { ROUND_LABELS, announcerText } from './screen';
-import type { DebateSnapshot, Hit, Side, Stage, Verdict } from './types';
+import type { DebateSnapshot, Hit, Side, Stage } from './types';
 
 export const speakerName = (side: Side): 'YOU' | 'THE HOUSE' => (side === 'user' ? 'YOU' : 'THE HOUSE');
 
@@ -34,8 +34,31 @@ export const battleLines = (hit: Hit): string[] => {
   return lines;
 };
 
-export const decisionBanner = (winner: Verdict['winner']): 'YOU WIN' | 'YOU LOSE' | 'DRAW GAME' =>
-  winner === 'user' ? 'YOU WIN' : winner === 'bot' ? 'YOU LOSE' : 'DRAW GAME';
+/**
+ * The end-of-match banners, from the Style guide's rule table ("The finish"),
+ * checked in its order: a double K.O. beats everything, then a draw, then a
+ * flourish — `K.O.!` for a bar at zero, `PERFECT!` for a winner never touched —
+ * over the result. The last entry is always the result itself, so the screen
+ * can set the flourish above it in a different size.
+ *
+ * A snapshot with no verdict is not a row of the table: it returns nothing, and
+ * the screen shows `JUDGE'S DECISION` alone.
+ */
+export const decisionBanners = (snapshot: DebateSnapshot): string[] => {
+  const { user, bot, verdict } = snapshot;
+  if (!verdict) return [];
+  if (user.health <= 0 && bot.health <= 0) return ['DOUBLE K.O.'];
+  if (verdict.winner === 'draw') return ['DRAW GAME'];
+
+  const won = verdict.winner === 'user';
+  const result = won ? 'YOU WIN' : 'YOU LOSE';
+  const winner = won ? user : bot;
+  const loser = won ? bot : user;
+
+  if (loser.health <= 0) return ['K.O.!', result];
+  if (winner.health >= 100) return ['PERFECT!', result];
+  return [result];
+};
 
 /** What the fight screen's live region last said, so the next snapshot knows
  * what's already been announced. */
