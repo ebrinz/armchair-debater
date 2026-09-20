@@ -26,6 +26,22 @@ describe('useArcadeStore.receive', () => {
     expect(store().hitCount).toBe(distinctHits);
   });
 
+  it('ignores a debate_state it cannot draw, and keeps the last good one', () => {
+    store().receive(fixtures[3]);
+    const good = store().snapshot;
+    for (const broken of [
+      { type: 'debate_state' },
+      { ...fixtures[3], stage: 'intermission' },
+      { ...fixtures[3], user: null },
+      { ...fixtures[3], bot: { ...fixtures[3].bot, health: '70' } },
+      { ...fixtures[3], last_hit: { by: 'user' } },
+      { ...fixtures[3], verdict: 'user' },
+    ]) {
+      store().receive(broken);
+      expect(store().snapshot).toBe(good);
+    }
+  });
+
   it('clear() empties the snapshot and hit count but keeps the cards', () => {
     store().receive(cardsFixture);
     store().receive(fixtures[3]);
