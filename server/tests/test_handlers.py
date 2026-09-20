@@ -158,3 +158,24 @@ async def test_a_rematch_is_judged_afresh(monkeypatch):
     await handlers.judge_debate(fm)
 
     assert len(calls) == 2
+
+
+async def test_a_crash_while_deciding_is_not_remembered_so_a_retry_can_succeed(monkeypatch):
+    import pytest
+
+    attempts = []
+
+    async def write_rationale(**kwargs):
+        attempts.append(kwargs)
+        if len(attempts) == 1:
+            raise RuntimeError("not a JudgeError: nothing catches this")
+        return "Second time lucky."
+
+    fm = await ready_for_verdict(monkeypatch, write_rationale)
+    with pytest.raises(RuntimeError):
+        await handlers.judge_debate(fm)
+
+    result, _ = await handlers.judge_debate(fm)
+
+    assert result["status"] == "ok"
+    assert fm.state["debate"].snapshot()["verdict"]["rationale"] == "Second time lucky."

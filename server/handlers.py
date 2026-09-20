@@ -77,7 +77,12 @@ async def judge_debate(flow_manager: FlowManager):
     state = flow_manager.state
     if "verdict_task" not in state:
         state["verdict_task"] = asyncio.ensure_future(_decide(flow_manager))
-    return await state["verdict_task"], TRANSITION_IN_YAML
+    try:
+        return await state["verdict_task"], TRANSITION_IN_YAML
+    except BaseException:
+        # A failed or cancelled decision is not remembered: the next call tries again.
+        state.pop("verdict_task", None)
+        raise
 
 
 async def _decide(flow_manager: FlowManager) -> dict:
