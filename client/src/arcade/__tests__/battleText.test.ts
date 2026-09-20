@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { battleLines, decisionBanners, fightAnnouncement, hitTier, speakerName } from '../battleText';
+import { battleLines, decisionBanners, fightAnnouncement, hitTier, nextSpoken, speakerName } from '../battleText';
+import type { Spoken } from '../battleText';
 import states from '../fixtures/debate-state.json';
 import { ROUND_LABELS, announcerText } from '../screen';
 import type { DebateSnapshot, Hit, Verdict } from '../types';
@@ -110,6 +111,71 @@ describe('fightAnnouncement', () => {
     const previous = { stage: 'opening' as const, hitCount: 1 };
     const landed = hit({ damage: 24 });
     expect(fightAnnouncement(previous, snapshot('opening', landed), 1)).toBe('');
+  });
+});
+
+describe('nextSpoken', () => {
+  const fixtureSnapshots = states as DebateSnapshot[];
+
+  // The same "counts as a new hit" rule the store uses (store.ts's `sameHit`),
+  // reproduced here so the fixture can be fed through exactly as the app
+  // would feed it: a fresh hitCount only when last_hit actually changed.
+  const hitCounts = (): number[] => {
+    let count = 0;
+    let previous: Hit | null = null;
+    return fixtureSnapshots.map((s) => {
+      if (s.last_hit && JSON.stringify(s.last_hit) !== JSON.stringify(previous)) count += 1;
+      previous = s.last_hit;
+      return count;
+    });
+  };
+
+  it('announces the round banner once per stage change and the hit lines once per hit', () => {
+    const counts = hitCounts();
+    let spoken: Spoken = { announced: null, text: '' };
+    let lastStage: DebateSnapshot['stage'] | null = null;
+    let lastCount = 0;
+    const stageChanges: string[] = [];
+    let hitLines = 0;
+
+    fixtureSnapshots.forEach((snap, i) => {
+      spoken = nextSpoken(spoken, snap, counts[i]);
+      if (snap.stage !== lastStage) {
+        expect(spoken.text).toContain(ROUND_LABELS[snap.stage]);
+        stageChanges.push(snap.stage);
+        lastStage = snap.stage;
+      }
+      if (counts[i] !== lastCount) {
+        expect(spoken.text).toContain('used');
+        hitLines += 1;
+        lastCount = counts[i];
+      }
+    });
+
+    // The fixture's five stages (setup, opening, rebuttal, closing, verdict)
+    // and its six scored turns — docs/design/2026-09-19-debate-ui-design.md,
+    // "What the real data looks like".
+    expect(stageChanges).toEqual(['setup', 'opening', 'rebuttal', 'closing', 'verdict']);
+    expect(hitLines).toBe(6);
+  });
+
+  it('says nothing new for a repeated snapshot, and — the regression — the text survives being asked twice', () => {
+    // An earlier version derived the text from `announced` AFTER updating it,
+    // so asking twice for the same snapshot always compared a value against
+    // itself and read '' — silencing the live region for the whole fight
+    // even though fightAnnouncement's own tests, called directly, all passed.
+    const landed = fixtureSnapshots.find((s) => s.stage === 'opening' && s.last_hit)!;
+    const first = nextSpoken({ announced: null, text: '' }, landed, 1);
+    expect(first.text).not.toBe('');
+
+    const second = nextSpoken(first, landed, 1);
+    expect(second).toBe(first);
+    expect(second.text).toBe(first.text);
+  });
+
+  it('has nothing to say before the first snapshot', () => {
+    const spoken = nextSpoken({ announced: null, text: '' }, null, 0);
+    expect(spoken).toEqual({ announced: null, text: '' });
   });
 });
 

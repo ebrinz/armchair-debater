@@ -34,4 +34,16 @@ describe('useArcadeStore.receive', () => {
     expect(store().hitCount).toBe(0);
     expect(store().cards).toHaveLength(12);
   });
+
+  it('keeps the snapshot when theory_cards arrives after it, however late', () => {
+    // The contract sends theory_cards once, before the first snapshot — but
+    // nothing stops a slow connection from reordering that, and a mid-fight
+    // snapshot must not be wiped out by cards arriving on its heels.
+    const midFight = fixtures.find((f) => f.stage === 'opening' && f.last_hit)!;
+    store().receive(midFight);
+    store().receive(cardsFixture);
+    expect(store().snapshot?.stage).toBe('opening');
+    expect(store().snapshot?.last_hit).toEqual(midFight.last_hit);
+    expect(store().cards).toHaveLength(12);
+  });
 });

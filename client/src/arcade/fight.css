@@ -551,6 +551,9 @@
   font-size: clamp(16px, 1.55vw, 24px);
   line-height: 1.3;
   color: var(--ink);
+  /* last_hit.reason is the judge's free text; a run with no spaces to wrap
+     on (an unbroken word) must still break rather than push the box wide. */
+  overflow-wrap: break-word;
 }
 
 /* The move line is the quote; the effectiveness line is the verdict on it. */

@@ -97,7 +97,11 @@ export const CardGrid = ({
             style={style}
             // One tab stop for the whole roster; the arrows do the rest.
             tabIndex={i === focused ? 0 : -1}
-            disabled={!card || disabled}
+            // An empty slot cannot be picked, but the focused one stays
+            // enabled anyway: before `theory_cards` arrives every slot would
+            // otherwise be `disabled`, and a disabled button is never a tab
+            // stop, so Tab would skip the roster entirely.
+            disabled={(!card && i !== focused) || disabled}
             // The theory the server confirmed, not a toggle button's state.
             aria-current={locked ? 'true' : undefined}
             aria-label={card ? card.name : 'Empty slot'}

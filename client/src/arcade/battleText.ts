@@ -67,6 +67,13 @@ export interface Announced {
   hitCount: number;
 }
 
+/** The fight screen's live-region state: what was last announced, and the
+ * words that went with it. */
+export interface Spoken {
+  announced: Announced | null;
+  text: string;
+}
+
 /**
  * The fight screen's live-region text for an incoming snapshot, given what
  * was last announced. The round banner ("ROUND 1. ROUND 1 · OPENING") reads
@@ -88,4 +95,32 @@ export const fightAnnouncement = (
     lines.push(...battleLines(snapshot.last_hit));
   }
   return lines.filter(Boolean).join('. ');
+};
+
+/**
+ * Advances the fight screen's live-region state by one snapshot. Returns the
+ * SAME `spoken` object, not a new one with identical fields, when the stage
+ * and hit count have not moved since the last call — so a caller that does
+ * this from inside a render (`setSpoken(nextSpoken(spoken, snapshot,
+ * hitCount))`) gets React's Object.is bail-out for free instead of deriving
+ * the text itself afterwards.
+ *
+ * That "afterwards" is exactly the regression this guards against: an
+ * earlier version updated `announced` during render and then computed the
+ * text from `announced` on the next line, comparing it against the value it
+ * had just written — so previous and current always matched, and the live
+ * region read '' for the whole fight even though every pure-function test of
+ * `fightAnnouncement` passed. Computing the text here, before `announced` is
+ * replaced, is what keeps that comparison honest.
+ */
+export const nextSpoken = (
+  spoken: Spoken,
+  snapshot: DebateSnapshot | null,
+  hitCount: number
+): Spoken => {
+  const announced: Announced | null = snapshot ? { stage: snapshot.stage, hitCount } : null;
+  if (announced?.stage === spoken.announced?.stage && announced?.hitCount === spoken.announced?.hitCount) {
+    return spoken;
+  }
+  return { announced, text: snapshot ? fightAnnouncement(spoken.announced, snapshot, hitCount) : '' };
 };

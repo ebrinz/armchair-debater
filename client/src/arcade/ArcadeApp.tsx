@@ -15,8 +15,8 @@ import { BotAudioOutput } from '@/components/pipecat/bot-audio';
 import { DEFAULT_TRANSPORT, TRANSPORT_FACTORIES, TRANSPORT_PROPS } from '../config';
 import { usePipecatApp } from '../hooks/use-pipecat-app';
 import './arcade.css';
-import { decisionBanners, fightAnnouncement } from './battleText';
-import type { Announced } from './battleText';
+import { decisionBanners, nextSpoken } from './battleText';
+import type { Spoken } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
 import { Stage } from './components/Stage';
@@ -108,24 +108,14 @@ const ArcadeView = ({
 
   // What the live region last read out, and the words that went with it, so a
   // stage change reads the banner and a hit within the same stage does not.
-  // The text is worked out in the same render-time update that records what
-  // was announced: React re-renders straight after a state change made during
-  // render, so text derived from `announced` afterwards would always compare
-  // the snapshot with itself and say nothing.
-  const [spoken, setSpoken] = useState<{ announced: Announced | null; text: string }>({
-    announced: null,
-    text: '',
-  });
-  const nextAnnounced: Announced | null = snapshot ? { stage: snapshot.stage, hitCount } : null;
-  if (
-    nextAnnounced?.stage !== spoken.announced?.stage ||
-    nextAnnounced?.hitCount !== spoken.announced?.hitCount
-  ) {
-    setSpoken({
-      announced: nextAnnounced,
-      text: snapshot ? fightAnnouncement(spoken.announced, snapshot, hitCount) : '',
-    });
-  }
+  // `nextSpoken` is a render-time update — React re-renders straight after a
+  // state change made during render — but it is pure and returns the SAME
+  // object when nothing changed, so this bails out via setState's own
+  // Object.is check instead of re-deriving (and losing) the text on every
+  // render. See its doc comment for the regression that shape guards against.
+  const [spoken, setSpoken] = useState<Spoken>({ announced: null, text: '' });
+  const advanced = nextSpoken(spoken, snapshot, hitCount);
+  if (advanced !== spoken) setSpoken(advanced);
 
   return (
     <div className="arcade">
