@@ -116,3 +116,57 @@ async def test_write_rationale_returns_stripped_text_and_sees_the_hits():
 async def test_write_rationale_retries_on_empty_then_raises():
     with pytest.raises(JudgeError):
         await rationale(scripted("", "   "))
+
+
+class _RecordingOpenAI:
+    """Stands in for ``openai.AsyncOpenAI``: records how it was built and called."""
+
+    instances: list["_RecordingOpenAI"] = []
+
+    def __init__(self, **kwargs):
+        self.init = kwargs
+        self.calls = []
+        self.chat = type("Chat", (), {"completions": self})()
+        _RecordingOpenAI.instances.append(self)
+
+    async def create(self, **kwargs):
+        self.calls.append(kwargs)
+        message = type("Message", (), {"content": "ok"})()
+        return type("Response", (), {"choices": [type("Choice", (), {"message": message})()]})()
+
+
+@pytest.fixture
+def recording_openai(monkeypatch):
+    import openai
+
+    _RecordingOpenAI.instances = []
+    monkeypatch.setattr(openai, "AsyncOpenAI", _RecordingOpenAI)
+    return _RecordingOpenAI.instances
+
+
+async def test_the_judge_calls_general_compute_by_default(monkeypatch, recording_openai):
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("GENERAL_COMPUTE_MODEL", raising=False)
+    monkeypatch.setenv("GENERAL_COMPUTE_API_KEY", "gc-key")
+
+    assert await judge._complete("system", "user") == "ok"
+
+    (client,) = recording_openai
+    assert client.init == {"api_key": "gc-key", "base_url": "https://api.generalcompute.com/v1"}
+    assert client.calls[0]["model"] == "deepseek-v3.2"
+    assert client.calls[0]["max_tokens"] == 400
+    assert client.calls[0]["temperature"] == 0.1
+
+
+async def test_the_judge_follows_the_llm_provider_switch(monkeypatch, recording_openai):
+    monkeypatch.setenv("LLM_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "oa-key")
+    monkeypatch.setenv("OPENAI_MODEL", "an-openai-model")
+
+    await judge._complete("system", "user")
+
+    (client,) = recording_openai
+    assert client.init == {"api_key": "oa-key", "base_url": None}
+    assert client.calls[0]["model"] == "an-openai-model"
+    assert client.calls[0]["max_completion_tokens"] == 400
+    assert "max_tokens" not in client.calls[0]

@@ -22,7 +22,6 @@ Run the bot using::
     uv run bot.py
 """
 
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -39,14 +38,13 @@ from pipecat.processors.aggregators.llm_response_universal import (
 )
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
-from pipecat.services.gradium.stt import GradiumSTTService
-from pipecat.services.gradium.tts import GradiumTTSService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
 from pipecat.workers.runner import WorkerRunner
 
 import handlers
 import knowledge
+import providers
 from debate_state import DebateState
 from scorer import TurnScorer
 from turns import TurnObserver
@@ -69,24 +67,20 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     """
     logger.info("Starting bot")
 
-    # Speech-to-Text service
-    stt = GradiumSTTService(api_key=os.getenv("GRADIUM_API_KEY"))
+    # Speech-to-Text and Text-to-Speech services (SPEECH_PROVIDER: Gradium by default)
+    stt = providers.make_stt()
+    tts = providers.make_tts()
 
-    # Text-to-Speech service
-    tts = GradiumTTSService(
-        api_key=os.getenv("GRADIUM_API_KEY"),
-        settings=GradiumTTSService.Settings(
-            voice=os.getenv("GRADIUM_VOICE_ID", "_6Aslh2DxfmnRLmP"),
-        ),
+    # LLM service (LLM_PROVIDER: General Compute by default, via its
+    # OpenAI-compatible API, which is why OpenAI itself is a config change)
+    llm_config = providers.llm_config()
+    logger.info(
+        f"LLM: {llm_config.provider} ({llm_config.model}); speech: {providers.speech_provider()}"
     )
-
-    # LLM service (General Compute, via its OpenAI-compatible API)
     llm = OpenAILLMService(
-        api_key=os.getenv("GENERAL_COMPUTE_API_KEY"),
-        base_url="https://api.generalcompute.com/v1",
-        settings=OpenAILLMService.Settings(
-            model=os.getenv("GENERAL_COMPUTE_MODEL", "deepseek-v3.2"),
-        ),
+        api_key=llm_config.require_key(),
+        base_url=llm_config.base_url,
+        settings=OpenAILLMService.Settings(model=llm_config.model),
     )
 
     context = LLMContext()

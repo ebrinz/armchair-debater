@@ -101,3 +101,16 @@ async def test_start_warmup_task_exception_does_not_propagate_and_is_removed():
     await task  # must not raise: warm_llm already swallows the error
 
     assert task not in warmup._tasks
+
+
+async def test_warm_llm_follows_the_llm_provider_switch(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_MODEL", "an-openai-model")
+    client = FakeClient()
+
+    await warmup.warm_llm(client_factory=lambda: client)
+
+    call = client.chat.completions.calls[0]
+    assert call["model"] == "an-openai-model"
+    assert call["max_completion_tokens"] == 1
+    assert "max_tokens" not in call

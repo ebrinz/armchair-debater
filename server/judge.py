@@ -6,15 +6,14 @@ Python around an OpenAI-compatible chat call, which tests replace via `complete`
 """
 
 import json
-import os
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from loguru import logger
 
-Complete = Callable[[str, str], Awaitable[str]]
+from providers import llm_config
 
-BASE_URL = "https://api.generalcompute.com/v1"
+Complete = Callable[[str, str], Awaitable[str]]
 
 SCORE_SYSTEM = """You are the impartial judge of a spoken debate about theories of consciousness. \
 You score ONE turn at a time.
@@ -70,11 +69,11 @@ def parse_score(text: str) -> TurnScore:
 async def _complete(system: str, user: str) -> str:
     from openai import AsyncOpenAI
 
-    client = AsyncOpenAI(api_key=os.environ["GENERAL_COMPUTE_API_KEY"], base_url=BASE_URL)
+    config = llm_config()
+    client = AsyncOpenAI(api_key=config.require_key(), base_url=config.base_url)
     response = await client.chat.completions.create(
-        model=os.getenv("GENERAL_COMPUTE_MODEL", "deepseek-v3.2"),
-        temperature=0.1,
-        max_tokens=400,
+        model=config.model,
+        **config.limits(400, temperature=0.1),
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user},

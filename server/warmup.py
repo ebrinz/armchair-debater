@@ -1,18 +1,17 @@
 """Warm the LLM endpoint so the first real request doesn't pay a cold-start cost.
 
 No Pipecat imports: a plain OpenAI-compatible chat call, built the same way as
-judge.py's ``_complete`` (same base URL, same env vars), so it is unit-testable
+judge.py's ``_complete`` (the endpoint ``providers.llm_config()`` names), so it is unit-testable
 with an injected client factory and no network in tests.
 """
 
 import asyncio
-import os
 from collections.abc import Callable
 from typing import Any
 
 from loguru import logger
 
-from judge import BASE_URL
+from providers import llm_config
 
 ClientFactory = Callable[[], Any]
 
@@ -29,8 +28,9 @@ _tasks: set[asyncio.Task] = set()
 def _default_client_factory() -> Any:
     from openai import AsyncOpenAI
 
+    config = llm_config()
     return AsyncOpenAI(
-        api_key=os.environ["GENERAL_COMPUTE_API_KEY"], base_url=BASE_URL, timeout=WARMUP_TIMEOUT_S
+        api_key=config.require_key(), base_url=config.base_url, timeout=WARMUP_TIMEOUT_S
     )
 
 
@@ -44,10 +44,11 @@ async def warm_llm(*, client_factory: ClientFactory | None = None) -> None:
     """
     try:
         client = (client_factory or _default_client_factory)()
+        config = llm_config()
         await asyncio.wait_for(
             client.chat.completions.create(
-                model=os.getenv("GENERAL_COMPUTE_MODEL", "deepseek-v3.2"),
-                max_tokens=1,
+                model=config.model,
+                **config.limits(1),
                 messages=[{"role": "user", "content": "hi"}],
                 timeout=WARMUP_TIMEOUT_S,
             ),

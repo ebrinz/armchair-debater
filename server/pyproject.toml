@@ -28,4 +28,6 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore:'audioop' is deprecated:DeprecationWarning",
+    # Raised inside Pipecat's own Gradium service when it is constructed.
+    "ignore:`AudioContextTTSService` is deprecated:DeprecationWarning",
 ]
