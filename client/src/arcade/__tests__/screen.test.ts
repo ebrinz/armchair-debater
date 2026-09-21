@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import fixtures from '../fixtures/debate-state.json';
-import { ROUND_LABELS, nextSplash, roundNumber, screenFor, splashKey } from '../screen';
+import { ROUNDS, ROUND_LABELS, nextSplash, roundNumber, screenFor, splashKey } from '../screen';
 import type { DebateSnapshot } from '../types';
 
 const snapshots = fixtures as DebateSnapshot[];
@@ -23,7 +23,7 @@ describe('screenFor', () => {
     expect(screenFor(false, lockIn)).toBe('title');
   });
   it('is fight in every debate round', () => {
-    for (const stage of ['opening', 'rebuttal', 'closing']) {
+    for (const stage of ['opening', 'rebuttal', 'crossexam', 'closing']) {
       expect(screenFor(true, at(stage))).toBe('fight');
     }
   });
@@ -36,10 +36,14 @@ describe('round labels', () => {
   it('uses the spec copy', () => {
     expect(ROUND_LABELS.opening).toBe('ROUND 1 · OPENING');
     expect(ROUND_LABELS.rebuttal).toBe('ROUND 2 · REBUTTAL');
+    expect(ROUND_LABELS.crossexam).toBe('ROUND 3 · CROSS-EXAMINATION');
     expect(ROUND_LABELS.closing).toBe('FINAL ROUND · CLOSING');
   });
   it('numbers the rounds', () => {
-    expect([roundNumber('setup'), roundNumber('opening'), roundNumber('rebuttal'), roundNumber('closing'), roundNumber('verdict')]).toEqual([0, 1, 2, 3, 3]);
+    expect(
+      (['setup', 'opening', 'rebuttal', 'crossexam', 'closing', 'verdict'] as const).map(roundNumber)
+    ).toEqual([0, 1, 2, 3, 4, 4]);
+    expect(ROUNDS).toBe(4);
   });
 });
 

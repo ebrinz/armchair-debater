@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { battleLines, decisionBanners, fightAnnouncement, hitTier, nextSpoken, speakerName } from '../battleText';
+import {
+  battleLines,
+  decisionBanners,
+  fightAnnouncement,
+  hitTier,
+  nextSpoken,
+  speakerName,
+  turnCue,
+} from '../battleText';
 import type { Spoken } from '../battleText';
 import states from '../fixtures/debate-state.json';
 import { ROUND_LABELS, announcerText } from '../screen';
@@ -34,12 +42,23 @@ describe('hitTier', () => {
     expect(hitTier(-5)).toBe('miss');
   });
 
-  it('tiers the six damages the balance rules produce in the fixtures', () => {
-    expect([24, 30, 8, 44, 20, 28].map(hitTier)).toEqual([
+  it('tiers the eight damages the balance rules produce in the fixtures', () => {
+    // A hit is new when it differs from the snapshot before: a stage change and
+    // the verdict both re-send the last one.
+    const all = states as DebateSnapshot[];
+    const damages = all
+      .filter(
+        (s, i) => s.last_hit && JSON.stringify(s.last_hit) !== JSON.stringify(all[i - 1]?.last_hit)
+      )
+      .map((s) => s.last_hit!.damage);
+    expect(damages).toEqual([24, 30, 8, 44, 10, 6, 20, 28]);
+    expect(damages.map(hitTier)).toEqual([
       'solid',
       'super',
       'glancing',
       'super',
+      'glancing',
+      'glancing',
       'solid',
       'solid',
     ]);
@@ -152,11 +171,18 @@ describe('nextSpoken', () => {
       }
     });
 
-    // The fixture's five stages (setup, opening, rebuttal, closing, verdict)
-    // and its six scored turns — docs/design/2026-09-19-debate-ui-design.md,
+    // The fixture's six stages (setup, opening, rebuttal, crossexam, closing,
+    // verdict) and its eight scored turns — docs/design/2026-09-19-debate-ui-design.md,
     // "What the real data looks like".
-    expect(stageChanges).toEqual(['setup', 'opening', 'rebuttal', 'closing', 'verdict']);
-    expect(hitLines).toBe(6);
+    expect(stageChanges).toEqual([
+      'setup',
+      'opening',
+      'rebuttal',
+      'crossexam',
+      'closing',
+      'verdict',
+    ]);
+    expect(hitLines).toBe(8);
   });
 
   it('says nothing new for a repeated snapshot, and — the regression — the text survives being asked twice', () => {
@@ -234,8 +260,27 @@ describe('decisionBanners', () => {
   it('reads the contract fixture’s final snapshot as YOU WIN', () => {
     const final = (states as DebateSnapshot[]).at(-1) as DebateSnapshot;
     expect(final.stage).toBe('verdict');
-    expect(final.user.health).toBe(49);
+    expect(final.user.health).toBe(41);
     expect(final.bot.health).toBe(15);
     expect(decisionBanners(final)).toEqual(['YOU WIN']);
+  });
+});
+
+describe('turnCue', () => {
+  const by = (side: 'user' | 'bot'): Hit => hit({ by: side });
+
+  it('has the house open, then hands the floor to whoever was just hit', () => {
+    expect(turnCue(null, 'opening')).toBe('THE HOUSE steps up…');
+    expect(turnCue(by('bot'), 'opening')).toBe('YOUR MOVE');
+    expect(turnCue(by('user'), 'rebuttal')).toBe('THE HOUSE steps up…');
+    expect(turnCue(by('bot'), 'closing')).toBe('YOUR MOVE');
+  });
+
+  it('names what cross-examination wants from the player', () => {
+    // Part one is not scored, so the last hit is still the player's rebuttal:
+    // the floor is theirs, for a question.
+    expect(turnCue(by('user'), 'crossexam')).toBe('ASK THE HOUSE ONE QUESTION');
+    // The house has answered and asked: now they answer.
+    expect(turnCue(by('bot'), 'crossexam')).toBe('ANSWER THE HOUSE');
   });
 });

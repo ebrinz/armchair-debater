@@ -3,7 +3,7 @@
  * docs/design/2026-09-19-debate-ui-design.md and the fixtures beside this folder.
  */
 
-export type Stage = 'setup' | 'opening' | 'rebuttal' | 'closing' | 'verdict';
+export type Stage = 'setup' | 'opening' | 'rebuttal' | 'crossexam' | 'closing' | 'verdict';
 export type Side = 'user' | 'bot';
 
 export interface Debater {
@@ -52,7 +52,14 @@ export interface TheoryCardsMessage {
 const hasType = (data: unknown, type: string): boolean =>
   typeof data === 'object' && data !== null && (data as { type?: unknown }).type === type;
 
-const STAGES: readonly string[] = ['setup', 'opening', 'rebuttal', 'closing', 'verdict'];
+const STAGES: readonly string[] = [
+  'setup',
+  'opening',
+  'rebuttal',
+  'crossexam',
+  'closing',
+  'verdict',
+];
 const SIDES: readonly string[] = ['user', 'bot'];
 
 type Loose = Record<string, unknown> | null | undefined;

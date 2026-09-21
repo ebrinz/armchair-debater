@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Conversation } from '@/components/pipecat/conversation';
 
-import { battleLines, hitTier } from '../battleText';
+import { battleLines, hitTier, turnCue } from '../battleText';
 import { useTypewriter } from '../hooks/useTypewriter';
 import type { Hit, Stage } from '../types';
 
@@ -24,20 +24,6 @@ export interface BattleTextBoxProps {
 
 /** battleLines always returns the move, then the effectiveness, then a heal. */
 const LINE_ROLES = ['move', 'effect', 'recovery'] as const;
-
-/**
- * Whose turn it is, derived only from the snapshot: the house opens, and after
- * that each hit hands the floor to the other side. Nothing here guesses at
- * state the server does not send — there is no "thinking…", because the
- * contract cannot tell us that.
- */
-// Flips on `last_hit.by` alone, so it relies on the server strictly
-// alternating turns (bot, user, bot, …) — two hits in a row from the same
-// side would leave this cue naming the wrong mover.
-const turnCue = (hit: Hit | null, stage: Stage): string => {
-  if (!hit) return stage === 'opening' ? 'THE HOUSE steps up…' : 'YOUR MOVE';
-  return hit.by === 'bot' ? 'YOUR MOVE' : 'THE HOUSE steps up…';
-};
 
 /**
  * The bordered box along the bottom that reads the fight out. Each hit types

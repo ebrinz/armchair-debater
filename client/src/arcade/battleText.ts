@@ -35,6 +35,26 @@ export const battleLines = (hit: Hit): string[] => {
 };
 
 /**
+ * Whose turn it is, derived only from the snapshot: the house opens, and after
+ * that each hit hands the floor to the other side. Nothing here guesses at
+ * state the server does not send — there is no "thinking…", because the
+ * contract cannot tell us that.
+ *
+ * Flips on `last_hit.by` alone, so it relies on the server strictly alternating
+ * scored turns (bot, user, bot, …). Cross-examination opens with two turns that
+ * are not scored — the house's invitation and the player's question — so there
+ * the last hit is still the player's rebuttal, and the cue says what the round
+ * wants from them rather than naming the house.
+ */
+export const turnCue = (hit: Hit | null, stage: Stage): string => {
+  if (!hit) return stage === 'opening' ? 'THE HOUSE steps up…' : 'YOUR MOVE';
+  if (stage === 'crossexam') {
+    return hit.by === 'user' ? 'ASK THE HOUSE ONE QUESTION' : 'ANSWER THE HOUSE';
+  }
+  return hit.by === 'bot' ? 'YOUR MOVE' : 'THE HOUSE steps up…';
+};
+
+/**
  * The end-of-match banners, from the Style guide's rule table ("The finish"),
  * checked in its order: a double K.O. beats everything, then a draw, then a
  * flourish — `K.O.!` for a bar at zero, `PERFECT!` for a winner never touched —
