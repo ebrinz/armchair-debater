@@ -16,5 +16,5 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project --no-dev
 
 # Copy the application code
-COPY ./bot.py ./handlers.py ./knowledge.py ./debate_state.py ./judge.py ./scorer.py ./turns.py ./warmup.py ./providers.py ./flow.yaml ./
+COPY ./bot.py ./handlers.py ./knowledge.py ./debate_state.py ./judge.py ./scorer.py ./turns.py ./skip_tts_sync.py ./warmup.py ./providers.py ./flow.yaml ./
 COPY ./cards cards

@@ -47,6 +47,7 @@ import knowledge
 import providers
 from debate_state import DebateState
 from scorer import TurnScorer
+from skip_tts_sync import SkipTTSSync
 from turns import TurnObserver
 from warmup import start_warmup
 
@@ -146,6 +147,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     # of TTS and the transport and so immune to the aggregator-event race
     # that used to drop bot turns under an interruption.
     worker.add_observer(TurnObserver(llm, scorer.submit))
+    # Text-mode evals ask for no speech; see skip_tts_sync.py for why they got it anyway.
+    worker.add_observer(SkipTTSSync(worker.rtvi, worker.queue_frame))
 
     @worker.rtvi.event_handler("on_client_ready")
     async def on_client_ready(rtvi):
