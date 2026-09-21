@@ -50,12 +50,16 @@ export const ROUND_LABELS: Record<Stage, string> = {
   setup: 'CHOOSE YOUR THEORY',
   opening: 'ROUND 1 · OPENING',
   rebuttal: 'ROUND 2 · REBUTTAL',
+  crossexam: 'ROUND 3 · CROSS-EXAMINATION',
   closing: 'FINAL ROUND · CLOSING',
   verdict: "JUDGE'S DECISION",
 };
 
-export const roundNumber = (stage: Stage): 0 | 1 | 2 | 3 =>
-  ({ setup: 0, opening: 1, rebuttal: 2, closing: 3, verdict: 3 })[stage] as 0 | 1 | 2 | 3;
+/** How many rounds a debate has: the pips on the round plate. */
+export const ROUNDS = 4;
+
+export const roundNumber = (stage: Stage): number =>
+  ({ setup: 0, opening: 1, rebuttal: 2, crossexam: 3, closing: ROUNDS, verdict: ROUNDS })[stage];
 
 /**
  * The announcer's banners for each stage, in the spec's words, with how long
@@ -67,6 +71,10 @@ export const ANNOUNCER_SEQUENCE: Partial<Record<Stage, Array<[text: string, ms: 
     ['FIGHT!', 700],
   ],
   rebuttal: [['ROUND 2', 900]],
+  crossexam: [
+    ['ROUND 3', 900],
+    ['CROSS-EXAMINE!', 800],
+  ],
   closing: [['FINAL ROUND', 900]],
 };
 

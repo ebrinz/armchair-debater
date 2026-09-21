@@ -133,11 +133,74 @@
   },
   {
     "type": "debate_state",
+    "stage": "crossexam",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 69
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 36
+    },
+    "last_hit": {
+      "by": "user",
+      "damage": 44,
+      "recovery": 1,
+      "reason": "Used the logic-gate objection: a trivial grid would out-score a brain."
+    },
+    "verdict": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "crossexam",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 59
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 48
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 10,
+      "recovery": 12,
+      "reason": "Named a result that would count against the theory, which steadied the position."
+    },
+    "verdict": null
+  },
+  {
+    "type": "debate_state",
     "stage": "closing",
     "user": {
       "theory_id": "gwt",
       "theory_name": "Global Workspace Theory",
-      "health": 49
+      "health": 61
+    },
+    "bot": {
+      "theory_id": "iit",
+      "theory_name": "Integrated Information Theory",
+      "health": 42
+    },
+    "last_hit": {
+      "by": "user",
+      "damage": 6,
+      "recovery": 2,
+      "reason": "Said that broadcast simply is the feeling, without saying why."
+    },
+    "verdict": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "closing",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 41
     },
     "bot": {
       "theory_id": "iit",
@@ -147,7 +210,7 @@
     "last_hit": {
       "by": "bot",
       "damage": 20,
-      "recovery": 7,
+      "recovery": 1,
       "reason": "Turned the adversarial collaboration results against late prefrontal ignition."
     },
     "verdict": null
@@ -158,7 +221,7 @@
     "user": {
       "theory_id": "gwt",
       "theory_name": "Global Workspace Theory",
-      "health": 49
+      "health": 41
     },
     "bot": {
       "theory_id": "iit",
@@ -179,7 +242,7 @@
     "user": {
       "theory_id": "gwt",
       "theory_name": "Global Workspace Theory",
-      "health": 49
+      "health": 41
     },
     "bot": {
       "theory_id": "iit",
