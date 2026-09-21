@@ -7,7 +7,7 @@ Status: approved for planning
 
 A voice bot that debates the user on theories of consciousness. The user says what
 they think consciousness is; the bot takes a rival theory and argues it through a
-formal debate — opening, rebuttal, closing. An independent judge scores every turn
+formal debate — opening, rebuttal, cross-examination, closing. An independent judge scores every turn
 as it lands, driving two live health bars in the UI; whoever has more health after
 the closings wins. Every paper the bot cites comes from a curated knowledge file,
 never from the LLM's memory.
@@ -17,8 +17,8 @@ agent. That constraint drives the scope below.
 
 ## Non-goals (v1)
 
-No RAG, embeddings, or vector store. No bot-vs-bot. No second voice. No
-cross-examination round. See [TODOs](#todos).
+No RAG, embeddings, or vector store. No bot-vs-bot. No second voice. See
+[TODOs](#todos).
 
 ## Starting point
 
@@ -38,7 +38,7 @@ server/
   judge.py                  # score_turn() and write_rationale(); no Pipecat imports
   scorer.py                 # TurnScorer: ordered background scoring of finished turns
   user_turns.py             # UserTurnObserver: the user's turns, spoken or typed, from the LLM context frame
-  flow.yaml                 # FlowConfig: setup → opening → rebuttal → closing → verdict
+  flow.yaml                 # FlowConfig: setup → opening → rebuttal → cross-examination (2 nodes) → closing → verdict
   handlers.py               # Flows tools + action: set_positions, judge_debate, emit_stage
   bot.py                    # wires Flow, FlowManager, DebateState, TurnScorer
   tests/                    # pytest
@@ -102,17 +102,30 @@ Rules:
 
 ## Conversation flow
 
-Five nodes. The bot speaks on entering each node; each user round is one turn,
+Seven nodes. The bot speaks on entering each node; each user round is one turn,
 which gives the LLM an unambiguous rule for when to call the transition. Every
-node has an `emit_stage` pre-action that records the stage and pushes a snapshot.
+node but one has an `emit_stage` pre-action that records the stage and pushes a
+snapshot; `crossexam_answer` shares its stage with the node before it and emits
+nothing.
 
 | Node | On entry the bot… | Tool that leaves the node |
 |---|---|---|
 | `setup` | greets, asks what the user thinks consciousness is | `set_positions(user_theory, bot_theory)` → `opening` when `status: ok` |
 | `opening` | states which theory it defends, gives its opening, invites the user's | `opening_done` (transition only) |
 | `rebuttal` | rebuts the user's opening, invites their rebuttal | `rebuttal_done` (transition only) |
-| `closing` | gives its closing, invites the user's | `judge_debate()` → `verdict` |
+| `crossexam_question` | announces cross-examination and invites ONE question about its theory; does not argue | `question_asked` (transition only) |
+| `crossexam_answer` | answers that question in two sentences, then puts ONE pointed question to the user, aimed at their weakest point or a known objection on their card | `answer_given` (transition only) |
+| `closing` | responds to the user's answer, gives its closing, invites the user's | `judge_debate()` → `verdict` |
 | `verdict` | announces the final health, the winner, and the judge's rationale; offers a rematch | `rematch` (transition only → `setup`) |
+
+**Cross-examination** keeps the shape every other round has — the house speaks,
+the user speaks, the flow advances — by splitting into two nodes with the user
+asking first. Part one is an invitation and a question, neither of which is an
+argument, so the scorer hears them (they go into the transcript the judge reads,
+since an answer means little without its question) but does not score them
+(`scorer.UNSCORED_NODES`). Part two is the house's answer and the user's answer;
+both are scored like any other turn, so a dodge earns nothing. The client sees one
+stage, `crossexam`, for both parts.
 
 `set_positions` receives theory ids the LLM chose from the index in the `setup`
 prompt (the index lists each card's rivals). It validates both; if the bot's theory
@@ -169,7 +182,7 @@ with both bars near 80):
 
 The snapshot's `last_hit.damage` and `last_hit.recovery` carry the APPLIED values
 (`dealt`, `healed`) — what the bars actually moved — so the client's numbers always
-agree with its bars. A bar at 0 does not end the debate; all three rounds always
+agree with its bars. A bar at 0 does not end the debate; all four rounds always
 run. With these rules a close debate ends with both bars low and the last turn
 deciding it, and a one-sided debate can end in a knockout.
 
@@ -231,7 +244,7 @@ one; there are no diffs to apply.
 }
 ```
 
-- `stage`: `setup` | `opening` | `rebuttal` | `closing` | `verdict`.
+- `stage`: `setup` | `opening` | `rebuttal` | `crossexam` | `closing` | `verdict`.
 - `last_hit`: `{"by": "user" | "bot", "damage": int, "recovery": int, "reason": str}`
   — the most recent scored turn, or `null`.
 - `verdict`: `{"winner": "user" | "bot" | "draw", "rationale": str}` or `null`.
@@ -310,7 +323,6 @@ at the end-to-end check.
 ## TODOs
 
 - Socratic sparring mode; theory-explorer mode (the original 4 → 3 → 1 progression).
-- Cross-examination round.
 - Distinct voice for the judge.
 - Bot vs. bot with the user moderating.
 - RAG over PhilPapers / ConTraSt for long-tail theories.

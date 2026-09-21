@@ -8,7 +8,7 @@
 
 Tell it what you think consciousness is, in your own words. It works out which
 theory you're closest to, picks a rival theory, and debates you out loud through
-three rounds — opening, rebuttal, closing. An independent judge scores every turn
+four rounds — opening, rebuttal, cross-examination, closing. An independent judge scores every turn
 as it lands, moving two fighting-game health bars. Whoever has more health after
 the closings wins, and the bot reads you the judge's verdict.
 
@@ -22,7 +22,8 @@ Built on [Pipecat](https://github.com/pipecat-ai/pipecat) (1.11) with Pipecat Fl
 | Stage | What happens |
 |---|---|
 | **Setup** | The bot asks what you think consciousness is. It matches your answer to one of twelve theory cards and chooses an opponent from that card's rivals. (Or click a card — typed input works too.) |
-| **Opening → Rebuttal → Closing** | One turn each per round. The bot argues only from its card, uses a different argument each round, keeps turns under ~70 words, concedes good points, and never folds. It may quote *your* theory's papers against you, but never a paper that is on neither card. |
+| **Opening, Rebuttal, Closing** (rounds 1, 2, 4) | One turn each per round. The bot argues only from its card, uses a different argument each round, keeps turns under ~70 words, concedes good points, and never folds. It may quote *your* theory's papers against you, but never a paper that is on neither card. |
+| **Cross-examination** (round 3) | You put one question to the house and it has to answer it straight; then it puts one to you, aimed at the weakest thing you have said or a known objection to your theory. The questions are not scored. Both answers are, so a dodge earns nothing. |
 | **Judging, live** | After each turn a separate LLM call — a fresh context with no memory of having argued a side — scores that turn: damage to the opponent, and how well it recovered from the last hit. Scoring runs off the voice path, so it never delays speech; bars move about a second after a turn ends. |
 | **Verdict** | Bars decide it: higher health wins, within 5 is a draw. The judge writes a two-sentence rationale, which the bot reads out, then offers a rematch. |
 
@@ -50,7 +51,7 @@ boot, not mid-debate.
 ```
 server/
   bot.py            Pipecat cascade pipeline: Gradium STT → General Compute LLM → Gradium TTS
-  flow.yaml         Pipecat Flows graph: setup → opening → rebuttal → closing → verdict
+  flow.yaml         Pipecat Flows graph: setup → opening → rebuttal → cross-examination → closing → verdict
   handlers.py       Flow tools: set_positions, judge_debate; emit_stage action
   knowledge.py      Loads + validates the cards; client_cards() for the UI
   turns.py          TurnObserver — reads both sides' turns from pipeline frames
@@ -166,7 +167,7 @@ It is an homage: all art is original CSS/SVG and the fonts are open-licensed
 (Press Start 2P, VT323). Phone layouts are not done.
 
 **Parked for later:** a Socratic sparring mode, a theory-explorer mode, a
-cross-examination round, a distinct judge voice, bot-vs-bot, retrieval over
+distinct judge voice, bot-vs-bot, retrieval over
 PhilPapers for long-tail theories, sound effects, and a distinct armchair per
 theory.
 

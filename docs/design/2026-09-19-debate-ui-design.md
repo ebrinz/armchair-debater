@@ -31,7 +31,7 @@ Measured in end-to-end runs; the design is built around these:
   their own animation, never implied to be in sync with speech.
 - `last_hit.reason` is a 10–15 word declarative sentence, e.g. "Argues GWT conflates
   reportability with experience itself."
-- The sequence is fixed: three rounds, six scored turns, a spoken "judge is
+- The sequence is fixed: four rounds, eight scored turns, a spoken "judge is
   tallying" line, then a verdict with a two-sentence rationale.
 
 ## Screens
@@ -48,7 +48,7 @@ screenFor(connected: boolean, snapshot: DebateSnapshot | null): Screen
 | `title` | not connected | PRESS START connects and unlocks the mic |
 | `select` | connected, and no snapshot yet or `stage: "setup"` with nobody matched | both sides are matched to a theory |
 | `versus` | `stage: "setup"` with both `theory_id`s set (the lock-in snapshot) | `stage` moves to a debate round and the 2.6 s hold below has run out |
-| `fight` | `stage` is `opening`, `rebuttal`, or `closing` | `stage: "verdict"` |
+| `fight` | `stage` is `opening`, `rebuttal`, `crossexam`, or `closing` | `stage: "verdict"` |
 | `decision` | `stage: "verdict"` | a rematch puts `stage` back to `setup` → `select`; disconnect → `title` |
 
 The `versus` splash is the one screen that also needs time. Live, the lock-in
@@ -108,8 +108,8 @@ Reduced motion: no slide and no slam, the finished picture simply appears.
   fill. Below 30 the fill turns red and pulses. The number is shown. Each bar keeps
   `role="meter"` with `aria-valuenow`.
 - **Names and round plate.** Theory names under the bars. Centre plate:
-  `ROUND 1 · OPENING`, `ROUND 2 · REBUTTAL`, `FINAL ROUND · CLOSING`, with three
-  round pips. There is no countdown timer: the debate has no clock, and a fake one
+  `ROUND 1 · OPENING`, `ROUND 2 · REBUTTAL`, `ROUND 3 · CROSS-EXAMINATION`,
+  `FINAL ROUND · CLOSING`, with four round pips. There is no countdown timer: the debate has no clock, and a fake one
   would mislead.
 - **Fighters.** Two original pixel-art armchairs facing each other — the player's
   on the left, the house's on the right, mirrored. Each bobs with its side's live
@@ -128,8 +128,16 @@ Reduced motion: no slide and no slam, the finished picture simply appears.
   no line, 1–10 "It's not very effective…", 0 "But it missed!". If `recovery > 0` a second line follows: "{SPEAKER} shook off
   the last hit!  +{recovery}". A button on the box opens a transcript drawer, closed
   by default. Before the first hit the box shows a prompt for whose turn it is.
+- **Whose move.** The cue under the battle text follows `last_hit.by`: each hit
+  hands the floor to the other side. Cross-examination opens with two unscored
+  turns, so there the cue names what the round wants instead: `ASK THE HOUSE ONE
+  QUESTION` while the last hit is still the player's rebuttal, then `ANSWER THE
+  HOUSE` once the house's answer has been scored. (A user's hit usually lands a
+  stage late — the round advances about a second after they stop talking and the
+  judge takes a few — which is why the fixture shows the cross-examination answer
+  scored under `closing`.)
 - **Announcer.** A banner that slams in and out on each stage change: `ROUND 1`
-  then `FIGHT!`; `ROUND 2`; `FINAL ROUND`.
+  then `FIGHT!`; `ROUND 2`; `ROUND 3` then `CROSS-EXAMINE!`; `FINAL ROUND`.
 
 ### DECISION
 
@@ -231,7 +239,7 @@ Move names are new card data — see Contract additions.
 
 ### The finish: judge's decision, with arcade flourishes
 
-All three rounds always play. Then: the fire dims; `JUDGE'S DECISION` slams in; a
+All four rounds always play. Then: the fire dims; `JUDGE'S DECISION` slams in; a
 beat while the two final numbers count up side by side; then the result banner,
 which the client chooses from the final state:
 
