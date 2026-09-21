@@ -377,6 +377,33 @@
   }
 }
 
+/*
+ * At rest the chair breathes: one sprite pixel, up and back, in two hard steps.
+ * The house breathes half a cycle behind, so the pair never moves in unison.
+ * Hit-stop holds it still along with everything else.
+ */
+.armchair--resting .armchair__bob {
+  animation: chair-breathe 3.4s steps(1, end) infinite;
+}
+
+.armchair--resting.armchair--bot .armchair__bob {
+  animation-delay: -1.7s;
+}
+
+.fight--frozen .armchair__bob {
+  animation-play-state: paused;
+}
+
+@keyframes chair-breathe {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
 /* The decision screen's poses (task U.5). */
 .armchair--win .armchair__rock {
   animation: chair-hop 480ms steps(2, end) 3;

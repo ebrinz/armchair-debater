@@ -406,6 +406,10 @@ export const Armchair = ({
     low ? 'armchair--low' : '',
     pose !== 'idle' ? `armchair--${pose}` : '',
     level > 0 ? 'armchair--talking' : '',
+    // At rest: nobody is talking through it, nothing has just hit it, and it is
+    // not holding a win or lose pose. The voice-driven bob above takes over the
+    // same group the moment there is a level to follow.
+    bob === 0 && !hurt && pose === 'idle' ? 'armchair--resting' : '',
     className ?? '',
   ]
     .filter(Boolean)
