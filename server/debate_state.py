@@ -7,7 +7,9 @@ the client only ever renders the latest one.
 
 from collections.abc import Awaitable, Callable
 
-DEBATE_ROUNDS = ("opening", "rebuttal", "closing")
+# The rounds as the client sees them. Cross-examination is two flow nodes that
+# share one stage; which nodes are scored is the scorer's business.
+DEBATE_ROUNDS = ("opening", "rebuttal", "crossexam", "closing")
 STAGES = ("setup", *DEBATE_ROUNDS, "verdict")
 
 MAX_HEALTH = 100

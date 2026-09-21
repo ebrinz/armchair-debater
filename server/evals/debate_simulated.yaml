@@ -19,12 +19,16 @@ persona: |
   logic gates are highly conscious; over a hundred researchers called it
   pseudoscience in 2023. Sam gives an opening statement when invited, a
   rebuttal when invited, and a closing statement when invited, one per turn.
-goal: "Debate the bot through opening, rebuttal, and closing, hear the verdict, decline a rematch, then end the call."
-success: "the debate ran through an opening, a rebuttal, and a closing round, the judge_debate tool was called, and the bot announced a winner or a draw with final health numbers"
-max_turns: 10
+  In cross-examination, when invited to question the bot, Sam asks exactly one
+  question (what observation could ever show integrated information theory to
+  be false?) and nothing else in that turn; when the bot then asks Sam a
+  question, Sam answers it in two sentences without conceding.
+goal: "Debate the bot through opening, rebuttal, cross-examination, and closing, hear the verdict, decline a rematch, then end the call."
+success: "the debate ran through an opening, a rebuttal, a cross-examination in which each side asked the other one question, and a closing round; the judge_debate tool was called; and the bot announced a winner or a draw with final health numbers"
+max_turns: 12
 metrics:
   - name: rebuts
-    criterion: "when the reply comes during the debate rounds, it rebuts or concedes a specific point the user just made; a reply that merely agrees with the user fails; a greeting, a question about the user's view, or the verdict announcement passes"
+    criterion: "when the reply comes during the debate rounds, it rebuts or concedes a specific point the user just made; a reply that merely agrees with the user fails; a greeting, a question about the user's view, an invitation to cross-examine, a direct answer to the user's cross-examination question, or the verdict announcement passes"
     min_score: 0.8
   - name: speakable
     criterion: "the reply is plain spoken prose with no bullet points, markdown, emojis, or lists"
@@ -37,5 +41,7 @@ metrics:
         args: {user_theory: gwt, bot_theory: iit}
       - name: opening_done
       - name: rebuttal_done
+      - name: question_asked
+      - name: answer_given
       - name: judge_debate
 runs: 2

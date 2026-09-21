@@ -80,6 +80,24 @@ scenarios:
             calls:
               - name: rebuttal_done
           - event: response
+            eval: "the bot says it is time for cross-examination and invites the user to put a question to it"
+            text_excludes: "_"
+
+      - user: "My question for you: what observation, if we actually made it, would show that integrated information theory is false?"
+        expect:
+          - event: function_call
+            calls:
+              - name: question_asked
+          - event: response
+            eval: "the bot answers the user's question about what could show integrated information theory to be false, and then asks the user a question of its own"
+            text_excludes: "*"
+
+      - user: "My answer: broadcast needs no extra ingredient. Being globally available for report, memory, and action is what we mean by experience; ask for more than that and you are asking for magic."
+        expect:
+          - event: function_call
+            calls:
+              - name: answer_given
+          - event: response
             eval: "the bot gives a closing statement and invites the user's closing statement"
             text_excludes: "_"
 

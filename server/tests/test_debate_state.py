@@ -196,12 +196,19 @@ async def test_replaying_the_fixture_debate_reproduces_the_fixture_healths():
         ("user", 15, 0, "opening user"),
         ("bot", 4, 10, "rebuttal bot"),
         ("user", 22, 4, "rebuttal user"),
+        ("bot", 5, 8, "crossexam bot"),
+        ("user", 3, 6, "crossexam user"),
         ("bot", 10, 5, "closing bot"),
         ("user", 14, 0, "closing user"),
     ]
-    # One snapshot per scored turn: those with a hit and no verdict yet. Picked
-    # by content, not position, so adding a non-hit snapshot cannot shift them.
-    fixture_snapshots = [f for f in FIXTURES if f["last_hit"] and not f["verdict"]]
+    # One snapshot per scored turn: those whose hit is new. Picked by content,
+    # not position — a stage change re-sends the last hit under the new stage,
+    # and the verdict re-sends the final one.
+    fixture_snapshots = [
+        f
+        for previous, f in zip(FIXTURES, FIXTURES[1:], strict=False)
+        if f["last_hit"] and f["last_hit"] != previous["last_hit"]
+    ]
     for (by, damage, recovery, reason), fixture in zip(turns, fixture_snapshots, strict=True):
         await state.apply_hit(by, damage, recovery, reason)
         assert state.health["user"] == fixture["user"]["health"]

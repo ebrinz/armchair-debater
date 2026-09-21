@@ -85,7 +85,7 @@ nodes:
           instructions not to state a view or start arguing no longer apply:
           your opening turn MUST contain your argument.
 
-          The debate begins. This is the OPENING round of three.
+          The debate begins. This is the OPENING round of four.
           The user holds: {{ user_theory_name }}. You defend: {{ bot_theory_name }}.
 
           Your card. Pick ONE argument from this list for your opening and
@@ -137,13 +137,71 @@ nodes:
           {{ bot_card }}
 
           When the user has given their rebuttal, call rebuttal_done
-          immediately, without replying to it; your closing comes next round.
+          immediately, without replying to it; cross-examination comes next.
           If instead they ask a question or object to the theory you matched
           them with, answer briefly and invite their rebuttal again.
     functions:
       - name: rebuttal_done
         transition_only: true
-        description: The user has finished their rebuttal. Moves the debate to the closing round.
+        description: The user has finished their rebuttal. Moves the debate to cross-examination.
+        transition_to: crossexam_question
+
+  crossexam_question:
+    pre_actions:
+      - type: emit_stage
+        handler: emit_stage
+        stage: crossexam
+    task_messages:
+      - role: developer
+        content: |
+          This is the CROSS-EXAMINATION round, in two parts. Part one: the
+          user questions you. In one short turn of two sentences: say that it
+          is time for cross-examination, and invite the user to put ONE
+          question to you about {{ bot_theory_name }}. Do not answer their
+          rebuttal, do not argue, and do not ask them anything yet.
+
+          Whatever the user says next about the debate is their question, even
+          if it is phrased as a challenge rather than a question: call
+          question_asked immediately, without replying to it; you answer it
+          next. Only if they ask how cross-examination works, explain it in one
+          sentence and invite their question again.
+    functions:
+      - name: question_asked
+        transition_only: true
+        description: The user has put their cross-examination question to you. Moves to your answer and your question for them.
+        transition_to: crossexam_answer
+
+  # Part two shares the stage above, so it emits nothing: the client is already
+  # showing the cross-examination round.
+  crossexam_answer:
+    task_messages:
+      - role: developer
+        content: |
+          Part two of CROSS-EXAMINATION. In one turn of three short sentences:
+          first and second, answer the question the user just put to you,
+          directly. Do not dodge it; if it exposes a real weakness, concede
+          that much and say why {{ bot_theory_name }} survives it. Third, put
+          ONE pointed question to the user: aim it at the weakest point in what
+          they have argued so far, or at a known objection from their card
+          below. Ask only one question, and do not answer it yourself.
+
+          Your card, to answer from; these are the papers that support your
+          case:
+          {{ bot_card }}
+
+          This is the OPPONENT's card — its known objections are your
+          ammunition for the question; do not argue their side or present
+          their arguments as your own:
+          {{ user_card }}
+
+          When the user has answered your question, call answer_given
+          immediately, without replying to it; your closing comes next round.
+          If instead they ask what you meant, rephrase your question in one
+          sentence and wait for their answer.
+    functions:
+      - name: answer_given
+        transition_only: true
+        description: The user has answered your cross-examination question. Moves the debate to the closing round.
         transition_to: closing
 
   closing:
@@ -155,11 +213,13 @@ nodes:
       - role: developer
         content: |
           This is the CLOSING round. In one turn of three short sentences:
-          first, answer the user's rebuttal; second, give your closing
-          statement, an argument for {{ bot_theory_name }} from the card below
-          that you have not used yet in this debate; third, invite the user's
-          closing statement and tell them it is the last word before the
-          judge decides. Do not repeat your opening or rebuttal arguments.
+          first, respond to the answer the user just gave to your question —
+          press its weak point, or concede it in a few words; second, give
+          your closing statement, an argument for {{ bot_theory_name }} from
+          the card below that you have not used yet in this debate; third,
+          invite the user's closing statement and tell them it is the last
+          word before the judge decides. Do not repeat an argument you have
+          already made in this debate.
 
           Your card; these are the papers that support your case:
           {{ bot_card }}

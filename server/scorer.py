@@ -12,7 +12,14 @@ from collections.abc import Callable
 from loguru import logger
 
 import judge
-from debate_state import DEBATE_ROUNDS, DebateState
+from debate_state import DebateState
+
+# Flow nodes (not client stages) whose turns belong to the debate. Everything
+# said in them goes into the transcript the judge reads.
+HEARD_NODES = ("opening", "rebuttal", "crossexam_question", "crossexam_answer", "closing")
+# ...and the ones where what is said is not an argument: the house's invitation
+# and the user's question. Both of the answers that follow are scored.
+UNSCORED_NODES = ("crossexam_question",)
 
 
 class TurnScorer:
@@ -35,10 +42,16 @@ class TurnScorer:
     def submit(self, by: str, text: str) -> None:
         """Queue a turn for background scoring. Never blocks; needs a running event loop."""
         text = text.strip()
-        if self._closed or not text or self._current_stage() not in DEBATE_ROUNDS:
+        node = self._current_stage()
+        if self._closed or not text or node not in HEARD_NODES:
             return
         history = list(self._transcript)
         self._transcript.append((by, text))
+        if node in UNSCORED_NODES:
+            # Kept for the judge to read — an answer means little without its
+            # question — but a question is not an argument, so it is not scored.
+            logger.debug(f"scorer: heard an unscored {by} turn in {node}")
+            return
         generation = self._generation
         logger.debug(
             f"scorer: accepted {by} turn in {self._current_stage()} ({len(text.split())} words)"

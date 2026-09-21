@@ -171,3 +171,23 @@ async def test_abandon_discards_the_turn_in_flight_and_refuses_new_ones():
 
     assert rig.state.hits == []
     assert [call["turn"] for call in rig.calls] == ["first"]
+
+
+async def test_a_cross_examination_question_is_heard_but_not_scored():
+    rig = Rig()
+    rig.stage = "crossexam_question"
+    rig.scorer.submit("bot", "Put one question to me.")
+    rig.scorer.submit("user", "How would anyone ever measure phi in a brain?")
+    await rig.scorer.drain()
+    assert rig.state.hits == [] and rig.calls == []
+
+    # The answer is scored, and the judge is shown the question it answers.
+    rig.stage = "crossexam_answer"
+    rig.scorer.submit("bot", "It is intractable, not undefined.")
+    await rig.scorer.drain()
+
+    assert [h["reason"] for h in rig.state.hits] == ["scored It is intractable, not undefined."]
+    assert rig.calls[0]["history"] == [
+        ("bot", "Put one question to me."),
+        ("user", "How would anyone ever measure phi in a brain?"),
+    ]
