@@ -35,6 +35,7 @@ class TurnScorer:
         self._theories = theories
         self._score = score
         self._transcript: list[tuple[str, str]] = []
+        self._heard: dict[tuple[str, str], int] = {}
         self._tail: asyncio.Task | None = None
         self._closed = False
         self._generation = 0
@@ -47,6 +48,7 @@ class TurnScorer:
             return
         history = list(self._transcript)
         self._transcript.append((by, text))
+        self._heard[(node, by)] = self._heard.get((node, by), 0) + 1
         if node in UNSCORED_NODES:
             # Kept for the judge to read — an answer means little without its
             # question — but a question is not an argument, so it is not scored.
@@ -112,8 +114,13 @@ class TurnScorer:
         self._closed = True
         self._generation += 1
 
+    def heard(self, node: str, by: str) -> int:
+        """How many finished turns ``by`` has had in flow node ``node`` this debate."""
+        return self._heard.get((node, by), 0)
+
     def reset(self) -> None:
         self._transcript = []
+        self._heard = {}
         self._closed = False
         self._generation += 1
         self._tail = None

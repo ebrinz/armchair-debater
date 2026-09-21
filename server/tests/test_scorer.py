@@ -191,3 +191,20 @@ async def test_a_cross_examination_question_is_heard_but_not_scored():
         ("bot", "Put one question to me."),
         ("user", "How would anyone ever measure phi in a brain?"),
     ]
+
+
+async def test_the_scorer_knows_who_has_been_heard_in_a_node_and_forgets_on_reset():
+    rig = Rig()
+    rig.stage = "crossexam_answer"
+    assert rig.scorer.heard("crossexam_answer", "bot") == 0
+
+    rig.scorer.submit("bot", "An answer, and a question.")
+    rig.scorer.submit("user", "My answer.")
+    await rig.scorer.drain()
+
+    assert rig.scorer.heard("crossexam_answer", "bot") == 1
+    assert rig.scorer.heard("crossexam_answer", "user") == 1
+    assert rig.scorer.heard("closing", "bot") == 0
+
+    rig.scorer.reset()
+    assert rig.scorer.heard("crossexam_answer", "bot") == 0
