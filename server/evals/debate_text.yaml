@@ -90,7 +90,7 @@ scenarios:
             calls:
               - name: opening_done
           - event: response
-            eval: "the bot rebuts the user's point about computability or testability, and invites the user's rebuttal"
+            eval: "the bot rebuts at least one specific point from the user's opening — either the masking and ignition evidence that workspace theory is testable, or the claim that integrated information cannot be computed for a real brain — and invites the user's rebuttal; rebutting only one of them passes"
             text_excludes: "`"
 
       - user: "Hang on, before my rebuttal: what's your source for that? Author and year."
