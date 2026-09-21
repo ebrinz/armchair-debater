@@ -18,7 +18,7 @@ character names, or sounds are used.
 
 ## Non-goals (v1)
 
-No VS splash screen. No sound effects. No per-theory armchair variants or
+No sound effects. No per-theory armchair variants or
 multi-frame sprite animation. No card-collection browser. See [TODOs](#todos).
 
 ## What the real data looks like
@@ -46,9 +46,19 @@ screenFor(connected: boolean, snapshot: DebateSnapshot | null): Screen
 | Screen | When | Leaves when |
 |---|---|---|
 | `title` | not connected | PRESS START connects and unlocks the mic |
-| `select` | connected, and no snapshot yet or `stage: "setup"` | a snapshot arrives with `stage` in a debate round |
+| `select` | connected, and no snapshot yet or `stage: "setup"` with nobody matched | both sides are matched to a theory |
+| `versus` | `stage: "setup"` with both `theory_id`s set (the lock-in snapshot) | `stage` moves to a debate round and the 2.6 s hold below has run out |
 | `fight` | `stage` is `opening`, `rebuttal`, or `closing` | `stage: "verdict"` |
 | `decision` | `stage: "verdict"` | a rematch puts `stage` back to `setup` → `select`; disconnect → `title` |
+
+The `versus` splash is the one screen that also needs time. Live, the lock-in
+snapshot and the `opening` one arrive milliseconds apart, so the view holds the
+splash for 2.6 s from the moment a pairing appears (`splashKey`, `nextSplash` in
+`screen.ts` — pure and unit-tested; the view only runs the timer). It fills air
+that is otherwise dead — the bot is composing its opening — and it can only
+delay `fight`, never any other screen. A snapshot that already carries a hit
+(a page reloaded mid-fight) or a repeat of the same snapshot does not replay it;
+a rematch, which passes through an unmatched `setup`, does.
 
 Two URL switches: `?console` renders the scaffold's debugging console instead of
 the arcade UI; `?mock` replays fixtures with no server (it implies "connected").
@@ -79,6 +89,16 @@ elsewhere.
 - Arrow keys move the cursor; the grid is a single tab stop with roving focus.
 - Prompt line: "CHOOSE YOUR THEORY — or just say what you think".
 - If the cards have not arrived yet, the grid shows twelve empty slots.
+
+### VERSUS — the match-up
+
+Two halves cut on a diagonal, each washed in its theory's type colour and sliding
+in from its own side: `1P YOU` with the challenger's chair on the left, `CPU THE
+HOUSE` with the champion's on the right — the same two chairs that are about to
+fight — each over a plate with the theory's name and its family. `VS` slams onto
+the seam once both have landed. It is the first time the player sees which theory
+the house chose. Nothing is interactive; the live region reads "*X* versus *Y*".
+Reduced motion: no slide and no slam, the finished picture simply appears.
 
 ### FIGHT — the HUD
 
@@ -305,7 +325,6 @@ client needs no balance logic of its own.
 
 ## TODOs
 
-- VS splash between select and fight.
 - Synthesized 8-bit sound effects with a mute toggle.
 - A distinct armchair per theory; idle, attack, and hurt frames.
 - Card-collection browser (the parked explorer mode, in miniature).

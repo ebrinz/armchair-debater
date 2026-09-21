@@ -101,9 +101,10 @@ npm run dev              # http://localhost:5173
 
 ### Arcade UI
 
-Four screens, chosen purely from the server's state: **TITLE** (PRESS START
+Five screens, chosen from the server's state: **TITLE** (PRESS START
 connects and unlocks the mic), **SELECT** (a twelve-card roster of the theories,
-trading-card style), **FIGHT** (two health bars draining toward the centre, with
+trading-card style), **VERSUS** (your theory against the one the house picked),
+**FIGHT** (two health bars draining toward the centre, with
 hit-by-hit battle text), and **DECISION** (the judge's verdict and a rematch
 prompt). On SELECT you can click a card or just say what you think consciousness
 is — either one sends the same pick to the bot. `?mock` replays a recorded debate
@@ -134,6 +135,15 @@ cd client
 npm test && npm run lint && npm run build
 ```
 
+**What costs credits.** `?mock` costs nothing: it replays a fixture in the browser
+and never connects. The text-mode evals call the LLM but not the speech services —
+the harness asks the bot to skip speech, and `server/skip_tts_sync.py` makes that
+stick (a Pipecat quirk otherwise switches speech back on after every tool call; one
+scripted suite run went from 1,585 synthesized characters to 44). A live session
+streams the mic to speech-to-text for as long as the tab is connected, so close it
+when you are done. For a spoken smoke test that spares the Gradium allowance, run
+the bot with `SPEECH_PROVIDER=openai`.
+
 The evals drive the real bot end to end: a scripted full debate (rounds advance one
 turn each, the right tools fire with the right arguments, no markdown reaches
 speech, no unrequested rematch, citations stay on the cards), a non-workspace view
@@ -146,18 +156,19 @@ model.
 per-turn judging, the balance rules, the verdict and rematch, the evals, and the
 server → client state contract.
 
-**UI:** the shell, the "study at night" stage, the pixel theme, and the title screen
-are done, and the select / fight / decision screens render live debate data on the
-stage. The full arcade treatment — wingback-armchair fighters with faces, tiered hit
-effects, the trading-card theory select with move names, judge's-decision
-flourishes — is specified in
-[`docs/design/2026-09-19-debate-ui-design.md`](docs/design/2026-09-19-debate-ui-design.md)
-and in progress. It is an homage: all art is original CSS/SVG and the fonts are
-open-licensed (Press Start 2P, VT323).
+**UI:** the full arcade treatment is in — the "study at night" stage and pixel theme;
+a title screen; the trading-card theory select with move names, pick-or-speak; a
+versus splash that reveals the house's theory; the fight, with wingback-armchair
+fighters with faces, tiered hit effects and battle text; and the judge's decision
+with its count-up, banners and CONTINUE? countdown. Specified in
+[`docs/design/2026-09-19-debate-ui-design.md`](docs/design/2026-09-19-debate-ui-design.md).
+It is an homage: all art is original CSS/SVG and the fonts are open-licensed
+(Press Start 2P, VT323). Phone layouts are not done.
 
 **Parked for later:** a Socratic sparring mode, a theory-explorer mode, a
-cross-examination round, a distinct judge voice, bot-vs-bot, and retrieval over
-PhilPapers for long-tail theories.
+cross-examination round, a distinct judge voice, bot-vs-bot, retrieval over
+PhilPapers for long-tail theories, sound effects, and a distinct armchair per
+theory.
 
 ## Swapping providers
 
