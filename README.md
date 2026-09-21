@@ -25,7 +25,7 @@ Built on [Pipecat](https://github.com/pipecat-ai/pipecat) (1.11) with Pipecat Fl
 | **Opening, Rebuttal, Closing** (rounds 1, 2, 4) | One turn each per round. The bot argues only from its card, uses a different argument each round, keeps turns under ~70 words, concedes good points, and never folds. It may quote *your* theory's papers against you, but never a paper that is on neither card. |
 | **Cross-examination** (round 3) | You put one question to the house and it has to answer it straight; then it puts one to you, aimed at the weakest thing you have said or a known objection to your theory. The questions are not scored. Both answers are, so a dodge earns nothing. |
 | **Judging, live** | After each turn a separate LLM call — a fresh context with no memory of having argued a side — scores that turn: damage to the opponent, and how well it recovered from the last hit. Scoring runs off the voice path, so it never delays speech; bars move about a second after a turn ends. |
-| **Verdict** | Bars decide it: higher health wins, within 5 is a draw. The judge writes a two-sentence rationale, which the bot reads out, then offers a rematch. |
+| **Verdict** | Bars decide it: higher health wins, within 5 is a draw. The judge writes a two-sentence rationale, which the bot reads out, then offers a rematch. Set `GRADIUM_JUDGE_VOICE_ID` and the judge reads it in a voice of their own. |
 
 **Balance:** damage is doubled, and a rebuttal can heal at most half of the last
 hit you took — so a good comeback blunts a hit but never erases it, close debates
@@ -107,12 +107,15 @@ connects and unlocks the mic), **SELECT** (a twelve-card roster of the theories,
 trading-card style), **VERSUS** (your theory against the one the house picked),
 **FIGHT** (two health bars draining toward the centre, with
 hit-by-hit battle text), and **DECISION** (the judge's verdict and a rematch
-prompt). On SELECT you can click a card or just say what you think consciousness
-is — either one sends the same pick to the bot. `?mock` replays a recorded debate
+prompt). On SELECT you can just say what you think consciousness is, or pick
+your theory and then the rival the house must defend (or leave that to the house).
+**THE DECK**, on the title screen, browses all twelve cards with no connection. `?mock` replays a recorded debate
 through the UI with no server; `?console` swaps in the Pipecat debugging console
 (both above). `prefers-reduced-motion` drops every shake, flash, and slam to an
-instant number and bar change, and a CRT toggle in the bottom corner (remembered
-in `localStorage`) turns the light scanline overlay on or off.
+instant number and bar change. Two toggles in the bottom corner, both remembered
+in `localStorage`: CRT for the light scanline overlay, and SFX for the fifteen
+synthesized 8-bit sound cues (Web Audio, no audio files; kept quiet because the mic
+is open).
 
 All art is original pixel art, drawn in code as CSS and inline SVG — no
 third-party game assets, names, logos, or sounds. It's an homage, not a copy. The
@@ -166,10 +169,8 @@ with its count-up, banners and CONTINUE? countdown. Specified in
 It is an homage: all art is original CSS/SVG and the fonts are open-licensed
 (Press Start 2P, VT323). Phone layouts are not done.
 
-**Parked for later:** a Socratic sparring mode, a theory-explorer mode, a
-distinct judge voice, bot-vs-bot, retrieval over
-PhilPapers for long-tail theories, sound effects, and a distinct armchair per
-theory.
+**Parked for later:** a Socratic sparring mode, a theory-explorer mode, bot-vs-bot,
+and retrieval over PhilPapers for long-tail theories.
 
 ## Swapping providers
 

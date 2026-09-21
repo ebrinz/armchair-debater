@@ -18,8 +18,7 @@ character names, or sounds are used.
 
 ## Non-goals (v1)
 
-No sound effects. No per-theory armchair variants or
-multi-frame sprite animation. No card-collection browser. See [TODOs](#todos).
+No multi-frame sprite animation beyond the states below. See [TODOs](#todos).
 
 ## What the real data looks like
 
@@ -70,25 +69,45 @@ mic prompt follows), and a one-line instruction: "Say what you think consciousne
 is. The house will disagree." Connection errors appear in the text box style used
 elsewhere.
 
-### SELECT — the character select, with Pokémon-style cards
+### SELECT — the character select, with trading cards
 
-- A grid of the twelve theory cards, two rows of six, each slot showing the
-  theory's short name and its type colour. One slot has focus; the focused card's
-  full face is shown beside the grid (below it on a narrow screen).
+- **Roster.** The twelve theories in one vertical column on the left, each tile in
+  its type colour with the theory's full name. One tile has the cursor; that
+  card's full face fills the rest of the width.
 - **Card face:** a trading card — layout in the Style guide below. Name and
   `HP 100`; the wingback portrait in the theory's type colour; the Kuhn category in
-  words; the three moves (each card's `moves[i]` name over its `arguments[i]` text,
-  clamped to two lines with the full text available on focus/hover); `WEAK vs`
-  listing its `rivals` by short name; the `claim` as flavour text. Objections and citations are not shown — the player should not see
-  their opponent's weaknesses on the select screen — and are not sent to the client.
-- **Pick or speak.** Clicking a card (or Enter on the focused slot) sends the typed
-  line `My view is {name}.` with `client.sendText()`. Speaking works exactly as it
-  does without the UI. Either way, when a snapshot arrives carrying
-  `user.theory_id`, the cursor jumps to that slot and it locks in with a flash; the
-  house's pick is revealed when the stage changes.
-- Arrow keys move the cursor; the grid is a single tab stop with roving focus.
-- Prompt line: "CHOOSE YOUR THEORY — or just say what you think".
-- If the cards have not arrived yet, the grid shows twelve empty slots.
+  words; the three moves (each card's `moves[i]` name over its `arguments[i]`
+  text, shown in full at desktop width, and expandable on a click where a narrower
+  card cuts one); `WEAK vs` listing its `rivals` by short name; the `claim` as
+  flavour text, never clamped. Objections and citations are not shown — the player
+  should not see their opponent's weaknesses here — and are not sent to the client.
+- **Pick or speak.** Speaking works exactly as it does without the UI. Picking
+  takes two steps, and nothing is sent until the second:
+  1. **Your theory.** Enter or a click on a tile takes it (`1P` flag).
+  2. **The house's theory.** The roster closes down to that theory's `rivals` —
+     the same list the server chooses from, so a pick is always one it honours —
+     under a `CPU` cursor; every other tile steps back. Pick one, or press
+     **HOUSE'S CHOICE** to leave it to the bot, which is what speaking does.
+     Escape or **BACK** returns to step one.
+
+  The pick is sent as a typed line with `client.sendText()`: `My view is {name}.`
+  or `My view is {name}, and I want you to defend {rival} against it.` Either way,
+  when a snapshot arrives carrying `user.theory_id`, the versus splash takes over.
+  A pick the bot does not confirm within 12 s reopens the roster.
+- Arrow keys move the cursor and skip closed tiles; the roster is a single tab
+  stop with roving focus.
+- Prompt line: "CHOOSE YOUR THEORY — or just say what you think", then "CHOOSE THE
+  HOUSE'S THEORY — or let the house pick".
+- If the cards have not arrived yet, the roster shows twelve empty slots.
+
+### THE DECK — the card browser
+
+A view of the title screen, not a server state: **THE DECK** under PRESS START
+opens the select screen's roster and card face with nothing at stake. A tile only
+shows its card, the rival chips on a card are links to the cards they name, and
+Escape or **BACK** returns to the title. It needs no connection — it reads the
+cards the server sent if there are any, otherwise the copy bundled with the client,
+which a server test pins to the real deck.
 
 ### VERSUS — the match-up
 
@@ -179,12 +198,20 @@ CSS variables:
 - **The challenger (the player, left):** worn green leather, a patch or two.
 - **The champion (the house, right, mirrored):** immaculate oxblood leather with
   brass studs.
-- **On a card portrait:** the same sprite upholstered in that theory's type colour,
-  so all twelve portraits differ at no extra drawing cost.
+- **On a card portrait:** the same sprite upholstered in that theory's type colour.
+- **The emblem.** Each theory has a 7×5 emblem stitched in pale thread on the
+  headrest, above the eyes — a broadcast for GWT, phi for IIT, a frame within a
+  frame for higher-order thought, an eye for attention schema, a question mark for
+  illusionism, a microtubule lattice for Orch OR, and so on (`emblems.ts`; a test
+  keeps one per card, all different). It is what tells the eight materialist
+  chairs apart, and in a fight each chair wears the emblem of the theory it is
+  defending. The house's sprite is mirrored, so its emblem is drawn flipped and
+  reads the right way round.
 
-States: *idle* — slow breathing bob; *talking* — bob follows that side's live audio
-level; *hit* — eyes squeeze to `> <`, chair rocks back on its rear legs, white
-flash; *low health (< 30)* — a visible tear with stuffing poking out, and a slump;
+States: *idle* — a breathing bob of one sprite pixel, the house half a cycle behind;
+*talking* — bob follows that side's live audio level; *attack* — the chair that
+landed the hit lunges at the other and settles back; *hit* — eyes squeeze to
+`> <`, chair rocks back on its rear legs, white flash; *low health (< 30)* — a visible tear with stuffing poking out, and a slump;
 *win* — a little hop; *lose* — slumped, stuffing out.
 
 On screen the sides are labelled `1P YOU` and `CPU THE HOUSE`.
@@ -253,6 +280,23 @@ which the client chooses from the final state:
 
 The winner's chair hops; the loser's slumps with stuffing out. Then the rationale
 types into the text box, then `CONTINUE?` 9 to 0.
+
+### Sound: fifteen cues, no files
+
+Synthesized in the browser with Web Audio — square, triangle and sawtooth
+oscillators and a noise burst — so there is nothing to license or load. The cues:
+cursor, pick, back, the versus slam, the round jingle, a miss and three tiers of
+hit, the shake-off, win / lose / draw, the countdown tick, and game over. Each is a
+recipe of tones in `sfx.ts` (pure data, unit-tested to stay short, quiet and in a
+chiptune register); `sfxPlayer.ts` is the only part that touches audio.
+
+They are cues under a conversation, not a soundtrack: the mic is open and the bot
+speaks through the same speakers, so every tone is capped well below the voice,
+and the longest effect is under a second and a half. **SFX ON/OFF** sits beside the
+CRT toggle and is remembered the same way. Browsers keep audio suspended until the
+page has had a click, so there is no sound before PRESS START, and none on `?mock`
+until something is clicked. Reduced motion does not silence it — sound is not
+motion — the toggle does.
 
 ### Accessibility and small screens
 
@@ -333,7 +377,6 @@ client needs no balance logic of its own.
 
 ## TODOs
 
-- Synthesized 8-bit sound effects with a mute toggle.
-- A distinct armchair per theory; idle, attack, and hurt frames.
-- Card-collection browser (the parked explorer mode, in miniature).
-- Let the player choose the house's theory too.
+Nothing open: the versus splash, the sound effects, the per-theory armchairs, the
+deck, and choosing the house's theory have all been built. Phone layouts remain
+out of scope.

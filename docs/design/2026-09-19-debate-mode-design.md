@@ -17,8 +17,7 @@ agent. That constraint drives the scope below.
 
 ## Non-goals (v1)
 
-No RAG, embeddings, or vector store. No bot-vs-bot. No second voice. See
-[TODOs](#todos).
+No RAG, embeddings, or vector store. No bot-vs-bot. See [TODOs](#todos).
 
 ## Starting point
 
@@ -126,6 +125,15 @@ since an answer means little without its question) but does not score them
 (`scorer.UNSCORED_NODES`). Part two is the house's answer and the user's answer;
 both are scored like any other turn, so a dodge earns nothing. The client sees one
 stage, `crossexam`, for both parts.
+
+**The judge's voice** is optional and off by default, because a voice ID is the
+user's to choose: set `GRADIUM_JUDGE_VOICE_ID` (or, with OpenAI speech, both
+`OPENAI_TTS_VOICE` and `OPENAI_JUDGE_VOICE`). The `verdict` node then has a
+`use_voice` pre-action that pushes a `TTSUpdateSettingsFrame` — a frame, so the
+switch takes its place in line behind the house's "the judge is tallying" — and
+the verdict prompt gains a line telling the bot to read it as the judge, saying
+"the house" for "I". `setup` switches back, so a rematch is argued in the house's
+voice again.
 
 `set_positions` receives theory ids the LLM chose from the index in the `setup`
 prompt (the index lists each card's rivals). It validates both; if the bot's theory
@@ -323,7 +331,6 @@ at the end-to-end check.
 ## TODOs
 
 - Socratic sparring mode; theory-explorer mode (the original 4 → 3 → 1 progression).
-- Distinct voice for the judge.
 - Bot vs. bot with the user moderating.
 - RAG over PhilPapers / ConTraSt for long-tail theories.
 - README lists Deepgram / OpenAI / Cartesia; `bot.py` uses Gradium + General Compute.
