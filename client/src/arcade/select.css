@@ -170,6 +170,12 @@
   text-shadow: 2px 2px 0 rgb(0 0 0 / 30%);
 }
 
+/* A tile carrying a flag keeps its name clear of it; a long one wraps instead. */
+.slot--focused .slot__name,
+.slot--mine .slot__name {
+  padding-right: 3.4em;
+}
+
 /* No separate :hover state — the pointer MOVES the cursor (CardGrid listens for
    mouseenter), so lighting a hovered slot as well would show two lit keys. */
 .slot--focused {
@@ -217,6 +223,42 @@
     background: var(--bar-fill);
     color: var(--bg);
   }
+}
+
+/*
+ * Step two — the house's theory. The rivals stay lit and everything else steps
+ * back, the same "not choosable now" dimming a confirmed pick uses. The player's
+ * own tile keeps its brass ring and a still 1P flag; the blinking cursor is the
+ * house's, in the house's oxblood.
+ */
+.slot--closed:not(.slot--mine) {
+  filter: brightness(0.5) saturate(0.6);
+}
+
+.slot--mine {
+  outline: 4px solid var(--bar-fill);
+  filter: none;
+}
+
+.slot--mine .slot__cursor {
+  animation: none;
+}
+
+.slot__cursor--cpu {
+  border-color: var(--bar-danger);
+  color: var(--ink);
+  background: var(--oxblood);
+}
+
+/* Under the roster in step two: leave it to the house, or go back. */
+.select__house {
+  display: flex;
+  gap: 0.6em;
+  margin-top: clamp(8px, 1.4vh, 14px);
+}
+
+.select__house > * {
+  flex: 1 1 0;
 }
 
 /* The server has confirmed this one. It flashes, then keeps a brass ring. */

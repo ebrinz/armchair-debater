@@ -25,6 +25,7 @@ import { useSuperFlare } from './hooks/useHitEffects';
 import { startMockReplay } from './mock';
 import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
 import type { SplashState } from './screen';
+import { pickLine } from './selection';
 import { DecisionScreen } from './screens/DecisionScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
@@ -67,8 +68,6 @@ const announce = (
   return lines.filter(Boolean).join('. ');
 };
 
-/** What clicking a theory card says, as if the player had typed it. */
-const pickLine = (card: TheoryCard) => `My view is ${card.name}.`;
 
 /** What the REMATCH button says, as if the player had asked out loud. */
 const REMATCH_LINE = "I'd like a rematch.";
@@ -83,7 +82,7 @@ interface ViewProps {
   botLevel?: number;
   mock?: boolean;
   /** Sends the select screen's pick. */
-  onPick: (card: TheoryCard) => void;
+  onPick: (mine: TheoryCard, house: TheoryCard | null) => void;
   /** Asks for another debate from the decision screen. */
   onRematch: () => void;
 }
@@ -200,8 +199,8 @@ const ArcadeSession = ({
   // way by the scaffold at src/components/pipecat/text-input.tsx:187.
   const client = usePipecatClient();
   const onPick = useCallback(
-    (card: TheoryCard) => {
-      void client?.sendText(pickLine(card));
+    (mine: TheoryCard, house: TheoryCard | null) => {
+      void client?.sendText(pickLine(mine, house));
     },
     [client]
   );
@@ -278,7 +277,7 @@ export const ArcadeApp = () => {
         busy={false}
         error={null}
         onStart={() => {}}
-        onPick={(card) => console.info(pickLine(card))}
+        onPick={(mine, house) => console.info(pickLine(mine, house))}
         onRematch={() => setReplay((n) => n + 1)}
         mock
       />
