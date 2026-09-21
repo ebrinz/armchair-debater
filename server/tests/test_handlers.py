@@ -9,6 +9,7 @@ from debate_state import DebateState
 class FakeScorer:
     def __init__(self, on_drain=None):
         self.log = []
+        self.heard_turns = {}
         self._on_drain = on_drain
 
     def reset(self):
@@ -16,6 +17,9 @@ class FakeScorer:
 
     def close(self):
         self.log.append("close")
+
+    def heard(self, node, by):
+        return self.heard_turns.get((node, by), 0)
 
     async def drain(self):
         self.log.append("drain")
@@ -179,3 +183,40 @@ async def test_a_crash_while_deciding_is_not_remembered_so_a_retry_can_succeed(m
 
     assert result["status"] == "ok"
     assert fm.state["debate"].snapshot()["verdict"]["rationale"] == "Second time lucky."
+
+
+async def test_answer_given_waits_until_the_house_has_answered_and_asked():
+    # A barge-in during the house's answer leaves it with no finished turn in
+    # this node; what the user said then is not an answer to a question they
+    # have not been asked.
+    fm = FakeFlowManager()
+
+    result, nxt = await handlers.answer_given(fm)
+    assert result["status"] == "answer_first"
+    assert nxt is TRANSITION_IN_YAML
+
+    fm.state["scorer"].heard_turns[("crossexam_answer", "bot")] = 1
+    result, _ = await handlers.answer_given(fm)
+    assert result["status"] == "ok"
+
+
+async def test_use_voice_does_nothing_when_no_judge_voice_is_configured(monkeypatch):
+    monkeypatch.setattr(handlers.providers, "voices", lambda: None)
+    fm = FakeFlowManager()
+
+    await handlers.use_voice({"type": "use_voice", "who": "judge"}, fm)
+
+    assert fm.worker.frames == []
+
+
+async def test_use_voice_switches_the_tts_voice_with_a_frame_in_order(monkeypatch):
+    from pipecat.frames.frames import TTSUpdateSettingsFrame
+
+    monkeypatch.setattr(handlers.providers, "voices", lambda: {"house": "h", "judge": "j"})
+    fm = FakeFlowManager()
+
+    await handlers.use_voice({"type": "use_voice", "who": "judge"}, fm)
+    await handlers.use_voice({"type": "use_voice", "who": "house"}, fm)
+
+    assert [type(f) for f in fm.worker.frames] == [TTSUpdateSettingsFrame, TTSUpdateSettingsFrame]
+    assert [f.delta.voice for f in fm.worker.frames] == ["j", "h"]

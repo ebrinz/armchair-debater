@@ -33,6 +33,11 @@ nodes:
       - type: emit_stage
         handler: emit_stage
         stage: setup
+      # Back to the house's own voice after a rematch. The same voice as already
+      # set changes nothing, so this costs nothing on first connect.
+      - type: use_voice
+        handler: use_voice
+        who: house
     task_messages:
       - role: developer
         content: |
@@ -54,6 +59,10 @@ nodes:
           index, and choose one of its listed rivals for yourself:
 
           {{ theory_index }}
+
+          If the user names the theory they want you to defend, and it is one
+          of the listed rivals of their own, choose that one; otherwise the
+          choice of rival is yours.
 
           Then call set_positions with both ids. Do not start arguing yet.
 
@@ -196,13 +205,16 @@ nodes:
 
           When the user has answered your question, call answer_given
           immediately, without replying to it; your closing comes next round.
+          If answer_given reports answer_first, you were interrupted before
+          you had your turn: give it now, answer and question both.
           If instead they ask what you meant, rephrase your question in one
           sentence and wait for their answer.
     functions:
       - name: answer_given
-        transition_only: true
-        description: The user has answered your cross-examination question. Moves the debate to the closing round.
-        transition_to: closing
+        transition_to:
+          field: status
+          cases:
+            ok: closing
 
   closing:
     pre_actions:
@@ -237,11 +249,16 @@ nodes:
       - type: emit_stage
         handler: emit_stage
         stage: verdict
+      # The verdict is the judge's to read, in the judge's voice if one is
+      # configured (GRADIUM_JUDGE_VOICE_ID); a no-op otherwise.
+      - type: use_voice
+        handler: use_voice
+        who: judge
     task_messages:
       - role: developer
         content: |
-          The judge has decided. Announce the result to the user now, in one
-          turn of three short sentences:
+          The judge has decided. {{ judge_persona }}Announce the result to the
+          user now, in one turn of three short sentences:
 
           {{ verdict_text }}
 
@@ -249,6 +266,11 @@ nodes:
           the judge's rationale in your own spoken words, gracious whether you
           won or lost. Third, offer a rematch, on the same question or a
           different one.
+
+          The result must reach the user. If they speak before you have
+          announced it — over the judge's tally, or while you were starting —
+          announce the two numbers, the winner, and the rationale first, and
+          only then respond to what they said.
 
           Only call rematch if the user explicitly asks for another debate or
           says yes to your offer. If instead they keep arguing the finished

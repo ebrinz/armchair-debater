@@ -83,6 +83,25 @@ def speech_provider() -> str:
     return _choice("SPEECH_PROVIDER", SPEECH_PROVIDERS)
 
 
+GRADIUM_HOUSE_VOICE = "_6Aslh2DxfmnRLmP"
+
+
+def voices() -> dict[str, str] | None:
+    """The house's voice and the judge's, or ``None`` when the verdict is simply
+    read in the house's own — which is the default, since a voice ID is the
+    user's to choose. Switching needs both named: going back to the house
+    afterwards takes a voice to go back TO.
+    """
+    if speech_provider() == "openai":
+        house, judge = os.getenv("OPENAI_TTS_VOICE"), os.getenv("OPENAI_JUDGE_VOICE")
+    else:
+        house = os.getenv("GRADIUM_VOICE_ID", GRADIUM_HOUSE_VOICE)
+        judge = os.getenv("GRADIUM_JUDGE_VOICE_ID")
+    if not house or not judge or house == judge:
+        return None
+    return {"house": house, "judge": judge}
+
+
 def _set(**fields: str | None) -> dict:
     """Only the settings that were actually given; the rest keep the service's defaults."""
     return {name: value for name, value in fields.items() if value}
@@ -123,6 +142,6 @@ def make_tts():
     return GradiumTTSService(
         api_key=_require("GRADIUM_API_KEY", "SPEECH_PROVIDER=gradium"),
         settings=GradiumTTSService.Settings(
-            voice=os.getenv("GRADIUM_VOICE_ID", "_6Aslh2DxfmnRLmP"),
+            voice=os.getenv("GRADIUM_VOICE_ID", GRADIUM_HOUSE_VOICE),
         ),
     )

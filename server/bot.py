@@ -38,7 +38,6 @@ from pipecat.processors.aggregators.llm_response_universal import (
 )
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
-from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
 from pipecat.workers.runner import WorkerRunner
 
@@ -46,6 +45,7 @@ import handlers
 import knowledge
 import providers
 from debate_state import DebateState
+from quiet_llm import QuietOpenAILLMService
 from scorer import TurnScorer
 from skip_tts_sync import SkipTTSSync
 from turns import TurnObserver
@@ -78,10 +78,10 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     logger.info(
         f"LLM: {llm_config.provider} ({llm_config.model}); speech: {providers.speech_provider()}"
     )
-    llm = OpenAILLMService(
+    llm = QuietOpenAILLMService(
         api_key=llm_config.require_key(),
         base_url=llm_config.base_url,
-        settings=OpenAILLMService.Settings(model=llm_config.model),
+        settings=QuietOpenAILLMService.Settings(model=llm_config.model),
     )
 
     context = LLMContext()
@@ -138,7 +138,14 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         ),
     )
     flow_manager.state.update(
-        {"debate": debate, "scorer": scorer, "theory_index": knowledge.index()}
+        {
+            "debate": debate,
+            "scorer": scorer,
+            "theory_index": knowledge.index(),
+            # Only when the verdict really is read in another voice is the bot
+            # told to read it as someone else.
+            "judge_persona": handlers.JUDGE_PERSONA if providers.voices() else "",
+        }
     )
 
     # Both sides' turns are read from frames rather than aggregator events:

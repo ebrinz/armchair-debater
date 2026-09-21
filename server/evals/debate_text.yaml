@@ -118,6 +118,24 @@ scenarios:
             absent: true
             within_ms: 15000
 
+  # The select screen's second step sends exactly this line. Recurrent processing
+  # is a listed rival of the workspace card but not the first one, so the bot's
+  # own default cannot pass this by accident.
+  - name: defends_the_rival_the_user_names
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot asks the user what they think consciousness is"
+
+      - user: "My view is Global Workspace Theory, and I want you to defend Recurrent Processing Theory against it."
+        expect:
+          - event: function_call
+            calls:
+              - name: set_positions
+                args: {user_theory: gwt, bot_theory: rpt}
+          - event: response
+            eval: "the bot says it will defend recurrent processing theory, gives an opening argument for it, and invites the user's opening statement"
+
   - name: matches_a_non_workspace_view
     turns:
       - expect:

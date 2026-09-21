@@ -186,3 +186,9 @@ def test_client_cards_and_fixture_pin_the_seven_key_contract():
         assert set(card) == EXPECTED_CLIENT_CARD_KEYS
     for card in CARDS_FIXTURE["cards"]:
         assert set(card) == EXPECTED_CLIENT_CARD_KEYS
+
+
+def test_the_bundled_deck_is_the_real_deck():
+    # The client bundles this fixture so THE DECK can be browsed before
+    # connecting; it must say exactly what the server would send.
+    assert CARDS_FIXTURE == {"type": "theory_cards", "cards": knowledge.client_cards()}

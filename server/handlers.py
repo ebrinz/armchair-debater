@@ -11,9 +11,11 @@ under "debate" and "scorer".
 import asyncio
 
 from pipecat.flows import TRANSITION_IN_YAML, FlowManager
-from pipecat.frames.frames import TTSSpeakFrame
+from pipecat.frames.frames import TTSSpeakFrame, TTSUpdateSettingsFrame
+from pipecat.services.settings import TTSSettings
 
 import knowledge
+import providers
 from judge import JudgeError, write_rationale
 
 _WINNER_TEXT = {
@@ -26,6 +28,29 @@ _WINNER_TEXT = {
 async def emit_stage(action: dict, flow_manager: FlowManager) -> None:
     """Pre-action on every node: record the stage, which pushes a snapshot to the client."""
     await flow_manager.state["debate"].set_stage(action["stage"])
+
+
+# Prepended to the verdict prompt when the judge has a voice of their own.
+JUDGE_PERSONA = (
+    "From this turn on you speak as the JUDGE, in the judge's own voice, and no "
+    "longer as the debater: say 'the house' where you would have said 'I', take "
+    "no side, and do not reopen the argument. "
+)
+
+
+async def use_voice(action: dict, flow_manager: FlowManager) -> None:
+    """Pre-action: from here on, speak as ``action["who"]`` — "judge" or "house".
+
+    A frame rather than a call on the TTS service, so the switch takes its place
+    in line: whatever was already on its way to be spoken keeps the voice it was
+    written for. Does nothing unless a judge's voice has been configured.
+    """
+    voices = providers.voices()
+    if voices is None:
+        return
+    await flow_manager.worker.queue_frames(
+        [TTSUpdateSettingsFrame(delta=TTSSettings(voice=voices[action["who"]]))]
+    )
 
 
 async def set_positions(flow_manager: FlowManager, user_theory: str, bot_theory: str):
@@ -55,6 +80,26 @@ async def set_positions(flow_manager: FlowManager, user_theory: str, bot_theory:
     state.pop("verdict_task", None)
     await state["debate"].set_positions(user.id, user.name, bot.id, bot.name)
     return {"status": "ok", "user_theory": user.name, "bot_theory": bot.name}, TRANSITION_IN_YAML
+
+
+async def answer_given(flow_manager: FlowManager):
+    """The user has answered your cross-examination question.
+
+    Call this as soon as the user has answered the question you put to them.
+    """
+    # The flow only moves on once the house has had its turn here. A barge-in
+    # while it was answering leaves it with no finished turn in this node, and
+    # whatever the user said then is not an answer to a question they were
+    # never asked. No match in the config's branch table means: stay.
+    if flow_manager.state["scorer"].heard("crossexam_answer", "bot") == 0:
+        return {
+            "status": "answer_first",
+            "instruction": (
+                "You have not yet answered the user's question or asked your own. "
+                "Do both now, as this round's instructions describe."
+            ),
+        }, TRANSITION_IN_YAML
+    return {"status": "ok"}, TRANSITION_IN_YAML
 
 
 def fallback_rationale(hits: list[dict]) -> str:

@@ -14,6 +14,8 @@ PROVIDER_VARS = [
     "OPENAI_TTS_VOICE",
     "GRADIUM_API_KEY",
     "GRADIUM_VOICE_ID",
+    "GRADIUM_JUDGE_VOICE_ID",
+    "OPENAI_JUDGE_VOICE",
 ]
 
 
@@ -137,3 +139,36 @@ def test_unknown_speech_provider_names_the_valid_ones(monkeypatch):
 
     with pytest.raises(ValueError, match="gradium.*openai"):
         providers.make_stt()
+
+
+def test_there_is_no_judge_voice_unless_one_is_named(monkeypatch):
+    monkeypatch.setenv("GRADIUM_API_KEY", "gr-key")
+
+    assert providers.voices() is None
+
+
+def test_gradium_voices_for_the_house_and_the_judge(monkeypatch):
+    monkeypatch.setenv("GRADIUM_JUDGE_VOICE_ID", "judge-voice")
+
+    assert providers.voices() == {"house": "_6Aslh2DxfmnRLmP", "judge": "judge-voice"}
+
+    monkeypatch.setenv("GRADIUM_VOICE_ID", "house-voice")
+    assert providers.voices() == {"house": "house-voice", "judge": "judge-voice"}
+
+
+def test_openai_needs_both_voices_named_to_switch_between_them(monkeypatch):
+    # Switching back needs a voice to switch back TO, and the house's OpenAI
+    # voice is otherwise the service's own default, which this code cannot name.
+    monkeypatch.setenv("SPEECH_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_JUDGE_VOICE", "judge-voice")
+    assert providers.voices() is None
+
+    monkeypatch.setenv("OPENAI_TTS_VOICE", "house-voice")
+    assert providers.voices() == {"house": "house-voice", "judge": "judge-voice"}
+
+
+def test_a_judge_voice_the_same_as_the_houses_is_no_judge_voice(monkeypatch):
+    monkeypatch.setenv("GRADIUM_VOICE_ID", "same")
+    monkeypatch.setenv("GRADIUM_JUDGE_VOICE_ID", "same")
+
+    assert providers.voices() is None
