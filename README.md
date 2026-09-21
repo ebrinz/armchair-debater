@@ -15,6 +15,18 @@ the closings wins, and the bot reads you the judge's verdict.
 Every paper the bot cites comes from a curated, fact-checked knowledge base — never
 from the LLM's memory.
 
+There are two other things to do in the study, chosen at the door by voice or on
+an arcade MODE SELECT:
+
+- **Sparring** — the bot takes no side. As *the examiner* it puts five escalating
+  questions to your own view, drawn from the known objections to your theory, and
+  the judge scores each answer against a single bar: how much of the position is
+  still standing. It ends with a finding — *your view holds*, *shaken*, or *in
+  tatters* — and the question that cost you most.
+- **Explore** — a guide shows you round the twelve theories. Ask what one says,
+  what is wrong with it, or how two differ; the screen turns to whichever card is
+  being discussed.
+
 Built on [Pipecat](https://github.com/pipecat-ai/pipecat) (1.11) with Pipecat Flows.
 
 ## How a debate works
@@ -51,16 +63,22 @@ boot, not mid-debate.
 ```
 server/
   bot.py            Pipecat cascade pipeline: Gradium STT → General Compute LLM → Gradium TTS
-  flow.yaml         Pipecat Flows graph: setup → opening → rebuttal → cross-examination → closing → verdict
-  handlers.py       Flow tools: set_positions, judge_debate; emit_stage action
+  flow.yaml         Pipecat Flows graph: a front door, then the debate (setup → opening → rebuttal →
+                    cross-examination → closing → verdict), sparring, or the explorer
+  handlers.py       Flow tools: choose_mode, set_positions, answer_given, judge_debate, take_position,
+                    answer_heard, show_theory; emit_stage / emit_question / use_voice actions
   knowledge.py      Loads + validates the cards; client_cards() for the UI
   turns.py          TurnObserver — reads both sides' turns from pipeline frames
   scorer.py         Ordered background scoring; never blocks the voice path
-  judge.py          The judge's two LLM calls (score a turn; write the rationale)
-  debate_state.py   Health, hits, verdict; emits a full snapshot on every change
+  judge.py          The judge's LLM calls: score a turn or an answer; write the rationale or the finding
+  debate_state.py   Mode, health, hits, verdict; emits a full snapshot on every change
+  providers.py      LLM_PROVIDER / SPEECH_PROVIDER switches; the optional judge's voice
+  quiet_llm.py      Drops whitespace-only LLM replies (they confuse anything counting turns)
+  skip_tts_sync.py  Keeps text-mode evals from synthesizing speech nobody hears
+  make_fixtures.py  Generates the JSON contract fixtures from DebateState
   cards/            The twelve theory cards
   evals/            Scripted + simulated behavioural evals (pipecat eval)
-  tests/            100 unit tests
+  tests/            Unit tests
 client/
   src/arcade/       The arcade UI: state → screen logic, stage, theme, screens
 docs/design/        Specs, plans, and the JSON contract fixtures
@@ -97,17 +115,21 @@ npm run dev              # http://localhost:5173
 ```
 
 - `http://localhost:5173/` — the arcade UI. **PRESS START** connects and asks for the mic.
-- `http://localhost:5173/?mock` — replays a recorded debate through the UI with no server.
+- `http://localhost:5173/?mock` — replays a recorded debate through the UI with no server
+  (`?mock=sparring` and `?mock=explore` replay the other two modes).
 - `http://localhost:5173/?console` — the Pipecat debugging console.
 
 ### Arcade UI
 
-Five screens, chosen from the server's state: **TITLE** (PRESS START
-connects and unlocks the mic), **SELECT** (a twelve-card roster of the theories,
+Seven screens, chosen from the server's state: **TITLE** (PRESS START
+connects and unlocks the mic), **MODE SELECT** (debate, sparring, or explore),
+**SELECT** (a twelve-card roster of the theories,
 trading-card style), **VERSUS** (your theory against the one the house picked),
 **FIGHT** (two health bars draining toward the centre, with
-hit-by-hit battle text), and **DECISION** (the judge's verdict and a rematch
-prompt). On SELECT you can just say what you think consciousness is, or pick
+hit-by-hit battle text — in sparring, one bar facing THE EXAMINER and a plate
+counting the questions), **DECISION** (the judge's verdict, or the examiner's
+finding, with a rematch and the way back to the menu), and **EXPLORE** (the deck,
+turning to whichever card the guide is talking about). On SELECT you can just say what you think consciousness is, or pick
 your theory and then the rival the house must defend (or leave that to the house).
 **THE DECK**, on the title screen, browses all twelve cards with no connection. `?mock` replays a recorded debate
 through the UI with no server; `?console` swaps in the Pipecat debugging console
@@ -169,8 +191,8 @@ with its count-up, banners and CONTINUE? countdown. Specified in
 It is an homage: all art is original CSS/SVG and the fonts are open-licensed
 (Press Start 2P, VT323). Phone layouts are not done.
 
-**Parked for later:** a Socratic sparring mode, a theory-explorer mode, bot-vs-bot,
-and retrieval over PhilPapers for long-tail theories.
+**Parked for later:** bot-vs-bot with you moderating, and retrieval over PhilPapers
+for long-tail theories.
 
 ## Swapping providers
 

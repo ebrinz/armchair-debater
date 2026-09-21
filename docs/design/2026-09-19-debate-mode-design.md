@@ -330,7 +330,8 @@ at the end-to-end check.
 
 ## TODOs
 
-- Socratic sparring mode; theory-explorer mode (the original 4 → 3 → 1 progression).
+- ~~Socratic sparring mode; theory-explorer mode~~ — built; see
+  [`2026-09-20-modes-design.md`](2026-09-20-modes-design.md).
 - Bot vs. bot with the user moderating.
 - RAG over PhilPapers / ConTraSt for long-tail theories.
 - README lists Deepgram / OpenAI / Cartesia; `bot.py` uses Gradium + General Compute.

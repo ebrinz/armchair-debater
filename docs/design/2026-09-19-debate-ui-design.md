@@ -35,6 +35,10 @@ Measured in end-to-end runs; the design is built around these:
 
 ## Screens
 
+> The front door, sparring and the explorer — the `mode` and `explore` screens, and
+> how `select`, `fight` and `decision` change in sparring — are specified in
+> [`2026-09-20-modes-design.md`](2026-09-20-modes-design.md).
+
 The screen is a pure function of connection state and the latest snapshot. The
 client keeps no screen state of its own, so it cannot drift from the server.
 
