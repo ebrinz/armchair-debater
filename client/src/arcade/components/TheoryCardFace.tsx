@@ -29,6 +29,9 @@ export interface TheoryCardFaceProps {
   cards: TheoryCard[];
   /** The server has confirmed this is the player's theory. */
   locked?: boolean;
+  /** When given, each rival chip is a button that calls this with the rival's
+   *  id — the deck uses it to turn to that card. */
+  onRival?: (id: string) => void;
 }
 
 /**
@@ -43,7 +46,7 @@ const categoryLine = (card: TheoryCard): string => {
   return leaf && leaf !== family ? `${family} > ${leaf}` : family;
 };
 
-export const TheoryCardFace = ({ card, cards, locked = false }: TheoryCardFaceProps) => {
+export const TheoryCardFace = ({ card, cards, locked = false, onRival }: TheoryCardFaceProps) => {
   const [open, setOpen] = useState<number | null>(null);
   const movesRef = useRef<HTMLUListElement>(null);
 
@@ -150,7 +153,19 @@ export const TheoryCardFace = ({ card, cards, locked = false }: TheoryCardFacePr
               '--type': `var(${rival ? typeOf(rival).colorVar : '--type-neutral'})`,
               '--type-ink': `var(${inkOn(rival ? typeOf(rival).colorVar : '--type-neutral')})`,
             } as CSSProperties;
-            return (
+            return onRival && rival ? (
+              <button
+                type="button"
+                className="card__chip card__chip--link pixel-text"
+                key={id}
+                style={chip}
+                aria-label={`Turn to ${rival.name}`}
+                title={rival.name}
+                onClick={() => onRival(id)}
+              >
+                {shortName(id)}
+              </button>
+            ) : (
               <span className="card__chip pixel-text" key={id} style={chip} title={rival?.name}>
                 {shortName(id)}
               </span>

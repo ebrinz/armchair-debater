@@ -529,6 +529,18 @@
   line-height: 1;
 }
 
+/* In the deck a chip is a link to the card it names. */
+.card__chip--link {
+  border: 0;
+  cursor: pointer;
+}
+
+.card__chip--link:hover,
+.card__chip--link:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 1px;
+}
+
 .card__claim {
   margin: 0;
   padding-top: 0.3em;

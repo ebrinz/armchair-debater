@@ -2,6 +2,8 @@ import { PixelButton } from '../components/PixelButton';
 
 export interface TitleScreenProps {
   onStart: () => void;
+  /** Opens the card browser; it needs no connection. */
+  onDeck: () => void;
   busy: boolean;
   error: string | null;
 }
@@ -37,7 +39,7 @@ const Silhouette = ({ side, fill }: { side: 'left' | 'right'; fill: string }) =>
   </svg>
 );
 
-export const TitleScreen = ({ onStart, busy, error }: TitleScreenProps) => (
+export const TitleScreen = ({ onStart, onDeck, busy, error }: TitleScreenProps) => (
   <div className="title">
     <Silhouette side="left" fill="#27351f" />
     <Silhouette side="right" fill="#3d161b" />
@@ -56,6 +58,10 @@ export const TitleScreen = ({ onStart, busy, error }: TitleScreenProps) => (
       <p className="title__instruction">
         Say what you think consciousness is. The house will disagree.
       </p>
+
+      <PixelButton disabled={busy} onClick={onDeck}>
+        The deck
+      </PixelButton>
 
       {error && (
         <p className="pixel-panel title__error" role="alert">

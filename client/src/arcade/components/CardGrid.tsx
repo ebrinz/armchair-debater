@@ -36,8 +36,9 @@ export interface CardGridProps {
   open?: number[] | null;
   /** The slot the player has already taken for themselves, which keeps its flag. */
   mineIndex?: number | null;
-  /** Whose pick the cursor is making: the player's, or the house's. */
-  cursorLabel?: '1P' | 'CPU';
+  /** Whose pick the cursor is making: the player's, or the house's. `null`
+   *  plants no flag — the deck has a cursor but nobody choosing. */
+  cursorLabel?: '1P' | 'CPU' | null;
 }
 
 export const CardGrid = ({
@@ -128,9 +129,9 @@ export const CardGrid = ({
             onMouseEnter={() => !disabled && !closed && card && onFocusChange(i)}
           >
             <span className="slot__name">{card ? card.name : ''}</span>
-            {(i === focused || mine) && (
+            {(mine || (i === focused && cursorLabel)) && (
               <span
-                className={`slot__cursor pixel-text${mine ? '' : ` slot__cursor--${cursorLabel.toLowerCase()}`}`}
+                className={`slot__cursor pixel-text${mine || !cursorLabel ? '' : ` slot__cursor--${cursorLabel.toLowerCase()}`}`}
                 aria-hidden="true"
               >
                 {mine ? '1P' : cursorLabel}
