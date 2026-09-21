@@ -2,9 +2,9 @@ import { useState } from 'react';
 
 import { Conversation } from '@/components/pipecat/conversation';
 
-import { battleLines, hitTier, turnCue } from '../battleText';
+import { battleLines, feltDamage, hitTier, turnCue } from '../battleText';
 import { useTypewriter } from '../hooks/useTypewriter';
-import type { Hit, Stage } from '../types';
+import type { Hit, Mode, Stage } from '../types';
 
 import { PixelButton } from './PixelButton';
 
@@ -13,6 +13,8 @@ export interface BattleTextBoxProps {
   /** Re-types the lines when it changes. */
   hitCount: number;
   stage: Stage;
+  /** Sparring words a hit differently: it is an answer, scored. */
+  mode?: Mode | null;
   /** No Pipecat client behind the UI, so no transcript to open. */
   mock?: boolean;
   /** Fixed text in place of the hit's lines — the decision screen types the
@@ -39,13 +41,14 @@ export const BattleTextBox = ({
   hit,
   hitCount,
   stage,
+  mode = null,
   mock = false,
   lines: fixed,
   cue,
 }: BattleTextBoxProps) => {
   const [open, setOpen] = useState(false);
-  const tier = hit ? hitTier(hit.damage) : null;
-  const lines = fixed ?? (hit ? battleLines(hit) : []);
+  const tier = hit ? hitTier(feltDamage(hit, mode)) : null;
+  const lines = fixed ?? (hit ? battleLines(hit, mode) : []);
   const typed = useTypewriter(lines, hitCount, fixed ? false : tier === 'super');
   const turn = cue === undefined ? turnCue(hit, stage) : cue;
 

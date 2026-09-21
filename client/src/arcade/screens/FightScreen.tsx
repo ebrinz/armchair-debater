@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 
+import { feltDamage } from '../battleText';
 import type { HitTier } from '../battleText';
 import { Announcer } from '../components/Announcer';
 import { Armchair } from '../components/Armchair';
@@ -61,8 +62,16 @@ export const FightScreen = ({
   text,
 }: FightScreenProps) => {
   const hit = snapshot.last_hit;
-  const fx = useHitEffects(hitCount, hit, frozen);
+  // The effects are tiered on how hard the hit should feel, which in sparring is
+  // not its face value; the number that floats up is always the real one.
+  const felt = hit ? { ...hit, damage: feltDamage(hit, snapshot.mode) } : null;
+  const fx = useHitEffects(hitCount, felt, frozen);
   const tier = fx.tier;
+  const sparring = snapshot.mode === 'sparring';
+  // In a debate the side that lands a hit is the side that shakes one off. In
+  // sparring every hit is the examiner's question, and what is won back is the
+  // player's.
+  const healedSide: Side | null = fx.healed ? (sparring ? 'user' : fx.healed) : null;
   // The blow, and a beat later the shake-off if the speaker recovered. `frozen`
   // is the decision screen's replay of this HUD, where nothing lands.
   useSfx(!frozen && hit && tier ? sfxForHit(tier) : null, hitCount);
@@ -93,12 +102,13 @@ export const FightScreen = ({
           theory={snapshot.user.theory_name}
           health={snapshot.user.health}
         />
-        <RoundPlate stage={snapshot.stage} />
+        <RoundPlate snapshot={snapshot} />
         <HealthBar
           side="bot"
-          label="CPU THE HOUSE"
-          theory={snapshot.bot.theory_name}
+          label={sparring ? 'THE EXAMINER' : 'CPU THE HOUSE'}
+          theory={sparring ? 'asks the questions' : snapshot.bot.theory_name}
           health={snapshot.bot.health}
+          barless={sparring}
         />
       </div>
 
@@ -120,7 +130,7 @@ export const FightScreen = ({
                 // The lunge lasts as long as the other chair reels from it.
                 attacking={fx.attacker === side && fx.hurt !== null}
                 theoryId={debater[side].theory_id}
-                healed={fx.healed === side}
+                healed={healedSide === side}
                 health={debater[side].health}
                 pose={poses?.[side]}
               />
@@ -128,7 +138,7 @@ export const FightScreen = ({
               {hit && fx.target === side && tier && tier !== 'miss' && (
                 <DamageNumber key={`d${hitCount}`} side={side} amount={-hit.damage} tier={tier} />
               )}
-              {hit && fx.healed === side && (
+              {hit && healedSide === side && (
                 <DamageNumber key={`h${hitCount}`} side={side} amount={hit.recovery} />
               )}
               {tier && fx.target === side && PUFFS[tier] > 0 && (
@@ -146,6 +156,7 @@ export const FightScreen = ({
         hit={hit}
         hitCount={hitCount}
         stage={snapshot.stage}
+        mode={snapshot.mode}
         mock={mock}
         lines={text?.lines}
         cue={text?.cue}

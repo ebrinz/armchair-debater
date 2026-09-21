@@ -32,12 +32,14 @@ export interface SelectScreenProps {
   /** Sends the pick: the player's theory and the house's, or `null` to let the
    *  house choose. Supplied by ArcadeApp; logs instead of sending in ?mock. */
   onPick: (mine: TheoryCard, house: TheoryCard | null) => void;
+  /** Sparring: there is no house theory to choose, so the pick is one step. */
+  solo?: boolean;
 }
 
 /** How long a sent pick keeps the roster shut while waiting for the server to lock it in. */
 const PICK_PATIENCE_MS = 12000;
 
-export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => {
+export const SelectScreen = ({ snapshot, cards, onPick, solo = false }: SelectScreenProps) => {
   const [focused, setFocused] = useState(0);
   // Step two begins once the player has a theory of their own.
   const [mine, setMine] = useState<TheoryCard | null>(null);
@@ -55,15 +57,16 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
   const mineIndex = mine ? cards.findIndex((c) => c.id === mine.id) : -1;
   const rivals = mine ? rivalIndices(mine, cards) : null;
 
-  const send = (house: TheoryCard | null) => {
-    if (!mine) return;
+  const send = (house: TheoryCard | null, card: TheoryCard | null = mine) => {
+    if (!card) return;
     playSfx('pick');
-    setSent(mine);
-    onPick(mine, house);
+    setSent(card);
+    onPick(card, house);
   };
 
   const pick = (card: TheoryCard) => {
     if (mine) return send(card);
+    if (solo) return send(null, card);
     playSfx('pick');
     setMine(card);
     // The cursor becomes the house's, starting on the first rival.
@@ -156,7 +159,9 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
           to give up room to it. */}
       <footer className="select__foot">
         <p className="select__hint">
-          {mine
+          {solo
+            ? 'Your mic is already open. Say what you think consciousness is and the examiner will put five questions to it — or pick a theory here.'
+            : mine
             ? `These are the rivals of ${mine.name}. Pick the one the house must defend, or let it choose.`
             : 'Your mic is already open. Say what you think consciousness is and the house will take the other side — or pick a theory here.'}
         </p>

@@ -1,0 +1,354 @@
+[
+  {
+    "type": "debate_state",
+    "stage": "mode",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": null,
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "setup",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "setup",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 1,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 94
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 6,
+      "recovery": 0,
+      "reason": "Asked why broadcast should feel like anything, said access simply is experience."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 1,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 94
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 6,
+      "recovery": 0,
+      "reason": "Asked why broadcast should feel like anything, said access simply is experience."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 2,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 76
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 18,
+      "recovery": 0,
+      "reason": "Asked whether a broadcasting computer would be conscious, would not say either way."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 2,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 76
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 18,
+      "recovery": 0,
+      "reason": "Asked whether a broadcasting computer would be conscious, would not say either way."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 3,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 80
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 3,
+      "recovery": 7,
+      "reason": "Asked what would refute the theory, named late ignition failing to appear."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 3,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 80
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 3,
+      "recovery": 7,
+      "reason": "Asked what would refute the theory, named late ignition failing to appear."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 4,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 66
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 14,
+      "recovery": 0,
+      "reason": "Asked about the adversarial collaboration's missing prefrontal signal, waved it away."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 4,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 66
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 14,
+      "recovery": 0,
+      "reason": "Asked about the adversarial collaboration's missing prefrontal signal, waved it away."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 5,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "sparring",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 65
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 5,
+      "recovery": 4,
+      "reason": "Asked what the workspace is made of, gave the long-range neuron account."
+    },
+    "verdict": null,
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 5,
+      "of": 5
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "verdict",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 65
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Examiner",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 5,
+      "recovery": 4,
+      "reason": "Asked what the workspace is made of, gave the long-range neuron account."
+    },
+    "verdict": {
+      "winner": "user",
+      "rationale": "The view is shaken but standing. The machine question did the most damage: it was never answered either way."
+    },
+    "mode": "sparring",
+    "focus": null,
+    "question": {
+      "number": 5,
+      "of": 5
+    }
+  }
+]

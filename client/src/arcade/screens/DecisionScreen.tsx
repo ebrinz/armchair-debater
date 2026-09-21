@@ -16,6 +16,8 @@ export interface DecisionScreenProps {
   snapshot: DebateSnapshot;
   /** Asks for another debate: the live app says so to the bot, `?mock` replays. */
   onRematch: () => void;
+  /** Asks for the front door again; every mode's last screen offers the way out. */
+  onMenu: () => void;
   /** No Pipecat client behind the UI, so no transcript button in the box. */
   mock?: boolean;
 }
@@ -54,7 +56,7 @@ const COUNT_FROM = 9;
  * `screenFor` from the server's state, and clicking REMATCH does not switch
  * screens — it asks, and the next snapshot moves the game on.
  */
-export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionScreenProps) => {
+export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: DecisionScreenProps) => {
   const reduced = useReducedMotion();
   const verdict = snapshot.verdict;
   const banners = decisionBanners(snapshot);
@@ -98,10 +100,15 @@ export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionSc
   useSfx(phase >= CONTINUE && !asked && left > 0 && left < COUNT_FROM ? 'tick' : null, left);
   useSfx(phase >= CONTINUE && !asked && left === 0 ? 'gameOver' : null, left === 0);
 
+  const sparring = snapshot.mode === 'sparring';
   const winner: Side | null =
     verdict && verdict.winner !== 'draw' ? verdict.winner : null;
+  // The examiner has nothing at stake, so it neither celebrates nor slumps.
   const poses = winner
-    ? ({ user: winner === 'user' ? 'win' : 'lose', bot: winner === 'bot' ? 'win' : 'lose' } as const)
+    ? ({
+        user: winner === 'user' ? 'win' : 'lose',
+        ...(sparring ? {} : { bot: winner === 'bot' ? ('win' as const) : ('lose' as const) }),
+      } as const)
     : undefined;
 
   return (
@@ -122,17 +129,26 @@ export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionSc
         {/* The title, the numbers and the banners are pure show: the same words
             reach a screen reader through the app's one live region. */}
         <div className="decision__plate" aria-hidden="true">
-          <p className="decision__title pixel-text">JUDGE&apos;S DECISION</p>
+          <p className="decision__title pixel-text">
+            {sparring ? 'THE FINDING' : 'JUDGE’S DECISION'}
+          </p>
 
           {verdict && phase >= COUNT && (
             <p className="decision__score">
               <span className={`decision__num decision__num--${winner === 'user' ? 'win' : 'lose'}`}>
                 {counted(snapshot.user.health)}
               </span>
-              {' — '}
-              <span className={`decision__num decision__num--${winner === 'bot' ? 'win' : 'lose'}`}>
-                {counted(snapshot.bot.health)}
-              </span>
+              {/* One bar, one number: sparring has nobody on the other side. */}
+              {!sparring && (
+                <>
+                  {' — '}
+                  <span
+                    className={`decision__num decision__num--${winner === 'bot' ? 'win' : 'lose'}`}
+                  >
+                    {counted(snapshot.bot.health)}
+                  </span>
+                </>
+              )}
             </p>
           )}
 
@@ -153,7 +169,7 @@ export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionSc
           <div className="decision__continue">
             <p className="decision__prompt pixel-text">
               {asked ? (
-                'HERE COMES A NEW CHALLENGER…'
+                sparring ? 'FIVE MORE QUESTIONS…' : 'HERE COMES A NEW CHALLENGER…'
               ) : left > 0 ? (
                 <>
                   CONTINUE? <span className="decision__count">{left}</span>
@@ -170,7 +186,15 @@ export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionSc
                 onRematch();
               }}
             >
-              REMATCH
+              {sparring ? 'AGAIN' : 'REMATCH'}
+            </PixelButton>
+            <PixelButton
+              onClick={() => {
+                setAsked(true);
+                onMenu();
+              }}
+            >
+              MENU
             </PixelButton>
           </div>
         )}

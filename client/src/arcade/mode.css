@@ -1,0 +1,113 @@
+/*
+ * MODE SELECT: three big tiles over the dimmed study. Tokens and the pixel kit
+ * come from arcade.css; the tile treatment — bevel, hard shadow, cream ring for
+ * the cursor, brass for a locked choice — is the roster's, at poster size.
+ */
+
+.mode {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 3vh, 34px);
+  min-height: 100%;
+  padding: clamp(14px, 3vh, 32px) 16px clamp(44px, 7vh, 72px);
+}
+
+.mode__head {
+  text-align: center;
+}
+
+.mode__title {
+  margin: 0;
+  color: var(--bar-fill);
+  font-size: clamp(16px, 2.4vw, 30px);
+  text-shadow:
+    3px 3px 0 var(--oxblood),
+    6px 6px 0 var(--shadow);
+}
+
+.mode__sub {
+  margin: 0.6em 0 0;
+  color: var(--ink-dim);
+  font-size: clamp(15px, 1.4vw, 20px);
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.mode__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 1.8vw, 26px);
+  width: min(1120px, 100%);
+}
+
+.mode__tile {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6vh, 18px);
+  min-height: clamp(170px, 30vh, 260px);
+  padding: clamp(14px, 1.8vw, 24px);
+  border: 0;
+  border-radius: 0;
+  background: var(--tile);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    inset 0 4px 0 rgb(255 255 255 / 22%),
+    inset 4px 0 0 rgb(255 255 255 / 10%),
+    inset 0 -5px 0 rgb(0 0 0 / 34%),
+    inset -4px 0 0 rgb(0 0 0 / 22%),
+    6px 6px 0 0 var(--shadow);
+  filter: brightness(0.82);
+}
+
+/* Each game in a colour of its own: the house's oxblood, the examiner's slate,
+   the guide's bottle green. */
+.mode__tile--debate {
+  --tile: #6a2029;
+}
+
+.mode__tile--sparring {
+  --tile: #2f4a63;
+}
+
+.mode__tile--explore {
+  --tile: #2f5a35;
+}
+
+.mode__tile--focused {
+  outline: 4px solid var(--ink);
+  transform: translateY(-4px);
+  filter: none;
+}
+
+.mode__tile--locked {
+  outline: 4px solid var(--bar-fill);
+  filter: none;
+}
+
+.mode__tile:disabled {
+  cursor: default;
+  filter: brightness(0.45) saturate(0.6);
+}
+
+.mode__name {
+  color: var(--bar-fill);
+  font-size: clamp(14px, 1.9vw, 24px);
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+.mode__blurb {
+  font-size: clamp(16px, 1.55vw, 22px);
+  line-height: 1.3;
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 40%);
+}
+
+.mode__status {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(8px, 0.8vw, 11px);
+  text-shadow: 2px 2px 0 var(--shadow);
+}

@@ -23,6 +23,9 @@ const snapshot = (stage: DebateSnapshot['stage'], last_hit: Hit | null): DebateS
   bot: { theory_id: 't2', theory_name: 'Theory', health: 80 },
   last_hit,
   verdict: null,
+  mode: null,
+  focus: null,
+  question: null,
 });
 
 describe('hitTier', () => {
@@ -171,10 +174,11 @@ describe('nextSpoken', () => {
       }
     });
 
-    // The fixture's six stages (setup, opening, rebuttal, crossexam, closing,
-    // verdict) and its eight scored turns — docs/design/2026-09-19-debate-ui-design.md,
+    // The fixture's seven stages (the front door, setup, opening, rebuttal,
+    // crossexam, closing, verdict) and its eight scored turns — docs/design/2026-09-19-debate-ui-design.md,
     // "What the real data looks like".
     expect(stageChanges).toEqual([
+      'mode',
       'setup',
       'opening',
       'rebuttal',
@@ -221,6 +225,9 @@ describe('decisionBanners', () => {
     bot: { theory_id: 't2', theory_name: 'Theory', health: bot },
     last_hit: null,
     verdict: winner ? { winner, rationale: 'Because.' } : null,
+    mode: null,
+    focus: null,
+    question: null,
   });
 
   // The Style guide's rule table, one case per row, checked in its order.

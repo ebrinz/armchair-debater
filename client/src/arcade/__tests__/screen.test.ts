@@ -12,8 +12,8 @@ describe('screenFor', () => {
     expect(screenFor(false, null)).toBe('title');
     expect(screenFor(false, at('closing'))).toBe('title');
   });
-  it('is select when connected with no snapshot yet, or in setup', () => {
-    expect(screenFor(true, null)).toBe('select');
+  it('is the mode select when connected with nothing heard yet, and select in setup', () => {
+    expect(screenFor(true, null)).toBe('mode');
     expect(screenFor(true, at('setup'))).toBe('select');
   });
   it('is the versus splash for the lock-in: both theories set while still in setup', () => {
