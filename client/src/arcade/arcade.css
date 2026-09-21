@@ -237,6 +237,11 @@
   cursor: pointer;
 }
 
+/* The sound toggle stands to the CRT toggle's left. */
+.sfx-toggle {
+  right: 92px;
+}
+
 .crt-toggle:hover {
   border-color: var(--accent);
   color: var(--bar-fill);

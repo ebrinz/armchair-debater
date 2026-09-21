@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 
 import { Armchair } from '../components/Armchair';
 import '../fight.css';
+import { useSfx } from '../hooks/useSfx';
 import { inkOn, typeOf } from '../theme';
 import type { DebateSnapshot, Side, TheoryCard } from '../types';
 import '../versus.css';
@@ -22,7 +23,9 @@ const LABELS: Record<Side, string> = { user: '1P YOU', bot: 'CPU THE HOUSE' };
  * Pure show — nothing here can be clicked, and the words reach a screen reader
  * through the app's one live region.
  */
-export const VersusScreen = ({ snapshot, cards }: VersusScreenProps) => (
+export const VersusScreen = ({ snapshot, cards }: VersusScreenProps) => {
+  useSfx('versus', true);
+  return (
   <div className="versus" aria-hidden="true">
     {(['user', 'bot'] as const).map((side) => {
       const debater = snapshot[side];
@@ -59,4 +62,5 @@ export const VersusScreen = ({ snapshot, cards }: VersusScreenProps) => (
     })}
     <p className="versus__vs pixel-text">VS</p>
   </div>
-);
+  );
+};

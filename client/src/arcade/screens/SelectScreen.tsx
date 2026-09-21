@@ -8,6 +8,7 @@ import { TheoryCardFace } from '../components/TheoryCardFace';
 import '../fight.css';
 import '../select.css';
 import { rivalIndices } from '../selection';
+import { playSfx } from '../sfxPlayer';
 import type { DebateSnapshot, TheoryCard } from '../types';
 
 /**
@@ -56,12 +57,14 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
 
   const send = (house: TheoryCard | null) => {
     if (!mine) return;
+    playSfx('pick');
     setSent(mine);
     onPick(mine, house);
   };
 
   const pick = (card: TheoryCard) => {
     if (mine) return send(card);
+    playSfx('pick');
     setMine(card);
     // The cursor becomes the house's, starting on the first rival.
     setFocused(rivalIndices(card, cards)[0] ?? focused);
@@ -69,6 +72,7 @@ export const SelectScreen = ({ snapshot, cards, onPick }: SelectScreenProps) => 
 
   const back = () => {
     if (!mine || sent) return;
+    playSfx('back');
     setFocused(mineIndex >= 0 ? mineIndex : 0);
     setMine(null);
   };

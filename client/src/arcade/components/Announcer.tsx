@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { useSfx } from '../hooks/useSfx';
 import { ANNOUNCER_SEQUENCE } from '../screen';
 import type { Stage } from '../types';
 
@@ -15,6 +16,7 @@ export const Announcer = ({ stage }: { stage: Stage }) => {
   const [step, setStep] = useState<{ stage: Stage; index: number }>({ stage, index: 0 });
   const steps = ANNOUNCER_SEQUENCE[stage] ?? [];
   const index = step.stage === stage ? step.index : 0;
+  useSfx(steps.length > 0 ? 'round' : null, stage);
 
   useEffect(() => {
     const timers: number[] = [];

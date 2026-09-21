@@ -1,4 +1,5 @@
 import { PixelButton } from '../components/PixelButton';
+import { playSfx } from '../sfxPlayer';
 
 export interface TitleScreenProps {
   onStart: () => void;
@@ -51,7 +52,16 @@ export const TitleScreen = ({ onStart, onDeck, busy, error }: TitleScreenProps) 
     <p className="logo__rule pixel-text title__subtitle">ARCADE EDITION</p>
 
     <div className="title__start">
-      <PixelButton size="lg" blink={!busy} disabled={busy} onClick={onStart}>
+      <PixelButton
+        size="lg"
+        blink={!busy}
+        disabled={busy}
+        onClick={() => {
+          // The first gesture on the page: it is also what lets the browser play sound.
+          playSfx('pick');
+          onStart();
+        }}
+      >
         {busy ? 'CONNECTING…' : 'PRESS START'}
       </PixelButton>
 
@@ -59,7 +69,13 @@ export const TitleScreen = ({ onStart, onDeck, busy, error }: TitleScreenProps) 
         Say what you think consciousness is. The house will disagree.
       </p>
 
-      <PixelButton disabled={busy} onClick={onDeck}>
+      <PixelButton
+        disabled={busy}
+        onClick={() => {
+          playSfx('pick');
+          onDeck();
+        }}
+      >
         The deck
       </PixelButton>
 

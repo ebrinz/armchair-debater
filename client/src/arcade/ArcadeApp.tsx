@@ -19,6 +19,7 @@ import { decisionBanners, nextSpoken } from './battleText';
 import type { Spoken } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
+import { SfxToggle } from './components/SfxToggle';
 import { Stage } from './components/Stage';
 import bundledDeck from './fixtures/theory-cards.json';
 import { useAudioLevel } from './hooks/useAudioLevel';
@@ -191,6 +192,7 @@ const ArcadeView = ({
         }
       />
       <CrtOverlay />
+      <SfxToggle />
     </div>
   );
 };

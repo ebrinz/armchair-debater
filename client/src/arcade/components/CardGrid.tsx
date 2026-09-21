@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { GridKey } from '../gridNav';
 import { moveFocus } from '../gridNav';
 import { moveAmong } from '../selection';
+import { playSfx } from '../sfxPlayer';
 import { inkOn, typeOf } from '../theme';
 import type { TheoryCard } from '../types';
 
@@ -71,11 +72,11 @@ export const CardGrid = ({
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (!isNavKey(event.key)) return;
     event.preventDefault();
-    onFocusChange(
-      open
-        ? moveAmong(focused, event.key, open)
-        : moveFocus(focused, event.key, cards.length || SLOTS, COLUMNS)
-    );
+    const next = open
+      ? moveAmong(focused, event.key, open)
+      : moveFocus(focused, event.key, cards.length || SLOTS, COLUMNS);
+    if (next !== focused) playSfx('cursor');
+    onFocusChange(next);
   };
 
   return (
@@ -126,7 +127,11 @@ export const CardGrid = ({
             aria-label={card ? card.name : 'Empty slot'}
             onClick={() => card && onPick(card)}
             onFocus={() => onFocusChange(i)}
-            onMouseEnter={() => !disabled && !closed && card && onFocusChange(i)}
+            onMouseEnter={() => {
+              if (disabled || closed || !card) return;
+              if (i !== focused) playSfx('cursor');
+              onFocusChange(i);
+            }}
           >
             <span className="slot__name">{card ? card.name : ''}</span>
             {(mine || (i === focused && cursorLabel)) && (

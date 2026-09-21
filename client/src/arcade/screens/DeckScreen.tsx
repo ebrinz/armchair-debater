@@ -5,6 +5,7 @@ import { PixelButton } from '../components/PixelButton';
 import { TheoryCardFace } from '../components/TheoryCardFace';
 import '../fight.css';
 import '../select.css';
+import { playSfx } from '../sfxPlayer';
 import type { TheoryCard } from '../types';
 
 export interface DeckScreenProps {
@@ -26,14 +27,21 @@ export const DeckScreen = ({ cards, onBack }: DeckScreenProps) => {
 
   const goTo = (id: string) => {
     const index = cards.findIndex((c) => c.id === id);
-    if (index >= 0) setFocused(index);
+    if (index < 0) return;
+    if (index !== focused) playSfx('pick');
+    setFocused(index);
+  };
+
+  const leave = () => {
+    playSfx('back');
+    onBack();
   };
 
   return (
     <div
       className="select select--deck"
       onKeyDown={(event) => {
-        if (event.key === 'Escape') onBack();
+        if (event.key === 'Escape') leave();
       }}
     >
       <header className="select__head">
@@ -53,7 +61,7 @@ export const DeckScreen = ({ cards, onBack }: DeckScreenProps) => {
             cursorLabel={null}
           />
           <div className="select__house">
-            <PixelButton onClick={onBack}>Back</PixelButton>
+            <PixelButton onClick={leave}>Back</PixelButton>
           </div>
         </div>
 
