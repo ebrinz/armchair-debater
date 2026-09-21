@@ -1,5 +1,5 @@
 import { ROUND_LABELS, announcerText } from './screen';
-import type { DebateSnapshot, Hit, Side, Stage } from './types';
+import type { DebateSnapshot, Hit, Mode, Side, Stage } from './types';
 
 export const speakerName = (side: Side): 'YOU' | 'THE HOUSE' => (side === 'user' ? 'YOU' : 'THE HOUSE');
 
@@ -26,8 +26,32 @@ const EFFECTIVENESS: Record<HitTier, (damage: number) => string> = {
   super: (damage) => `It's super effective!  −${damage}`,
 };
 
+/**
+ * How hard a hit should FEEL — the damage the shake, flash and sound are tiered
+ * on. Sparring scores at half the debate's scale (one bar, five questions), so
+ * it is felt at double: the worst answer shakes the room like the hardest blow.
+ */
+export const feltDamage = (hit: Hit, mode: Mode | null): number =>
+  mode === 'sparring' ? hit.damage * 2 : hit.damage;
+
+/** Sparring's damage, worded from the side that is defending. */
+const HELD: Record<HitTier, (damage: number) => string> = {
+  miss: () => 'Answered in full!',
+  glancing: (damage) => `A scratch…  −${damage}`,
+  solid: (damage) => `That one landed.  −${damage}`,
+  super: (damage) => `A hole in the view!  −${damage}`,
+};
+
 /** The lines the battle text box types out for one hit. */
-export const battleLines = (hit: Hit): string[] => {
+export const battleLines = (hit: Hit, mode: Mode | null = null): string[] => {
+  // Sparring records each scored ANSWER as a hit by the examiner: the reason
+  // names the question and what the answer did with it, the damage is what the
+  // player lost, and the recovery is what the PLAYER won back.
+  if (mode === 'sparring') {
+    const lines = [`THE EXAMINER: "${hit.reason}"`, HELD[hitTier(feltDamage(hit, mode))](hit.damage)];
+    if (hit.recovery > 0) lines.push(`YOU won some back!  +${hit.recovery}`);
+    return lines;
+  }
   const who = speakerName(hit.by);
   const lines = [`${who} used "${hit.reason}"`, EFFECTIVENESS[hitTier(hit.damage)](hit.damage)];
   if (hit.recovery > 0) lines.push(`${who} shook off the last hit!  +${hit.recovery}`);
@@ -47,6 +71,8 @@ export const battleLines = (hit: Hit): string[] => {
  * wants from them rather than naming the house.
  */
 export const turnCue = (hit: Hit | null, stage: Stage): string => {
+  // The examiner only asks, so once a question is out the floor is the player's.
+  if (stage === 'sparring') return 'ANSWER THE EXAMINER';
   if (!hit) return stage === 'opening' ? 'THE HOUSE steps up…' : 'YOUR MOVE';
   if (stage === 'crossexam') {
     return hit.by === 'user' ? 'ASK THE HOUSE ONE QUESTION' : 'ANSWER THE HOUSE';
@@ -67,6 +93,10 @@ export const turnCue = (hit: Hit | null, stage: Stage): string => {
 export const decisionBanners = (snapshot: DebateSnapshot): string[] => {
   const { user, bot, verdict } = snapshot;
   if (!verdict) return [];
+  // Sparring has one bar and no opponent: the finding is how much of it is left.
+  if (snapshot.mode === 'sparring') {
+    return [user.health >= 70 ? 'YOUR VIEW HOLDS' : user.health >= 40 ? 'SHAKEN' : 'IN TATTERS'];
+  }
   if (user.health <= 0 && bot.health <= 0) return ['DOUBLE K.O.'];
   if (verdict.winner === 'draw') return ['DRAW GAME'];
 

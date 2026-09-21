@@ -17,7 +17,7 @@ describe('useArcadeStore.receive', () => {
     store().receive(cardsFixture);
     store().receive(fixtures[0]);
     expect(store().cards).toHaveLength(12);
-    expect(store().snapshot?.stage).toBe('setup');
+    expect(store().snapshot?.stage).toBe('mode');
   });
 
   it('counts a hit once, however many snapshots repeat it', () => {

@@ -3,6 +3,9 @@ export interface HealthBarProps {
   label: string;
   theory: string | null;
   health: number;
+  /** Someone with no bar to lose — sparring's examiner. The name plate stays,
+   *  so the HUD keeps its two sides; the number and the meter do not exist. */
+  barless?: boolean;
 }
 
 /**
@@ -15,7 +18,7 @@ export interface HealthBarProps {
  * then NARROWER than the fill painted over it, so it is hidden for the whole
  * delay and no red is ever seen growing.
  */
-export const HealthBar = ({ side, label, theory, health }: HealthBarProps) => {
+export const HealthBar = ({ side, label, theory, health, barless = false }: HealthBarProps) => {
   const clamped = Math.max(0, Math.min(100, health));
   const danger = clamped < 30;
 
@@ -26,7 +29,8 @@ export const HealthBar = ({ side, label, theory, health }: HealthBarProps) => {
         <span className="hp-bar__theory">{theory ?? '???'}</span>
       </div>
 
-      <div className="hp-bar__row">
+      {/* Hidden rather than removed when barless, so both plates stay level. */}
+      <div className="hp-bar__row" style={barless ? { visibility: 'hidden' } : undefined} aria-hidden={barless || undefined}>
         <span className="hp-bar__number pixel-text">{clamped}</span>
         <div
           className="hp-bar__track pixel-border"

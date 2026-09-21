@@ -1,0 +1,97 @@
+[
+  {
+    "type": "debate_state",
+    "stage": "mode",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": null,
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "explore",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "explore",
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "explore",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "explore",
+    "focus": "iit",
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "explore",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "explore",
+    "focus": "gwt",
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "explore",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "explore",
+    "focus": "illusionism",
+    "question": null
+  }
+]

@@ -24,12 +24,14 @@ import { Stage } from './components/Stage';
 import bundledDeck from './fixtures/theory-cards.json';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
-import { startMockReplay } from './mock';
+import { mockKind, startMockReplay } from './mock';
+import { MENU_LINE, MODE_LINES, againLine, askLine } from './modes';
 import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
 import type { SplashState } from './screen';
 import { pickLine } from './selection';
 import { DeckScreen } from './screens/DeckScreen';
 import { DecisionScreen } from './screens/DecisionScreen';
+import { ModeScreen } from './screens/ModeScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
 import { TitleScreen } from './screens/TitleScreen';
@@ -59,7 +61,7 @@ const announce = (
   fightText: string
 ): string => {
   if (screen === 'title') return '';
-  if (!snapshot) return ROUND_LABELS.setup;
+  if (!snapshot) return ROUND_LABELS.mode;
   if (screen === 'fight') return fightText;
   if (screen === 'versus') {
     return `${snapshot.user.theory_name ?? 'You'} versus ${snapshot.bot.theory_name ?? 'the house'}`;
@@ -72,8 +74,6 @@ const announce = (
 };
 
 
-/** What the REMATCH button says, as if the player had asked out loud. */
-const REMATCH_LINE = "I'd like a rematch.";
 
 interface ViewProps {
   connected: boolean;
@@ -84,10 +84,9 @@ interface ViewProps {
   userLevel?: number;
   botLevel?: number;
   mock?: boolean;
-  /** Sends the select screen's pick. */
-  onPick: (mine: TheoryCard, house: TheoryCard | null) => void;
-  /** Asks for another debate from the decision screen. */
-  onRematch: () => void;
+  /** Says a line to the bot, as if the player had typed it. Every button in the
+   *  UI comes down to this: a pick, a mode, a rematch, the way back to the menu. */
+  say: (line: string) => void;
 }
 
 /**
@@ -99,8 +98,7 @@ const ArcadeView = ({
   busy,
   error,
   onStart,
-  onPick,
-  onRematch,
+  say,
   userLevel = 0,
   botLevel = 0,
   mock = false,
@@ -167,8 +165,24 @@ const ArcadeView = ({
         {screen === 'title' && browsing && (
           <DeckScreen cards={deck} onBack={() => setBrowsing(false)} />
         )}
+        {screen === 'mode' && (
+          <ModeScreen chosen={snapshot?.mode ?? null} onMode={(mode) => say(MODE_LINES[mode])} />
+        )}
         {screen === 'select' && (
-          <SelectScreen snapshot={snapshot} cards={cards} onPick={onPick} />
+          <SelectScreen
+            snapshot={snapshot}
+            cards={cards}
+            solo={snapshot?.mode === 'sparring'}
+            onPick={(mine, house) => say(pickLine(mine, house))}
+          />
+        )}
+        {screen === 'explore' && (
+          <DeckScreen
+            cards={deck}
+            follow={snapshot?.focus ?? null}
+            onAsk={(card) => say(askLine(card.name))}
+            onBack={() => say(MENU_LINE)}
+          />
         )}
         {screen === 'versus' && snapshot && <VersusScreen snapshot={snapshot} cards={cards} />}
         {screen === 'fight' && snapshot && (
@@ -181,7 +195,12 @@ const ArcadeView = ({
           />
         )}
         {screen === 'decision' && snapshot && (
-          <DecisionScreen snapshot={snapshot} onRematch={onRematch} mock={mock} />
+          <DecisionScreen
+            snapshot={snapshot}
+            onRematch={() => say(againLine(snapshot.mode))}
+            onMenu={() => say(MENU_LINE)}
+            mock={mock}
+          />
         )}
       </div>
       <LiveRegion
@@ -225,15 +244,12 @@ const ArcadeSession = ({
   // (node_modules/@pipecat-ai/client-js/dist/index.d.ts:1278), called the same
   // way by the scaffold at src/components/pipecat/text-input.tsx:187.
   const client = usePipecatClient();
-  const onPick = useCallback(
-    (mine: TheoryCard, house: TheoryCard | null) => {
-      void client?.sendText(pickLine(mine, house));
+  const say = useCallback(
+    (line: string) => {
+      void client?.sendText(line);
     },
     [client]
   );
-  const onRematch = useCallback(() => {
-    void client?.sendText(REMATCH_LINE);
-  }, [client]);
 
   const transportState = usePipecatClientTransportState();
   const connected = LIVE_STATES.includes(transportState);
@@ -258,8 +274,7 @@ const ArcadeSession = ({
         busy={busy}
         error={error}
         onStart={onStart}
-        onPick={onPick}
-        onRematch={onRematch}
+        say={say}
         userLevel={userLevel}
         botLevel={botLevel}
       />
@@ -273,6 +288,8 @@ export const ArcadeApp = () => {
     () => new URLSearchParams(window.location.search).has('mock'),
     []
   );
+  // `?mock` replays the debate; `?mock=sparring` and `?mock=explore` the others.
+  const kind = useMemo(() => mockKind(window.location.search), []);
 
   const app = usePipecatApp({
     transportType: DEFAULT_TRANSPORT,
@@ -291,21 +308,24 @@ export const ArcadeApp = () => {
   const [replay, setReplay] = useState(0);
   useEffect(() => {
     if (!mock) return;
-    return startMockReplay();
-  }, [mock, replay]);
+    return startMockReplay(kind);
+  }, [mock, kind, replay]);
 
   // ?mock replays the fixtures with no server and no client of any kind.
   if (mock) {
-    // No provider on this path, so nothing is sent: the pick is logged, and a
-    // rematch replays the fixture instead of asking the bot for one.
+    // No provider on this path, so nothing is sent: what would have been said
+    // is logged, and asking for another go, or for the menu, replays the fixture
+    // instead of asking the bot.
     return (
       <ArcadeView
         connected
         busy={false}
         error={null}
         onStart={() => {}}
-        onPick={(mine, house) => console.info(pickLine(mine, house))}
-        onRematch={() => setReplay((n) => n + 1)}
+        say={(line) => {
+          console.info(line);
+          if (line === MENU_LINE || line === againLine(kind)) setReplay((n) => n + 1);
+        }}
         mock
       />
     );
@@ -319,8 +339,7 @@ export const ArcadeApp = () => {
         busy
         error={app.error}
         onStart={() => {}}
-        onPick={() => {}}
-        onRematch={() => {}}
+        say={() => {}}
       />
     );
   }

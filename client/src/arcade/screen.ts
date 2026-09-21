@@ -1,11 +1,13 @@
 import type { DebateSnapshot, Stage } from './types';
 
-export type Screen = 'title' | 'select' | 'versus' | 'fight' | 'decision';
+export type Screen = 'title' | 'mode' | 'select' | 'versus' | 'fight' | 'decision' | 'explore';
 
 /** Which screen to show. A pure function of the server's state, so the UI cannot drift from it. */
 export const screenFor = (connected: boolean, snapshot: DebateSnapshot | null): Screen => {
   if (!connected) return 'title';
-  if (!snapshot) return 'select';
+  // Connected with nothing heard yet: the front door is where everything starts.
+  if (!snapshot || snapshot.stage === 'mode') return 'mode';
+  if (snapshot.stage === 'explore') return 'explore';
   // The lock-in: both sides matched to a theory, the first round not yet begun.
   if (snapshot.stage === 'setup') return splashKey(snapshot) ? 'versus' : 'select';
   return snapshot.stage === 'verdict' ? 'decision' : 'fight';
@@ -47,6 +49,9 @@ export const nextSplash = (state: SplashState, key: string | null): SplashState 
   key === state.seen ? state : { seen: key, holding: key ?? state.holding };
 
 export const ROUND_LABELS: Record<Stage, string> = {
+  mode: 'CHOOSE YOUR GAME',
+  sparring: 'EXAMINATION',
+  explore: 'THE DECK',
   setup: 'CHOOSE YOUR THEORY',
   opening: 'ROUND 1 · OPENING',
   rebuttal: 'ROUND 2 · REBUTTAL',
@@ -59,7 +64,34 @@ export const ROUND_LABELS: Record<Stage, string> = {
 export const ROUNDS = 4;
 
 export const roundNumber = (stage: Stage): number =>
-  ({ setup: 0, opening: 1, rebuttal: 2, crossexam: 3, closing: ROUNDS, verdict: ROUNDS })[stage];
+  ({
+    mode: 0,
+    setup: 0,
+    opening: 1,
+    rebuttal: 2,
+    crossexam: 3,
+    closing: ROUNDS,
+    verdict: ROUNDS,
+    sparring: 0,
+    explore: 0,
+  })[stage];
+
+/** What the plate between the bars says: rounds in a debate, questions in sparring. */
+export interface Plate {
+  title: string;
+  sub: string;
+  pips: number;
+  lit: number;
+}
+
+export const plateFor = (snapshot: DebateSnapshot): Plate => {
+  if (snapshot.question) {
+    const { number, of } = snapshot.question;
+    return { title: `QUESTION ${number}`, sub: `OF ${of}`, pips: of, lit: number };
+  }
+  const [title, ...rest] = ROUND_LABELS[snapshot.stage].split(' · ');
+  return { title, sub: rest.join(' · '), pips: ROUNDS, lit: roundNumber(snapshot.stage) };
+};
 
 /**
  * The announcer's banners for each stage, in the spec's words, with how long
@@ -71,6 +103,10 @@ export const ANNOUNCER_SEQUENCE: Partial<Record<Stage, Array<[text: string, ms: 
     ['FIGHT!', 700],
   ],
   rebuttal: [['ROUND 2', 900]],
+  sparring: [
+    ['EXAMINATION', 900],
+    ['BEGIN!', 700],
+  ],
   crossexam: [
     ['ROUND 3', 900],
     ['CROSS-EXAMINE!', 800],

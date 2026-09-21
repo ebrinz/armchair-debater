@@ -11,6 +11,11 @@ import type { TheoryCard } from '../types';
 export interface DeckScreenProps {
   cards: TheoryCard[];
   onBack: () => void;
+  /** The explorer: the card the guide is talking about. The cursor goes there
+   *  whenever it changes, and is the player's to move in between. */
+  follow?: string | null;
+  /** The explorer: choosing a card asks the guide about it. */
+  onAsk?: (card: TheoryCard) => void;
 }
 
 /**
@@ -21,8 +26,18 @@ export interface DeckScreenProps {
  * links to the cards they name. No connection is needed, so it opens from the
  * title screen; Escape or BACK returns there.
  */
-export const DeckScreen = ({ cards, onBack }: DeckScreenProps) => {
+export const DeckScreen = ({ cards, onBack, follow = null, onAsk }: DeckScreenProps) => {
   const [focused, setFocused] = useState(0);
+  // Following is an event, not a binding: when the guide turns to a new card the
+  // cursor goes with it, once, and the player can still wander off afterwards.
+  // Applied during render, like the other derived state in this UI.
+  const [followed, setFollowed] = useState<string | null>(null);
+  if (follow !== followed) {
+    setFollowed(follow);
+    const index = cards.findIndex((c) => c.id === follow);
+    if (index >= 0) setFocused(index);
+  }
+  const exploring = onAsk !== undefined;
   const shown = cards[focused];
 
   const goTo = (id: string) => {
@@ -45,8 +60,10 @@ export const DeckScreen = ({ cards, onBack }: DeckScreenProps) => {
       }}
     >
       <header className="select__head">
-        <h2 className="select__title pixel-text">The deck</h2>
-        <p className="select__sub">— twelve theories of consciousness —</p>
+        <h2 className="select__title pixel-text">{exploring ? 'Explore' : 'The deck'}</h2>
+        <p className="select__sub">
+          {exploring ? '— ask about any theory, or pick a card —' : '— twelve theories of consciousness —'}
+        </p>
       </header>
 
       <div className="select__body">
@@ -55,13 +72,16 @@ export const DeckScreen = ({ cards, onBack }: DeckScreenProps) => {
             cards={cards}
             focused={focused}
             onFocusChange={setFocused}
-            onPick={(card) => goTo(card.id)}
+            onPick={(card) => {
+              goTo(card.id);
+              onAsk?.(card);
+            }}
             lockedId={null}
             disabled={false}
             cursorLabel={null}
           />
           <div className="select__house">
-            <PixelButton onClick={leave}>Back</PixelButton>
+            <PixelButton onClick={leave}>{exploring ? 'Menu' : 'Back'}</PixelButton>
           </div>
         </div>
 
@@ -72,11 +92,14 @@ export const DeckScreen = ({ cards, onBack }: DeckScreenProps) => {
 
       <footer className="select__foot">
         <p className="select__hint">
-          Each card is one theory: its claim, three arguments it fights with, and the rivals it is
-          weak against. Pick a rival&apos;s tag to turn to its card.
+          {exploring
+            ? 'Your mic is open: ask what a theory says, what is wrong with it, or how two differ. The screen turns to whatever the guide is talking about.'
+            : 'Each card is one theory: its claim, three arguments it fights with, and the rivals it is weak against. Pick a rival’s tag to turn to its card.'}
         </p>
         <p className="select__status pixel-text">
-          <span className="select__prompt">Arrow keys move · Esc goes back</span>
+          <span className="select__prompt">
+            {exploring ? 'Arrow keys move · Enter asks · Esc for the menu' : 'Arrow keys move · Esc goes back'}
+          </span>
         </p>
       </footer>
     </div>
