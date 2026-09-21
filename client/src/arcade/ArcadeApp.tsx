@@ -23,11 +23,13 @@ import { Stage } from './components/Stage';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
 import { startMockReplay } from './mock';
-import { ROUND_LABELS, screenFor } from './screen';
+import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
+import type { SplashState } from './screen';
 import { DecisionScreen } from './screens/DecisionScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
 import { TitleScreen } from './screens/TitleScreen';
+import { VersusScreen } from './screens/VersusScreen';
 import { useArcadeStore } from './store';
 import type { TheoryCard } from './types';
 
@@ -55,6 +57,9 @@ const announce = (
   if (screen === 'title') return '';
   if (!snapshot) return ROUND_LABELS.setup;
   if (screen === 'fight') return fightText;
+  if (screen === 'versus') {
+    return `${snapshot.user.theory_name ?? 'You'} versus ${snapshot.bot.theory_name ?? 'the house'}`;
+  }
   const lines = [ROUND_LABELS[snapshot.stage]];
   if (screen === 'decision' && snapshot.verdict) {
     lines.push(...decisionBanners(snapshot), snapshot.verdict.rationale);
@@ -101,7 +106,25 @@ const ArcadeView = ({
   const snapshot = useArcadeStore((s) => s.snapshot);
   const cards = useArcadeStore((s) => s.cards);
   const hitCount = useArcadeStore((s) => s.hitCount);
-  const screen = screenFor(connected, snapshot);
+
+  // The versus splash is the one screen that needs time as well as state: see
+  // `nextSplash`. Applied during render like `spoken` below; the timer only
+  // ever ends a hold, so it cannot fight the server's state.
+  const [splash, setSplash] = useState<SplashState>({ seen: null, holding: null });
+  const splashed = nextSplash(splash, splashKey(snapshot));
+  if (splashed !== splash) setSplash(splashed);
+  const holding = splash.holding;
+  useEffect(() => {
+    if (!holding) return;
+    const timer = window.setTimeout(
+      () => setSplash((state) => ({ ...state, holding: null })),
+      VERSUS_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [holding]);
+
+  const fromState = screenFor(connected, snapshot);
+  const screen = holding && fromState === 'fight' ? 'versus' : fromState;
   // The fire belongs to the stage, which is mounted here rather than in the
   // fight screen, so the super-effective flare is lifted to this level.
   const flare = useSuperFlare(hitCount, snapshot?.last_hit ?? null);
@@ -128,6 +151,7 @@ const ArcadeView = ({
         {screen === 'select' && (
           <SelectScreen snapshot={snapshot} cards={cards} onPick={onPick} />
         )}
+        {screen === 'versus' && snapshot && <VersusScreen snapshot={snapshot} cards={cards} />}
         {screen === 'fight' && snapshot && (
           <FightScreen
             snapshot={snapshot}
