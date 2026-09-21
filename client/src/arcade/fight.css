@@ -404,6 +404,30 @@
   }
 }
 
+/*
+ * The attack frame: the chair that landed the blow lunges at the other one and
+ * settles back. The sprite's inner group is mirrored for the house, so "forward"
+ * is +x for both of them.
+ */
+.armchair--attacking .armchair__rock {
+  animation: chair-lunge 280ms steps(4, end) 1;
+}
+
+@keyframes chair-lunge {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+
+  35% {
+    transform: translateX(9%) rotate(4deg);
+  }
+
+  60% {
+    transform: translateX(5%) rotate(2deg);
+  }
+}
+
 /* The decision screen's poses (task U.5). */
 .armchair--win .armchair__rock {
   animation: chair-hop 480ms steps(2, end) 3;

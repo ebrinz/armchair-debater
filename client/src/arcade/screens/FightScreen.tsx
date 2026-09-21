@@ -117,6 +117,9 @@ export const FightScreen = ({
                 variant={side === 'user' ? 'challenger' : 'champion'}
                 level={level[side]}
                 hurt={hurt}
+                // The lunge lasts as long as the other chair reels from it.
+                attacking={fx.attacker === side && fx.hurt !== null}
+                theoryId={debater[side].theory_id}
                 healed={fx.healed === side}
                 health={debater[side].health}
                 pose={poses?.[side]}

@@ -101,6 +101,7 @@ export const TheoryCardFace = ({ card, cards, locked = false, onRival }: TheoryC
               hurt={false}
               healed={false}
               health={100}
+              theoryId={card.id}
               className="card__chair"
             />
           </div>

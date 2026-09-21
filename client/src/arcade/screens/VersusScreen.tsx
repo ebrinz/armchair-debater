@@ -51,6 +51,7 @@ export const VersusScreen = ({ snapshot, cards }: VersusScreenProps) => {
               hurt={false}
               healed={false}
               health={100}
+              theoryId={debater.theory_id}
             />
           </div>
           <div className="versus__plate">
