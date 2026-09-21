@@ -29,9 +29,24 @@ async def test_initial_snapshot_matches_first_fixture():
     assert DebateState().snapshot() == FIXTURES[0]
 
 
-async def test_lock_in_snapshot_matches_second_fixture():
+async def test_the_lock_in_snapshot_is_in_the_fixture():
     # Positions are set while the stage is still "setup": the UI locks the card in on this.
-    assert (await started()).snapshot() == FIXTURES[1]
+    state = DebateState()
+    await state.set_mode("debate")
+    await state.set_stage("setup")
+    await state.set_positions(
+        "gwt", "Global Workspace Theory", "iit", "Integrated Information Theory"
+    )
+    assert state.snapshot() in FIXTURES
+
+
+def test_the_committed_fixtures_are_what_the_generator_makes():
+    import make_fixtures
+
+    for name, text in make_fixtures.generate().items():
+        assert (make_fixtures.DESIGN / name).read_text() == text, (
+            f"{name} is out of date: run `uv run python make_fixtures.py`"
+        )
 
 
 async def test_snapshot_shape_matches_final_fixture():
@@ -112,7 +127,7 @@ async def test_setup_stage_resets_everything():
     await state.apply_hit("user", 20, 0, "u")
     await state.set_verdict("Because.")
     await state.set_stage("setup")
-    assert state.snapshot() == FIXTURES[0]
+    assert state.snapshot() == {**DebateState().snapshot(), "stage": "setup"}
     assert state.hits == []
 
 
@@ -216,3 +231,99 @@ async def test_replaying_the_fixture_debate_reproduces_the_fixture_healths():
         last_hit = state.snapshot()["last_hit"]
         assert last_hit["damage"] == fixture["last_hit"]["damage"]
         assert last_hit["recovery"] == fixture["last_hit"]["recovery"]
+
+
+# --- modes --------------------------------------------------------------------
+
+
+async def test_a_fresh_state_has_no_mode_focus_or_question():
+    snapshot = DebateState().snapshot()
+    assert (snapshot["mode"], snapshot["focus"], snapshot["question"]) == (None, None, None)
+
+
+async def test_the_front_door_forgets_everything_including_the_mode():
+    state = await started()
+    await state.set_mode("debate")
+    await state.apply_hit("bot", 10, 0, "r")
+
+    await state.set_stage("mode")
+
+    snapshot = state.snapshot()
+    assert snapshot["mode"] is None
+    assert snapshot["user"] == {"theory_id": None, "theory_name": None, "health": 100}
+    assert snapshot["last_hit"] is None
+
+
+async def test_setup_keeps_the_mode_so_a_rematch_stays_in_it():
+    state = DebateState()
+    await state.set_mode("sparring")
+    await state.set_stage("setup")
+    assert state.snapshot()["mode"] == "sparring"
+
+
+async def test_unknown_mode_is_rejected():
+    with pytest.raises(ValueError):
+        await DebateState().set_mode("karaoke")
+
+
+async def test_every_change_of_mode_focus_or_question_is_emitted():
+    seen = []
+
+    async def on_change(snapshot):
+        seen.append((snapshot["mode"], snapshot["focus"], snapshot["question"]))
+
+    state = DebateState(on_change=on_change)
+    await state.set_mode("explore")
+    await state.set_focus("iit")
+    await state.set_question(2, 5)
+
+    assert seen == [
+        ("explore", None, None),
+        ("explore", "iit", None),
+        ("explore", "iit", {"number": 2, "of": 5}),
+    ]
+
+
+async def test_sparring_has_a_player_and_an_examiner_with_no_theory():
+    state = DebateState()
+    await state.set_mode("sparring")
+    await state.set_solo("gwt", "Global Workspace Theory")
+
+    snapshot = state.snapshot()
+    assert snapshot["user"]["theory_id"] == "gwt"
+    assert snapshot["bot"] == {"theory_id": None, "theory_name": "The Examiner", "health": 100}
+
+
+async def test_a_sparring_answer_costs_the_player_at_scale_one_and_heals_the_player():
+    state = DebateState()
+    await state.set_mode("sparring")
+    await state.set_solo("gwt", "Global Workspace Theory")
+
+    await state.apply_answer(20, 0, "Dodged the question.")
+    assert state.health == {"user": 80, "bot": 100}
+    assert state.snapshot()["last_hit"] == {
+        "by": "bot",
+        "damage": 20,
+        "recovery": 0,
+        "reason": "Dodged the question.",
+    }
+
+    # A full answer costs nothing and wins back at most half the last loss.
+    await state.apply_answer(0, 15, "Answered it squarely, and repaired the last one.")
+    assert state.health == {"user": 90, "bot": 100}
+    assert state.snapshot()["last_hit"]["recovery"] == 10
+
+    # Clamped like any other score, and never above full health.
+    await state.apply_answer(99, 99, "r")
+    assert state.health["user"] == 90 - 25
+
+
+async def test_the_sparring_finding_is_the_players_bar_not_a_comparison():
+    state = DebateState()
+    await state.set_mode("sparring")
+    await state.set_solo("gwt", "Global Workspace Theory")
+    await state.apply_answer(25, 0, "r")
+    await state.apply_answer(24, 0, "r")
+    assert state.health["user"] == 51 and state.winner() == "user"
+    await state.apply_answer(2, 0, "r")
+    assert state.health["user"] == 49 and state.winner() == "bot"

@@ -220,3 +220,150 @@ async def test_use_voice_switches_the_tts_voice_with_a_frame_in_order(monkeypatc
 
     assert [type(f) for f in fm.worker.frames] == [TTSUpdateSettingsFrame, TTSUpdateSettingsFrame]
     assert [f.delta.voice for f in fm.worker.frames] == ["j", "h"]
+
+
+# --- the front door ------------------------------------------------------------
+
+
+async def test_choose_mode_records_the_mode_and_reports_it_for_the_flow_to_branch_on():
+    fm = FakeFlowManager()
+
+    for mode in ("debate", "sparring", "explore"):
+        result, nxt = await handlers.choose_mode(fm, mode=mode)
+        assert result == {"status": mode}
+        assert nxt is TRANSITION_IN_YAML
+        assert fm.state["debate"].snapshot()["mode"] == mode
+
+
+async def test_choose_mode_turns_down_anything_else_and_stays_put():
+    fm = FakeFlowManager()
+
+    result, _ = await handlers.choose_mode(fm, mode="karaoke")
+
+    assert result["status"] == "unknown_mode"
+    assert result["valid_modes"] == ["debate", "sparring", "explore"]
+    assert fm.state["debate"].snapshot()["mode"] is None
+
+
+# --- sparring -------------------------------------------------------------------
+
+
+async def sparring_at(question: int, monkeypatch, heard_by_examiner: int | None = None):
+    fm = FakeFlowManager()
+    await fm.state["debate"].set_mode("sparring")
+    await handlers.take_position(fm, user_theory="gwt")
+    fm.state["spar_q"] = question
+    fm.state["scorer"].heard_turns[("sparring", "bot")] = (
+        question if heard_by_examiner is None else heard_by_examiner
+    )
+    fm.state["scorer"].log.clear()
+    return fm
+
+
+async def test_take_position_seats_the_player_alone_and_resets():
+    fm = FakeFlowManager()
+    await fm.state["debate"].set_mode("sparring")
+
+    result, nxt = await handlers.take_position(fm, user_theory="gwt")
+
+    assert result == {"status": "ok", "user_theory": "Global Workspace Theory"}
+    assert nxt is TRANSITION_IN_YAML
+    assert fm.state["scorer"].log == ["reset"]
+    assert fm.state["spar_q"] == 1
+    assert fm.state["user_theory_name"] == "Global Workspace Theory"
+    assert fm.state["bot_theory_name"] == "The Examiner"
+    assert "Known objections" in fm.state["user_card"]
+    snapshot = fm.state["debate"].snapshot()
+    assert snapshot["user"]["theory_id"] == "gwt" and snapshot["bot"]["theory_id"] is None
+
+
+async def test_take_position_reports_an_unknown_id():
+    fm = FakeFlowManager()
+    result, _ = await handlers.take_position(fm, user_theory="nope")
+    assert result["status"] == "unknown_theory"
+
+
+async def test_answer_heard_moves_to_the_next_question(monkeypatch):
+    fm = await sparring_at(2, monkeypatch)
+
+    result, nxt = await handlers.answer_heard(fm)
+
+    assert result == {"status": "more", "question": 3, "of": 5}
+    assert nxt is TRANSITION_IN_YAML
+    assert fm.state["spar_q"] == 3
+
+
+async def test_answer_heard_waits_until_the_examiner_has_asked(monkeypatch):
+    # Two questions asked so far, and this is the third visit: a barge-in before
+    # the third question is not an answer to it.
+    fm = await sparring_at(3, monkeypatch, heard_by_examiner=2)
+
+    result, _ = await handlers.answer_heard(fm)
+
+    assert result["status"] == "ask_first"
+    assert fm.state["spar_q"] == 3
+
+
+async def test_the_fifth_answer_brings_the_finding(monkeypatch):
+    async def write_finding(**kwargs):
+        assert kwargs["theory"] == "Global Workspace Theory"
+        assert kwargs["health"] == 80
+        return "Shaken but standing."
+
+    monkeypatch.setattr(handlers, "write_finding", write_finding)
+    fm = await sparring_at(5, monkeypatch)
+    await fm.state["debate"].apply_answer(20, 0, "Dodged the machine question.")
+
+    first, _ = await handlers.answer_heard(fm)
+    again, _ = await handlers.answer_heard(fm)  # a repeat decides nothing new
+
+    assert first == again == {"status": "done", "integrity": 80, "holds": True}
+    assert fm.state["scorer"].log == ["close", "drain"]
+    assert len(fm.worker.frames) == 1 and isinstance(fm.worker.frames[0], TTSSpeakFrame)
+    assert fm.state["debate"].snapshot()["verdict"] == {
+        "winner": "user",
+        "rationale": "Shaken but standing.",
+    }
+    assert "80" in fm.state["finding_text"] and "Shaken but standing." in fm.state["finding_text"]
+
+
+async def test_the_finding_falls_back_to_the_question_that_cost_most(monkeypatch):
+    async def write_finding(**kwargs):
+        raise handlers.JudgeError("down")
+
+    monkeypatch.setattr(handlers, "write_finding", write_finding)
+    fm = await sparring_at(5, monkeypatch)
+    await fm.state["debate"].apply_answer(4, 0, "A small slip.")
+    await fm.state["debate"].apply_answer(21, 0, "Could not say what would refute it.")
+
+    await handlers.answer_heard(fm)
+
+    assert (
+        "Could not say what would refute it."
+        in (fm.state["debate"].snapshot()["verdict"]["rationale"])
+    )
+
+
+# --- the explorer ---------------------------------------------------------------
+
+
+async def test_show_theory_focuses_the_card_and_hands_over_all_of_it():
+    fm = FakeFlowManager()
+
+    result, nxt = await handlers.show_theory(fm, theory_id="iit")
+
+    assert nxt is TRANSITION_IN_YAML
+    assert result["status"] == "shown"
+    assert "Known objections" in result["card"] and "Papers you may cite" in result["card"]
+    assert result["rivals"] == ["Global Workspace Theory", "Illusionism", "Attention Schema Theory"]
+    assert fm.state["debate"].snapshot()["focus"] == "iit"
+
+
+async def test_show_theory_reports_an_unknown_id_and_leaves_the_focus_alone():
+    fm = FakeFlowManager()
+    await handlers.show_theory(fm, theory_id="iit")
+
+    result, _ = await handlers.show_theory(fm, theory_id="nope")
+
+    assert result["status"] == "unknown_theory" and "iit" in result["valid_ids"]
+    assert fm.state["debate"].snapshot()["focus"] == "iit"

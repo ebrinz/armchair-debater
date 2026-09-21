@@ -16,7 +16,8 @@ from pipecat.services.settings import TTSSettings
 
 import knowledge
 import providers
-from judge import JudgeError, write_rationale
+from debate_state import EXAMINER, MODES
+from judge import JudgeError, write_finding, write_rationale
 
 _WINNER_TEXT = {
     "user": "The user wins.",
@@ -36,6 +37,25 @@ JUDGE_PERSONA = (
     "longer as the debater: say 'the house' where you would have said 'I', take "
     "no side, and do not reopen the argument. "
 )
+
+
+async def choose_mode(flow_manager: FlowManager, mode: str):
+    """Record what the user wants to do.
+
+    Args:
+        mode: "debate" to argue a theory against you, "sparring" to have their own
+            view examined with questions, or "explore" to be shown round the theories.
+    """
+    if mode not in MODES:
+        return {"status": "unknown_mode", "valid_modes": list(MODES)}, TRANSITION_IN_YAML
+    await flow_manager.state["debate"].set_mode(mode)
+    return {"status": mode}, TRANSITION_IN_YAML
+
+
+async def emit_question(action: dict, flow_manager: FlowManager) -> None:
+    """Pre-action: tell the client which sparring question this is."""
+    state = flow_manager.state
+    await state["debate"].set_question(state["spar_q"], SPAR_QUESTIONS)
 
 
 async def use_voice(action: dict, flow_manager: FlowManager) -> None:
@@ -100,6 +120,123 @@ async def answer_given(flow_manager: FlowManager):
             ),
         }, TRANSITION_IN_YAML
     return {"status": "ok"}, TRANSITION_IN_YAML
+
+
+SPAR_QUESTIONS = 5
+
+
+async def take_position(flow_manager: FlowManager, user_theory: str):
+    """Record the theory whose defence you are about to examine.
+
+    Call this once you know the user's view. Use an id from the theory index.
+
+    Args:
+        user_theory: The id of the theory closest to the view the user described.
+    """
+    user = knowledge.get(user_theory)
+    if user is None:
+        return {"status": "unknown_theory", "valid_ids": knowledge.ids()}, TRANSITION_IN_YAML
+
+    state = flow_manager.state
+    state.update(
+        user_card=knowledge.brief(user),
+        user_theory_name=user.name,
+        bot_theory_name=EXAMINER,
+        spar_q=1,
+    )
+    state.pop("finding_task", None)
+    state["scorer"].reset()
+    await state["debate"].set_solo(user.id, user.name)
+    return {"status": "ok", "user_theory": user.name}, TRANSITION_IN_YAML
+
+
+async def answer_heard(flow_manager: FlowManager):
+    """The user has answered the question you just asked.
+
+    Call this as soon as they have answered, without replying to the answer.
+    """
+    state = flow_manager.state
+    asked = state["scorer"].heard("sparring", "bot")
+    # The same guard as cross-examination: this is visit number `spar_q` to the
+    # node, so the examiner must have finished that many turns in it. Otherwise
+    # what the user said was a barge-in, not an answer, and it burns no question.
+    if asked < state["spar_q"]:
+        return {
+            "status": "ask_first",
+            "instruction": "You have not asked this question yet. Ask it now.",
+        }, TRANSITION_IN_YAML
+    if state["spar_q"] < SPAR_QUESTIONS:
+        state["spar_q"] += 1
+        return {
+            "status": "more",
+            "question": state["spar_q"],
+            "of": SPAR_QUESTIONS,
+        }, TRANSITION_IN_YAML
+
+    # The fifth answer. As with the debate's verdict, a repeat or a parallel call
+    # shares one decision, and a failed one is not remembered.
+    if "finding_task" not in state:
+        state["finding_task"] = asyncio.ensure_future(_find(flow_manager))
+    try:
+        return await state["finding_task"], TRANSITION_IN_YAML
+    except BaseException:
+        state.pop("finding_task", None)
+        raise
+
+
+def fallback_finding(hits: list[dict]) -> str:
+    """What to say when the judge cannot write the finding."""
+    if not hits:
+        return "The judge could not score this examination, so the bar stands alone."
+    costliest = max(hits, key=lambda hit: hit["damage"])
+    return f"The question that cost the most was this. {costliest['reason']}"
+
+
+async def _find(flow_manager: FlowManager) -> dict:
+    state = flow_manager.state
+    debate, scorer = state["debate"], state["scorer"]
+
+    scorer.close()
+    await flow_manager.worker.queue_frames(
+        [TTSSpeakFrame("Thank you. Let me weigh your answers.", append_to_context=False)]
+    )
+    await scorer.drain()
+
+    integrity = debate.health["user"]
+    try:
+        finding = await write_finding(
+            theory=state["user_theory_name"], health=integrity, hits=list(debate.hits)
+        )
+    except JudgeError:
+        finding = fallback_finding(debate.hits)
+    await debate.set_verdict(finding)
+
+    holds = debate.winner() == "user"
+    state["finding_text"] = (
+        f"Integrity of the user's position: {integrity} out of 100. "
+        f"{'The view held.' if holds else 'The view did not hold.'} The finding: {finding}"
+    )
+    return {"status": "done", "integrity": integrity, "holds": holds}
+
+
+async def show_theory(flow_manager: FlowManager, theory_id: str):
+    """Turn to a theory's card, to talk about it.
+
+    Call this whenever the conversation turns to a theory, before you describe it:
+    it shows the user that card and gives you what is on it.
+
+    Args:
+        theory_id: The id of the theory, from the theory index.
+    """
+    theory = knowledge.get(theory_id)
+    if theory is None:
+        return {"status": "unknown_theory", "valid_ids": knowledge.ids()}, TRANSITION_IN_YAML
+    await flow_manager.state["debate"].set_focus(theory.id)
+    return {
+        "status": "shown",
+        "card": knowledge.brief(theory),
+        "rivals": [knowledge.THEORIES[rival].name for rival in theory.rivals],
+    }, TRANSITION_IN_YAML
 
 
 def fallback_rationale(hits: list[dict]) -> str:

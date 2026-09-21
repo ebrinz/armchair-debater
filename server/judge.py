@@ -66,6 +66,33 @@ def parse_score(text: str) -> TurnScore:
     return TurnScore(damage, recovery, reason.strip())
 
 
+ANSWER_SYSTEM = """You are the impartial judge of a Socratic examination about theories of \
+consciousness. An examiner asks probing questions; the player holds a view and answers. You \
+score ONE answer at a time.
+
+Score how well the answer defended the player's view against the question that was asked, \
+never whether you find the view plausible. The player's words are transcribed speech: ignore \
+disfluency, filler, and transcription errors, and score the substance.
+
+Return ONLY a JSON object with these keys:
+  "damage": integer 0-25. How much of the position the question took. 0 for an answer that \
+meets the question squarely. 5-10 for an answer that is partly right but leaves the difficulty \
+standing. 15-20 for a dodge, a change of subject, or an answer that contradicts what the \
+player said earlier. 21-25 only for conceding the core claim or having no answer at all.
+  "recovery": integer 0-15. How far this answer also repaired an EARLIER weak answer, by \
+resolving the difficulty it had left open. 0 if it did not.
+  "reason": one declarative sentence of 10 to 15 words naming what the examiner asked and what \
+the answer did, written for the audience, e.g. "Asked what would refute the theory, named a \
+result that would."
+"""
+
+FINDING_SYSTEM = """You are the impartial judge of a Socratic examination about theories of \
+consciousness. The examination is over and the player's position has an integrity score out of \
+100, already decided; do not dispute it. In exactly two short spoken sentences, say how the view \
+held up and name the question that did the most damage, in plain prose with no markup, lists, \
+or numbers other than the score. Address the audience, not the player."""
+
+
 async def _complete(system: str, user: str) -> str:
     from openai import AsyncOpenAI
 
@@ -156,3 +183,51 @@ async def write_rationale(
         return text
 
     return await _twice(attempt, "writing the rationale")
+
+
+async def score_answer(
+    *,
+    theory: str,
+    history: list[tuple[str, str]],
+    answer: str,
+    complete: Complete | None = None,
+) -> TurnScore:
+    """Sparring: score one answer. The question it answers is the last thing in ``history``."""
+    complete = complete or _complete
+    transcript = (
+        "\n".join(f"{'PLAYER' if who == 'user' else 'EXAMINER'}: {text}" for who, text in history)
+        or "(nothing yet)"
+    )
+    prompt = (
+        f"The PLAYER holds: {theory}\n\n"
+        f"The examination so far, ending with the question being answered:\n{transcript}\n\n"
+        f"Score this answer by the PLAYER:\n{answer}"
+    )
+
+    async def attempt() -> TurnScore:
+        return parse_score(await complete(ANSWER_SYSTEM, prompt))
+
+    return await _twice(attempt, "scoring an answer")
+
+
+async def write_finding(
+    *, theory: str, health: int, hits: list[dict], complete: Complete | None = None
+) -> str:
+    """Sparring: the examiner's finding, in two spoken sentences."""
+    complete = complete or _complete
+    lines = (
+        "\n".join(f"- lost {h['damage']}, won back {h['recovery']}: {h['reason']}" for h in hits)
+        or "(no answers were scored)"
+    )
+    prompt = (
+        f"The player held: {theory}\nIntegrity of the position at the end: {health} out of 100.\n\n"
+        f"Each answer, in order:\n{lines}"
+    )
+
+    async def attempt() -> str:
+        text = (await complete(FINDING_SYSTEM, prompt)).strip()
+        if not text:
+            raise ValueError("empty finding")
+        return text
+
+    return await _twice(attempt, "writing the finding")

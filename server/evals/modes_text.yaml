@@ -1,0 +1,120 @@
+name: modes_text
+
+# Scripted, text mode: the front door's other two doors — Socratic sparring and
+# the explorer. Run from server/:
+#
+#   uv run pipecat eval suite evals/suite.yaml -k script
+#
+# The suite starts a fresh bot per scenario, so each one begins at the front door.
+# `eval:` criteria are judged by local Ollama (`ollama pull gemma4:12b`).
+
+scenarios:
+  # Five questions, five answers, a finding. The examiner asks and never argues.
+  - name: sparring_asks_five_questions_and_gives_a_finding
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "I'd like you to test my view with questions."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: sparring}
+          - event: response
+            eval: "the bot says it will put questions to the user's view and asks what they think consciousness is"
+
+      - user: "I think consciousness is information being broadcast across the brain, so that every system can use it at once."
+        expect:
+          - event: function_call
+            calls:
+              - name: take_position
+                args: {user_theory: gwt}
+          - event: response
+            eval: "the bot asks the user one question that puts pressure on the global workspace view, and does not argue for any theory of its own"
+            text_excludes: "*"
+
+      - user: "Because being globally available for report, memory and action is what we mean by experience. There is nothing further to explain."
+        expect:
+          - event: function_call
+            calls:
+              - name: answer_heard
+          - event: response
+            eval: "the bot asks a new question about the user's view; it does not say whether the previous answer was good or bad, and it does not answer its own question"
+
+      - user: "Honestly I'm not sure a computer that broadcast information would be conscious. Maybe, maybe not."
+        expect:
+          - event: function_call
+            calls:
+              - name: answer_heard
+          - event: response
+            eval: "the bot asks another question about the user's view"
+            text_excludes: "_"
+
+      - user: "It would be refuted if conscious perception happened with no late, brain-wide ignition at all. That is something the masking experiments could have shown and did not."
+        expect:
+          - event: function_call
+            calls:
+              - name: answer_heard
+          - event: response
+            eval: "the bot asks another question about the user's view"
+
+      - user: "The adversarial collaboration result is one study. One missing prefrontal signal does not sink a theory with thirty years of evidence behind it."
+        expect:
+          - event: function_call
+            calls:
+              - name: answer_heard
+          - event: response
+            eval: "the bot asks another question about the user's view"
+            text_excludes: "`"
+
+      - user: "The workspace is the network of long-range neurons linking prefrontal and parietal cortex. That is a claim about anatomy, and it is testable."
+        expect:
+          - event: function_call
+            calls:
+              - name: answer_heard
+          - event: response
+            eval: "the bot announces a finding: it states a number out of one hundred for how well the view held up, says whether the view held, and offers another round of questions or a return to the menu"
+            text_excludes: "#"
+
+  # The guide speaks from the cards, turns the screen to the right one, and cites
+  # nothing that is not on a card it has been shown.
+  - name: explorer_shows_the_right_card_and_speaks_from_it
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "I'd just like to look around the theories for now."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: explore}
+          - event: response
+            eval: "the bot offers to show the user round the theories and invites them to name one or ask a question"
+
+      - user: "Tell me about integrated information theory."
+        expect:
+          - event: function_call
+            calls:
+              - name: show_theory
+                args: {theory_id: iit}
+          - event: response
+            eval: "the bot explains that integrated information theory identifies consciousness with a system's integrated information, its integrated cause-effect structure, or phi"
+            text_excludes: "*"
+
+      - user: "What's the strongest objection to it? And who says so?"
+        expect:
+          - event: response
+            eval: "the bot gives an objection to integrated information theory that is one of these: phi cannot be computed or measured for a real brain; it implies a simple grid of logic gates would be highly conscious; or an open letter from researchers called it pseudoscience. If it names a paper, the paper is by Tononi, Oizumi, Albantakis, Boly, Massimini or Koch; otherwise it says it has no source to hand. It names no other author."
+
+      - user: "And how is illusionism different?"
+        expect:
+          - event: function_call
+            calls:
+              - name: show_theory
+                args: {theory_id: illusionism}
+          - event: response
+            eval: "the bot says that illusionism denies that phenomenal consciousness exists as it seems, treating the feel of experience as an introspective illusion, in contrast to integrated information theory"

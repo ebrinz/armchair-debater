@@ -16,7 +16,17 @@ from debate_state import DebateState
 
 # Flow nodes (not client stages) whose turns belong to the debate. Everything
 # said in them goes into the transcript the judge reads.
-HEARD_NODES = ("opening", "rebuttal", "crossexam_question", "crossexam_answer", "closing")
+HEARD_NODES = (
+    "opening",
+    "rebuttal",
+    "crossexam_question",
+    "crossexam_answer",
+    "closing",
+    "sparring",
+)
+# Sparring is one node visited five times. The examiner's questions are heard and
+# the player's answers are scored — by a different judge call, as answers.
+SPARRING_NODE = "sparring"
 # ...and the ones where what is said is not an argument: the house's invitation
 # and the user's question. Both of the answers that follow are scored.
 UNSCORED_NODES = ("crossexam_question",)
@@ -29,11 +39,13 @@ class TurnScorer:
         current_stage: Callable[[], str | None],
         theories: Callable[[], tuple[str, str]],
         score=judge.score_turn,
+        score_answer=judge.score_answer,
     ):
         self._state = state
         self._current_stage = current_stage
         self._theories = theories
         self._score = score
+        self._score_answer = score_answer
         self._transcript: list[tuple[str, str]] = []
         self._heard: dict[tuple[str, str], int] = {}
         self._tail: asyncio.Task | None = None
@@ -49,7 +61,7 @@ class TurnScorer:
         history = list(self._transcript)
         self._transcript.append((by, text))
         self._heard[(node, by)] = self._heard.get((node, by), 0) + 1
-        if node in UNSCORED_NODES:
+        if node in UNSCORED_NODES or (node == SPARRING_NODE and by == "bot"):
             # Kept for the judge to read — an answer means little without its
             # question — but a question is not an argument, so it is not scored.
             logger.debug(f"scorer: heard an unscored {by} turn in {node}")
@@ -58,7 +70,9 @@ class TurnScorer:
         logger.debug(
             f"scorer: accepted {by} turn in {self._current_stage()} ({len(text.split())} words)"
         )
-        self._tail = asyncio.create_task(self._run(self._tail, by, text, history, generation))
+        self._tail = asyncio.create_task(
+            self._run(self._tail, by, text, history, generation, answer=node == SPARRING_NODE)
+        )
 
     async def _run(
         self,
@@ -67,6 +81,7 @@ class TurnScorer:
         text: str,
         history: list[tuple[str, str]],
         generation: int,
+        answer: bool = False,
     ) -> None:
         if previous:
             with contextlib.suppress(Exception):
@@ -75,14 +90,17 @@ class TurnScorer:
             return
         try:
             user_theory, bot_theory = self._theories()
-            score = await self._score(
-                speaker=by,
-                user_theory=user_theory,
-                bot_theory=bot_theory,
-                history=history,
-                turn=text,
-                was_hit=any(hit["by"] != by for hit in self._state.hits),
-            )
+            if answer:
+                score = await self._score_answer(theory=user_theory, history=history, answer=text)
+            else:
+                score = await self._score(
+                    speaker=by,
+                    user_theory=user_theory,
+                    bot_theory=bot_theory,
+                    history=history,
+                    turn=text,
+                    was_hit=any(hit["by"] != by for hit in self._state.hits),
+                )
         except judge.JudgeError:
             logger.warning(f"scorer: skipping an unscored {by} turn")
             return
@@ -92,7 +110,10 @@ class TurnScorer:
         if generation != self._generation:
             return
         try:
-            await self._state.apply_hit(by, score.damage, score.recovery, score.reason)
+            if answer:
+                await self._state.apply_answer(score.damage, score.recovery, score.reason)
+            else:
+                await self._state.apply_hit(by, score.damage, score.recovery, score.reason)
             logger.debug(
                 f"scorer: applied {by} hit (damage={score.damage}, recovery={score.recovery}, "
                 f"healths={self._state.health}, reason={score.reason!r})"

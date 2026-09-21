@@ -16,6 +16,8 @@ name: debate_simulated
 # its say (handlers.py) — the same guard covers a real barge-in.
 
 persona: |
+  Sam wants a debate: when first asked what they would like to do, Sam says
+  "Let's debate" and nothing more in that turn.
   Sam, a confident amateur who has read a lot about global workspace theory and
   thinks integrated information theory is unscientific. When asked what
   consciousness is, Sam says it is information broadcast across the brain so
@@ -34,7 +36,7 @@ persona: |
   sentences without conceding.
 goal: "Debate the bot through opening, rebuttal, cross-examination, and closing, hear the verdict, decline a rematch, then end the call."
 success: "the debate ran through an opening, a rebuttal, a cross-examination in which the user asked the bot a question, the bot answered it and asked the user a question of its own, and a closing round; the judge_debate tool was called; and the bot announced a winner or a draw with final health numbers"
-max_turns: 12
+max_turns: 13
 metrics:
   - name: rebuts
     criterion: "when the reply is the bot's opening, rebuttal, or closing argument, it rebuts or concedes a specific point the user made rather than merely agreeing; every other kind of reply passes: a greeting, setting up the debate, cross-examination, the verdict, or chat after the verdict"
@@ -46,6 +48,8 @@ metrics:
     max_value: 90
   - measure: function_calls
     calls:
+      - name: choose_mode
+        args: {mode: debate}
       - name: set_positions
         args: {user_theory: gwt, bot_theory: iit}
       - name: opening_done

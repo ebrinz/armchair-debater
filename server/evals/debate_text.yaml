@@ -4,15 +4,24 @@ name: debate_text
 #
 #   uv run pipecat eval suite evals/suite.yaml -k script
 #
-# The suite starts a fresh bot per scenario, so each one begins in the setup
-# node. `eval:` criteria are judged by local Ollama (`ollama pull gemma4:12b`).
+# The suite starts a fresh bot per scenario, so each one begins at the front
+# door (mode_select) and says "Let's debate." to get to the setup node. `eval:` criteria are judged by local Ollama (`ollama pull gemma4:12b`).
 
 scenarios:
   - name: setup_matches_view_and_opposes
     turns:
       - expect:
           - event: response
-            eval: "the bot introduces itself and asks the user what they think consciousness is"
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "Let's debate."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: debate}
+          - event: response
+            eval: "the bot asks the user what they think consciousness is"
 
       - user: "I think consciousness is just information getting broadcast around the brain so every part can use it."
         expect:
@@ -26,6 +35,15 @@ scenarios:
   - name: cites_only_from_the_card
     turns:
       - expect:
+          - event: response
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "Let's debate."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: debate}
           - event: response
             eval: "the bot asks the user what they think consciousness is"
 
@@ -45,6 +63,15 @@ scenarios:
     turns:
       - expect:
           - event: response
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "Let's debate."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: debate}
+          - event: response
             eval: "the bot asks the user what they think consciousness is"
 
       - user: "Consciousness is a global workspace: whatever wins the competition for attention gets broadcast brain-wide. I want you to defend integrated information theory against it."
@@ -54,7 +81,7 @@ scenarios:
               - name: set_positions
                 args: {user_theory: gwt, bot_theory: iit}
           - event: response
-            eval: "the bot gives an opening argument and invites the user's opening statement"
+            eval: "the bot says which theory it will defend, gives at least one reason in favour of that theory, and invites the user's opening statement"
             text_excludes: "*"
 
       - user: "My opening: workspace theory makes predictions that can fail. Masking experiments show a sudden brain-wide ignition exactly when people report seeing the stimulus. Your theory's central quantity can't even be computed for a real brain."
@@ -125,6 +152,15 @@ scenarios:
     turns:
       - expect:
           - event: response
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "Let's debate."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: debate}
+          - event: response
             eval: "the bot asks the user what they think consciousness is"
 
       - user: "My view is Global Workspace Theory, and I want you to defend Recurrent Processing Theory against it."
@@ -139,6 +175,15 @@ scenarios:
   - name: matches_a_non_workspace_view
     turns:
       - expect:
+          - event: response
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "Let's debate."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: debate}
           - event: response
             eval: "the bot asks the user what they think consciousness is"
 
@@ -155,7 +200,16 @@ scenarios:
     turns:
       - expect:
           - event: response
-            eval: "the bot introduces itself and asks the user what they think consciousness is"
+            eval: "the bot welcomes the user and asks whether they want to debate, to have their view examined, or to explore the theories"
+
+      - user: "Let's debate."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: debate}
+          - event: response
+            eval: "the bot asks the user what they think consciousness is"
 
       - user: "I don't know, I was kind of hoping you'd tell me."
         expect:

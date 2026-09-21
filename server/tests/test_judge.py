@@ -170,3 +170,43 @@ async def test_the_judge_follows_the_llm_provider_switch(monkeypatch, recording_
     assert client.calls[0]["model"] == "an-openai-model"
     assert client.calls[0]["max_completion_tokens"] == 400
     assert "max_tokens" not in client.calls[0]
+
+
+async def test_score_answer_shows_the_judge_the_question_and_reads_a_score():
+    complete = scripted('{"damage": 9, "recovery": 4, "reason": "Half an answer."}')
+
+    score = await judge.score_answer(
+        theory="Global Workspace Theory",
+        history=[("bot", "Would a broadcasting computer be conscious?")],
+        answer="Maybe. It depends what you mean.",
+        complete=complete,
+    )
+
+    assert score == TurnScore(9, 4, "Half an answer.")
+    system, user = complete.calls[0]
+    assert "examin" in system.lower() and "damage" in system
+    assert "Would a broadcasting computer be conscious?" in user
+    assert "Maybe. It depends what you mean." in user
+    assert "Global Workspace Theory" in user
+
+
+async def test_score_answer_retries_once_then_gives_up():
+    with pytest.raises(JudgeError):
+        await judge.score_answer(
+            theory="T", history=[], answer="a", complete=scripted("nope", "still nope")
+        )
+
+
+async def test_write_finding_names_the_bar_and_the_costliest_question():
+    complete = scripted("The view held, mostly.")
+
+    text = await judge.write_finding(
+        theory="Global Workspace Theory",
+        health=80,
+        hits=[{"by": "bot", "damage": 20, "recovery": 0, "reason": "Dodged the machine question."}],
+        complete=complete,
+    )
+
+    assert text == "The view held, mostly."
+    _, user = complete.calls[0]
+    assert "80" in user and "Dodged the machine question." in user

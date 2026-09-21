@@ -6,4 +6,4 @@ runs_dir: ../eval-runs
 concurrency: 1
 suite:
   - bot: bot.py
-    scenarios: [debate_text, debate_simulated]
+    scenarios: [debate_text, modes_text, debate_simulated]

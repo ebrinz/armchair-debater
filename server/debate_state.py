@@ -10,7 +10,13 @@ from collections.abc import Awaitable, Callable
 # The rounds as the client sees them. Cross-examination is two flow nodes that
 # share one stage; which nodes are scored is the scorer's business.
 DEBATE_ROUNDS = ("opening", "rebuttal", "crossexam", "closing")
-STAGES = ("setup", *DEBATE_ROUNDS, "verdict")
+# "mode" is the front door. Sparring reuses "setup" and "verdict" for its first
+# and last nodes and has one stage of its own; the explorer has one stage.
+STAGES = ("mode", "setup", *DEBATE_ROUNDS, "verdict", "sparring", "explore")
+MODES = ("debate", "sparring", "explore")
+EXAMINER = "The Examiner"
+# Sparring: at 50 or more the view has held.
+HOLDS_AT = 50
 
 MAX_HEALTH = 100
 MAX_DAMAGE = 25
@@ -29,19 +35,22 @@ _SIDES = ("user", "bot")
 class DebateState:
     def __init__(self, on_change: Callable[[dict], Awaitable[None]] | None = None):
         self._on_change = on_change
-        self.stage = "setup"
+        self.stage = "mode"
+        self.mode: str | None = None
         self._reset()
 
     def _reset(self) -> None:
         self._theories: dict[str, dict[str, str | None]] = {
             side: {"theory_id": None, "theory_name": None} for side in _SIDES
         }
+        self._focus: str | None = None
         self._reset_scores()
 
     def _reset_scores(self) -> None:
         self.health = {side: MAX_HEALTH for side in _SIDES}
         self.hits: list[dict] = []
         self._verdict: dict | None = None
+        self._question: dict | None = None
 
     async def _changed(self) -> None:
         if self._on_change:
@@ -51,8 +60,36 @@ class DebateState:
         if stage not in STAGES:
             raise ValueError(f"unknown stage '{stage}'")
         self.stage = stage
-        if stage == "setup":
+        if stage == "mode":
+            # The front door: nothing of the last visit survives it.
+            self.mode = None
+        if stage in ("mode", "setup"):
             self._reset()
+        await self._changed()
+
+    async def set_mode(self, mode: str) -> None:
+        if mode not in MODES:
+            raise ValueError(f"unknown mode '{mode}'")
+        self.mode = mode
+        await self._changed()
+
+    async def set_focus(self, theory_id: str | None) -> None:
+        """The explorer: the card being talked about."""
+        self._focus = theory_id
+        await self._changed()
+
+    async def set_question(self, number: int, of: int) -> None:
+        """Sparring: which question this is."""
+        self._question = {"number": number, "of": of}
+        await self._changed()
+
+    async def set_solo(self, user_id: str, user_name: str) -> None:
+        """Sparring: a player with a theory, and an examiner with none."""
+        self._theories = {
+            "user": {"theory_id": user_id, "theory_name": user_name},
+            "bot": {"theory_id": None, "theory_name": EXAMINER},
+        }
+        self._reset_scores()
         await self._changed()
 
     async def set_positions(self, user_id: str, user_name: str, bot_id: str, bot_name: str) -> None:
@@ -80,7 +117,27 @@ class DebateState:
         self.hits.append({"by": by, "damage": dealt, "recovery": healed, "reason": reason})
         await self._changed()
 
+    async def apply_answer(self, damage: int, recovery: int, reason: str) -> None:
+        """Sparring: one answer, scored.
+
+        Recorded as a hit by the examiner so the snapshot keeps its shape, but read
+        differently: ``damage`` is what the question took from the player, at scale
+        one — five questions at the debate's scale would floor anybody — and
+        ``recovery`` is what the PLAYER won back, since here a good answer is the
+        only way to. The examiner has no bar to move.
+        """
+        damage = max(0, min(MAX_DAMAGE, damage))
+        recovery = max(0, min(MAX_RECOVERY, recovery))
+        last_loss = self.hits[-1]["damage"] if self.hits else 0
+        healed = int(last_loss * RECOVERY_SHARE * recovery / MAX_RECOVERY + 0.5)
+        healed = min(healed, MAX_HEALTH - self.health["user"])
+        self.health["user"] = max(0, self.health["user"] + healed - damage)
+        self.hits.append({"by": "bot", "damage": damage, "recovery": healed, "reason": reason})
+        await self._changed()
+
     def winner(self) -> str:
+        if self.mode == "sparring":
+            return "user" if self.health["user"] >= HOLDS_AT else "bot"
         difference = self.health["user"] - self.health["bot"]
         if abs(difference) <= DRAW_MARGIN:
             return "draw"
@@ -98,4 +155,7 @@ class DebateState:
             "bot": {**self._theories["bot"], "health": self.health["bot"]},
             "last_hit": dict(self.hits[-1]) if self.hits else None,
             "verdict": dict(self._verdict) if self._verdict else None,
+            "mode": self.mode,
+            "focus": self._focus,
+            "question": dict(self._question) if self._question else None,
         }

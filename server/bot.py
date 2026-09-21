@@ -56,6 +56,17 @@ load_dotenv(override=True)
 FLOW_CONFIG_PATH = Path(__file__).with_name("flow.yaml")
 
 
+# What every persona shares: this is speech. The debater's own role message says
+# the same in its own words and is left as it was tuned.
+VOICE_RULES = (
+    "Your responses will be spoken aloud, so avoid emojis, bullet points, or other "
+    "formatting that can't be spoken. Never use asterisks, underscores, backticks, or "
+    "any other emphasis or markup characters. Keep every turn under 70 words, about "
+    "twenty seconds of speech. Your task instructions may describe a turn's structure "
+    'as "first", "second", or "third" — that is guidance for you, not words to speak.'
+)
+
+
 async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> None:
     """Run the voice bot for this session.
 
@@ -142,6 +153,16 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
             "debate": debate,
             "scorer": scorer,
             "theory_index": knowledge.index(),
+            # Every {{ key }} a node's prompt names must be in state before the
+            # node is entered; these are the ones handlers fill in later.
+            "voice_rules": VOICE_RULES,
+            "spar_q": 1,
+            "user_theory_name": "",
+            "bot_theory_name": "",
+            "user_card": "",
+            "bot_card": "",
+            "verdict_text": "",
+            "finding_text": "",
             # Only when the verdict really is read in another voice is the bot
             # told to read it as someone else.
             "judge_persona": handlers.JUDGE_PERSONA if providers.voices() else "",

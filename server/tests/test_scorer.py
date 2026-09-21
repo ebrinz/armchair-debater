@@ -208,3 +208,32 @@ async def test_the_scorer_knows_who_has_been_heard_in_a_node_and_forgets_on_rese
 
     rig.scorer.reset()
     assert rig.scorer.heard("crossexam_answer", "bot") == 0
+
+
+async def test_in_sparring_the_question_is_heard_and_the_answer_is_scored_as_an_answer():
+    answers = []
+
+    async def score_answer(**kwargs):
+        answers.append(kwargs)
+        return TurnScore(12, 3, "Half an answer.")
+
+    rig = Rig()
+    rig.scorer._score_answer = score_answer
+    await rig.state.set_mode("sparring")
+    await rig.state.set_solo("gwt", "Global Workspace Theory")
+    rig.stage = "sparring"
+
+    rig.scorer.submit("bot", "Would a broadcasting computer be conscious?")
+    rig.scorer.submit("user", "Maybe.")
+    await rig.scorer.drain()
+
+    assert rig.calls == []  # the debate's judge is not asked
+    assert answers == [
+        {
+            "theory": "Global Workspace Theory",
+            "history": [("bot", "Would a broadcasting computer be conscious?")],
+            "answer": "Maybe.",
+        }
+    ]
+    assert rig.state.health == {"user": 88, "bot": 100}
+    assert rig.scorer.heard("sparring", "bot") == 1

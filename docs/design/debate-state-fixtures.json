@@ -1,6 +1,44 @@
 [
   {
     "type": "debate_state",
+    "stage": "mode",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": null,
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "mode",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
+  },
+  {
+    "type": "debate_state",
     "stage": "setup",
     "user": {
       "theory_id": null,
@@ -13,7 +51,10 @@
       "health": 100
     },
     "last_hit": null,
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -29,7 +70,10 @@
       "health": 100
     },
     "last_hit": null,
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -45,7 +89,10 @@
       "health": 100
     },
     "last_hit": null,
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -66,7 +113,10 @@
       "recovery": 0,
       "reason": "Argued that broadcast explains access, not why access feels like anything."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -87,7 +137,10 @@
       "recovery": 0,
       "reason": "Pressed that phi cannot be computed for any real brain."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -108,7 +161,10 @@
       "recovery": 10,
       "reason": "Answered that intractable is not the same as ill-defined, but added little."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -129,7 +185,10 @@
       "recovery": 1,
       "reason": "Used the logic-gate objection: a trivial grid would out-score a brain."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -150,7 +209,10 @@
       "recovery": 1,
       "reason": "Used the logic-gate objection: a trivial grid would out-score a brain."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -171,7 +233,10 @@
       "recovery": 12,
       "reason": "Named a result that would count against the theory, which steadied the position."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -192,7 +257,10 @@
       "recovery": 2,
       "reason": "Said that broadcast simply is the feeling, without saying why."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -213,7 +281,10 @@
       "recovery": 1,
       "reason": "Turned the adversarial collaboration results against late prefrontal ignition."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -234,7 +305,10 @@
       "recovery": 0,
       "reason": "Closed on testability: workspace theory makes predictions that can fail."
     },
-    "verdict": null
+    "verdict": null,
+    "mode": "debate",
+    "focus": null,
+    "question": null
   },
   {
     "type": "debate_state",
@@ -258,6 +332,9 @@
     "verdict": {
       "winner": "user",
       "rationale": "The logic-gate objection was never fully answered. The challenger also closed on the stronger point about testability."
-    }
+    },
+    "mode": "debate",
+    "focus": null,
+    "question": null
   }
 ]
