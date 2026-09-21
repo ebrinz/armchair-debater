@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react';
 
 import type { GridKey } from '../gridNav';
 import { moveFocus } from '../gridNav';
+import { moveAmong } from '../selection';
+import { playSfx } from '../sfxPlayer';
 import { inkOn, typeOf } from '../theme';
 import type { TheoryCard } from '../types';
 
@@ -31,6 +33,13 @@ export interface CardGridProps {
   /** The theory the server has confirmed, if any. */
   lockedId: string | null;
   disabled: boolean;
+  /** Slots that can be picked right now; `null` means all of them. */
+  open?: number[] | null;
+  /** The slot the player has already taken for themselves, which keeps its flag. */
+  mineIndex?: number | null;
+  /** Whose pick the cursor is making: the player's, or the house's. `null`
+   *  plants no flag — the deck has a cursor but nobody choosing. */
+  cursorLabel?: '1P' | 'CPU' | null;
 }
 
 export const CardGrid = ({
@@ -40,6 +49,9 @@ export const CardGrid = ({
   onPick,
   lockedId,
   disabled,
+  open = null,
+  mineIndex = null,
+  cursorLabel = '1P',
 }: CardGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const slots = useRef<Array<HTMLButtonElement | null>>([]);
@@ -60,7 +72,11 @@ export const CardGrid = ({
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (!isNavKey(event.key)) return;
     event.preventDefault();
-    onFocusChange(moveFocus(focused, event.key, cards.length || SLOTS, COLUMNS));
+    const next = open
+      ? moveAmong(focused, event.key, open)
+      : moveFocus(focused, event.key, cards.length || SLOTS, COLUMNS);
+    if (next !== focused) playSfx('cursor');
+    onFocusChange(next);
   };
 
   return (
@@ -75,6 +91,8 @@ export const CardGrid = ({
         const card = cards[i];
         const type = card ? typeOf(card).colorVar : '--type-neutral';
         const locked = !!card && card.id === lockedId;
+        const closed = open !== null && !open.includes(i);
+        const mine = i === mineIndex;
         const style = card
           ? ({ '--type': `var(${type})`, '--type-ink': `var(${inkOn(type)})` } as CSSProperties)
           : undefined;
@@ -90,6 +108,8 @@ export const CardGrid = ({
               'slot',
               i === focused ? 'slot--focused' : '',
               locked ? 'slot--locked' : '',
+              closed ? 'slot--closed' : '',
+              mine ? 'slot--mine' : '',
               card ? '' : 'slot--empty',
             ]
               .filter(Boolean)
@@ -101,18 +121,25 @@ export const CardGrid = ({
             // enabled anyway: before `theory_cards` arrives every slot would
             // otherwise be `disabled`, and a disabled button is never a tab
             // stop, so Tab would skip the roster entirely.
-            disabled={(!card && i !== focused) || disabled}
+            disabled={(!card && i !== focused) || disabled || closed}
             // The theory the server confirmed, not a toggle button's state.
             aria-current={locked ? 'true' : undefined}
             aria-label={card ? card.name : 'Empty slot'}
             onClick={() => card && onPick(card)}
             onFocus={() => onFocusChange(i)}
-            onMouseEnter={() => !disabled && card && onFocusChange(i)}
+            onMouseEnter={() => {
+              if (disabled || closed || !card) return;
+              if (i !== focused) playSfx('cursor');
+              onFocusChange(i);
+            }}
           >
             <span className="slot__name">{card ? card.name : ''}</span>
-            {i === focused && (
-              <span className="slot__cursor pixel-text" aria-hidden="true">
-                1P
+            {(mine || (i === focused && cursorLabel)) && (
+              <span
+                className={`slot__cursor pixel-text${mine || !cursorLabel ? '' : ` slot__cursor--${cursorLabel.toLowerCase()}`}`}
+                aria-hidden="true"
+              >
+                {mine ? '1P' : cursorLabel}
               </span>
             )}
           </button>

@@ -19,12 +19,16 @@ import { decisionBanners, nextSpoken } from './battleText';
 import type { Spoken } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
+import { SfxToggle } from './components/SfxToggle';
 import { Stage } from './components/Stage';
+import bundledDeck from './fixtures/theory-cards.json';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
 import { startMockReplay } from './mock';
 import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
 import type { SplashState } from './screen';
+import { pickLine } from './selection';
+import { DeckScreen } from './screens/DeckScreen';
 import { DecisionScreen } from './screens/DecisionScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
@@ -67,8 +71,6 @@ const announce = (
   return lines.filter(Boolean).join('. ');
 };
 
-/** What clicking a theory card says, as if the player had typed it. */
-const pickLine = (card: TheoryCard) => `My view is ${card.name}.`;
 
 /** What the REMATCH button says, as if the player had asked out loud. */
 const REMATCH_LINE = "I'd like a rematch.";
@@ -83,7 +85,7 @@ interface ViewProps {
   botLevel?: number;
   mock?: boolean;
   /** Sends the select screen's pick. */
-  onPick: (card: TheoryCard) => void;
+  onPick: (mine: TheoryCard, house: TheoryCard | null) => void;
   /** Asks for another debate from the decision screen. */
   onRematch: () => void;
 }
@@ -123,6 +125,13 @@ const ArcadeView = ({
     return () => window.clearTimeout(timer);
   }, [holding]);
 
+  // The deck is the one screen the server has no say in: it is a view of the
+  // title screen, reachable only before connecting. It reads the cards the
+  // server sent if there are any, and otherwise the copy bundled with the client
+  // (a server test pins that copy to the real cards).
+  const [browsing, setBrowsing] = useState(false);
+  const deck = cards.length > 0 ? cards : (bundledDeck as { cards: TheoryCard[] }).cards;
+
   const fromState = screenFor(connected, snapshot);
   const screen = holding && fromState === 'fight' ? 'versus' : fromState;
   // The fire belongs to the stage, which is mounted here rather than in the
@@ -147,7 +156,17 @@ const ArcadeView = ({
         fire={screen === 'decision' ? 'dim' : flare && screen === 'fight' ? 'flare' : 'idle'}
       />
       <div className="arcade-screen">
-        {screen === 'title' && <TitleScreen onStart={onStart} busy={busy} error={error} />}
+        {screen === 'title' && !browsing && (
+          <TitleScreen
+            onStart={onStart}
+            onDeck={() => setBrowsing(true)}
+            busy={busy}
+            error={error}
+          />
+        )}
+        {screen === 'title' && browsing && (
+          <DeckScreen cards={deck} onBack={() => setBrowsing(false)} />
+        )}
         {screen === 'select' && (
           <SelectScreen snapshot={snapshot} cards={cards} onPick={onPick} />
         )}
@@ -165,8 +184,15 @@ const ArcadeView = ({
           <DecisionScreen snapshot={snapshot} onRematch={onRematch} mock={mock} />
         )}
       </div>
-      <LiveRegion text={announce(screen, snapshot, spoken.text)} />
+      <LiveRegion
+        text={
+          screen === 'title' && browsing
+            ? 'The deck. Twelve theories of consciousness.'
+            : announce(screen, snapshot, spoken.text)
+        }
+      />
       <CrtOverlay />
+      <SfxToggle />
     </div>
   );
 };
@@ -200,8 +226,8 @@ const ArcadeSession = ({
   // way by the scaffold at src/components/pipecat/text-input.tsx:187.
   const client = usePipecatClient();
   const onPick = useCallback(
-    (card: TheoryCard) => {
-      void client?.sendText(pickLine(card));
+    (mine: TheoryCard, house: TheoryCard | null) => {
+      void client?.sendText(pickLine(mine, house));
     },
     [client]
   );
@@ -278,7 +304,7 @@ export const ArcadeApp = () => {
         busy={false}
         error={null}
         onStart={() => {}}
-        onPick={(card) => console.info(pickLine(card))}
+        onPick={(mine, house) => console.info(pickLine(mine, house))}
         onRematch={() => setReplay((n) => n + 1)}
         mock
       />

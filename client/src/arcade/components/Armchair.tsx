@@ -1,5 +1,6 @@
 import type { CSSProperties, JSX } from 'react';
 
+import { emblemRects } from '../emblems';
 import type { Side } from '../types';
 
 /**
@@ -276,6 +277,10 @@ const TEAR: JSX.Element[] = [
 
 type EyeShape = 'open' | 'squeezed' | 'weary' | 'happy' | 'dead';
 
+/** The emblem's top-left corner: 7 columns centred on the 16-wide back, from its top row. */
+const EMBLEM_X = 13;
+const EMBLEM_Y = 7;
+
 const EYE_Y = 13;
 const EYE_X: [number, number] = [13, 20];
 
@@ -364,6 +369,10 @@ export interface ArmchairProps {
   /** 0..100. Below 30 the chair splits open and slumps. */
   health: number;
   pose?: 'idle' | 'win' | 'lose';
+  /** Whose chair this is: its theory's emblem is stitched on the headrest. */
+  theoryId?: string | null;
+  /** This side has just landed a hit: it lunges at the other chair. */
+  attacking?: boolean;
   className?: string;
 }
 
@@ -379,6 +388,8 @@ export const Armchair = ({
   healed,
   health,
   pose = 'idle',
+  theoryId = null,
+  attacking = false,
   className,
 }: ArmchairProps) => {
   const typed = typeof variant === 'object';
@@ -403,9 +414,14 @@ export const Armchair = ({
     `armchair--${side}`,
     hurt ? 'armchair--hurt' : '',
     healed ? 'armchair--healed' : '',
+    attacking ? 'armchair--attacking' : '',
     low ? 'armchair--low' : '',
     pose !== 'idle' ? `armchair--${pose}` : '',
     level > 0 ? 'armchair--talking' : '',
+    // At rest: nobody is talking through it, nothing has just hit it, and it is
+    // not holding a win or lose pose. The voice-driven bob above takes over the
+    // same group the moment there is a level to follow.
+    bob === 0 && !hurt && !attacking && pose === 'idle' ? 'armchair--resting' : '',
     className ?? '',
   ]
     .filter(Boolean)
@@ -433,6 +449,10 @@ export const Armchair = ({
             <g className="armchair__heal">{rects('L63', OUTLINE, 'var(--heal)')}</g>
             {FAR_WING}
             {BACK_PANEL}
+            {/* The theory's emblem, in pale thread on the headrest: five rows
+                above the eyes, centred on the back. Under the wings and the
+                face, so neither is ever covered by it. */}
+            {rects('L17', emblemRects(theoryId, EMBLEM_X, EMBLEM_Y, side === 'bot'), STUFFING, 0.82)}
             {eye(EYE_X[0], eyeShape, 1)}
             {eye(EYE_X[1], eyeShape, -1)}
             {NEAR_WING}

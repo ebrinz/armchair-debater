@@ -5,7 +5,9 @@ import { PixelButton } from '../components/PixelButton';
 import '../fight.css';
 import { useCountdown } from '../hooks/useCountdown';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useSfx } from '../hooks/useSfx';
 import { TYPE_CPS } from '../hooks/useTypewriter';
+import { sfxForVerdict } from '../sfx';
 import type { DebateSnapshot, Side } from '../types';
 
 import { FightScreen } from './FightScreen';
@@ -90,6 +92,11 @@ export const DecisionScreen = ({ snapshot, onRematch, mock = false }: DecisionSc
 
   const left = useCountdown(COUNT_FROM, phase >= CONTINUE);
   const [asked, setAsked] = useState(false);
+
+  // The result as the banner lands, then the countdown ticking to its end.
+  useSfx(verdict && phase >= BANNER ? sfxForVerdict(verdict.winner) : null, phase >= BANNER);
+  useSfx(phase >= CONTINUE && !asked && left > 0 && left < COUNT_FROM ? 'tick' : null, left);
+  useSfx(phase >= CONTINUE && !asked && left === 0 ? 'gameOver' : null, left === 0);
 
   const winner: Side | null =
     verdict && verdict.winner !== 'draw' ? verdict.winner : null;

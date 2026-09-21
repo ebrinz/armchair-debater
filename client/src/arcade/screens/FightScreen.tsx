@@ -10,6 +10,8 @@ import { Puffs } from '../components/Puffs';
 import { RoundPlate } from '../components/RoundPlate';
 import '../fight.css';
 import { useHitEffects } from '../hooks/useHitEffects';
+import { useSfx } from '../hooks/useSfx';
+import { sfxForHit } from '../sfx';
 import type { DebateSnapshot, Side } from '../types';
 
 export interface FightScreenProps {
@@ -61,6 +63,10 @@ export const FightScreen = ({
   const hit = snapshot.last_hit;
   const fx = useHitEffects(hitCount, hit, frozen);
   const tier = fx.tier;
+  // The blow, and a beat later the shake-off if the speaker recovered. `frozen`
+  // is the decision screen's replay of this HUD, where nothing lands.
+  useSfx(!frozen && hit && tier ? sfxForHit(tier) : null, hitCount);
+  useSfx(!frozen && hit && hit.recovery > 0 ? 'heal' : null, hitCount, 420);
   const level = { user: frozen ? 0 : userLevel, bot: frozen ? 0 : botLevel };
   const debater = { user: snapshot.user, bot: snapshot.bot };
 
@@ -111,6 +117,9 @@ export const FightScreen = ({
                 variant={side === 'user' ? 'challenger' : 'champion'}
                 level={level[side]}
                 hurt={hurt}
+                // The lunge lasts as long as the other chair reels from it.
+                attacking={fx.attacker === side && fx.hurt !== null}
+                theoryId={debater[side].theory_id}
                 healed={fx.healed === side}
                 health={debater[side].health}
                 pose={poses?.[side]}

@@ -377,6 +377,57 @@
   }
 }
 
+/*
+ * At rest the chair breathes: one sprite pixel, up and back, in two hard steps.
+ * The house breathes half a cycle behind, so the pair never moves in unison.
+ * Hit-stop holds it still along with everything else.
+ */
+.armchair--resting .armchair__bob {
+  animation: chair-breathe 3.4s steps(1, end) infinite;
+}
+
+.armchair--resting.armchair--bot .armchair__bob {
+  animation-delay: -1.7s;
+}
+
+.fight--frozen .armchair__bob {
+  animation-play-state: paused;
+}
+
+@keyframes chair-breathe {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+/*
+ * The attack frame: the chair that landed the blow lunges at the other one and
+ * settles back. The sprite's inner group is mirrored for the house, so "forward"
+ * is +x for both of them.
+ */
+.armchair--attacking .armchair__rock {
+  animation: chair-lunge 280ms steps(4, end) 1;
+}
+
+@keyframes chair-lunge {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+
+  35% {
+    transform: translateX(9%) rotate(4deg);
+  }
+
+  60% {
+    transform: translateX(5%) rotate(2deg);
+  }
+}
+
 /* The decision screen's poses (task U.5). */
 .armchair--win .armchair__rock {
   animation: chair-hop 480ms steps(2, end) 3;

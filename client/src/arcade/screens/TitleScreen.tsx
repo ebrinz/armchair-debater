@@ -1,7 +1,10 @@
 import { PixelButton } from '../components/PixelButton';
+import { playSfx } from '../sfxPlayer';
 
 export interface TitleScreenProps {
   onStart: () => void;
+  /** Opens the card browser; it needs no connection. */
+  onDeck: () => void;
   busy: boolean;
   error: string | null;
 }
@@ -37,7 +40,7 @@ const Silhouette = ({ side, fill }: { side: 'left' | 'right'; fill: string }) =>
   </svg>
 );
 
-export const TitleScreen = ({ onStart, busy, error }: TitleScreenProps) => (
+export const TitleScreen = ({ onStart, onDeck, busy, error }: TitleScreenProps) => (
   <div className="title">
     <Silhouette side="left" fill="#27351f" />
     <Silhouette side="right" fill="#3d161b" />
@@ -49,13 +52,32 @@ export const TitleScreen = ({ onStart, busy, error }: TitleScreenProps) => (
     <p className="logo__rule pixel-text title__subtitle">ARCADE EDITION</p>
 
     <div className="title__start">
-      <PixelButton size="lg" blink={!busy} disabled={busy} onClick={onStart}>
+      <PixelButton
+        size="lg"
+        blink={!busy}
+        disabled={busy}
+        onClick={() => {
+          // The first gesture on the page: it is also what lets the browser play sound.
+          playSfx('pick');
+          onStart();
+        }}
+      >
         {busy ? 'CONNECTING…' : 'PRESS START'}
       </PixelButton>
 
       <p className="title__instruction">
         Say what you think consciousness is. The house will disagree.
       </p>
+
+      <PixelButton
+        disabled={busy}
+        onClick={() => {
+          playSfx('pick');
+          onDeck();
+        }}
+      >
+        The deck
+      </PixelButton>
 
       {error && (
         <p className="pixel-panel title__error" role="alert">
