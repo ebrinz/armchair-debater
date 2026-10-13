@@ -101,6 +101,7 @@ def test_every_mode_has_a_way_back_to_the_front_door():
 def test_the_scorer_hears_every_debate_node_and_only_those():
     debate_nodes = {"opening", "rebuttal", "crossexam_question", "crossexam_answer", "closing"}
     assert debate_nodes <= set(CONFIG.nodes)
-    assert set(scorer.HEARD_NODES) == debate_nodes | {scorer.SPARRING_NODE}
-    assert set(scorer.UNSCORED_NODES) == {"crossexam_question"}
+    assert set(scorer.ANSWER_NODES) == {"sparring", "check"} <= set(CONFIG.nodes)
+    assert set(scorer.HEARD_NODES) == debate_nodes | set(scorer.ANSWER_NODES) | {"lesson"}
+    assert set(scorer.UNSCORED_NODES) == {"crossexam_question", "lesson"}
     assert set(scorer.UNSCORED_NODES) <= set(scorer.HEARD_NODES)

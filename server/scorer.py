@@ -23,13 +23,16 @@ HEARD_NODES = (
     "crossexam_answer",
     "closing",
     "sparring",
+    "lesson",
+    "check",
 )
-# Sparring is one node visited five times. The examiner's questions are heard and
-# the player's answers are scored — by a different judge call, as answers.
-SPARRING_NODE = "sparring"
-# ...and the ones where what is said is not an argument: the house's invitation
-# and the user's question. Both of the answers that follow are scored.
-UNSCORED_NODES = ("crossexam_question",)
+# Nodes where the user's turns are answers to a question the bot just asked, and
+# which judge call scores them. The bot's turns there are heard, not scored.
+ANSWER_NODES = {"sparring": "answer", "check": "understanding"}
+# ...and the ones where nothing said is an argument: the house's invitation and
+# the user's question in cross-examination, and the whole lesson (heard, so the
+# tutor's turns can be counted; the check resets the transcript before it starts).
+UNSCORED_NODES = ("crossexam_question", "lesson")
 
 
 class TurnScorer:
@@ -40,12 +43,16 @@ class TurnScorer:
         theories: Callable[[], tuple[str, str]],
         score=judge.score_turn,
         score_answer=judge.score_answer,
+        score_understanding=judge.score_understanding,
+        rubric: Callable[[], str] = lambda: "",
     ):
         self._state = state
         self._current_stage = current_stage
         self._theories = theories
         self._score = score
         self._score_answer = score_answer
+        self._score_understanding = score_understanding
+        self._rubric = rubric
         self._transcript: list[tuple[str, str]] = []
         self._heard: dict[tuple[str, str], int] = {}
         self._tail: asyncio.Task | None = None
@@ -61,17 +68,21 @@ class TurnScorer:
         history = list(self._transcript)
         self._transcript.append((by, text))
         self._heard[(node, by)] = self._heard.get((node, by), 0) + 1
-        if node in UNSCORED_NODES or (node == SPARRING_NODE and by == "bot"):
+        kind = ANSWER_NODES.get(node)
+        if node in UNSCORED_NODES or (kind and by == "bot"):
             # Kept for the judge to read — an answer means little without its
             # question — but a question is not an argument, so it is not scored.
             logger.debug(f"scorer: heard an unscored {by} turn in {node}")
             return
+        # The rubric is read now, not when the judge gets round to it: by then
+        # the handler may have moved the check on to its next question.
+        rubric = self._rubric() if kind == "understanding" else ""
         generation = self._generation
         logger.debug(
             f"scorer: accepted {by} turn in {self._current_stage()} ({len(text.split())} words)"
         )
         self._tail = asyncio.create_task(
-            self._run(self._tail, by, text, history, generation, answer=node == SPARRING_NODE)
+            self._run(self._tail, by, text, history, generation, kind=kind, rubric=rubric)
         )
 
     async def _run(
@@ -81,7 +92,8 @@ class TurnScorer:
         text: str,
         history: list[tuple[str, str]],
         generation: int,
-        answer: bool = False,
+        kind: str | None = None,
+        rubric: str = "",
     ) -> None:
         if previous:
             with contextlib.suppress(Exception):
@@ -90,8 +102,17 @@ class TurnScorer:
             return
         try:
             user_theory, bot_theory = self._theories()
-            if answer:
+            if kind == "answer":
                 score = await self._score_answer(theory=user_theory, history=history, answer=text)
+            elif kind == "understanding":
+                question = next((t for who, t in reversed(history) if who == "bot"), "")
+                score = await self._score_understanding(
+                    theory=user_theory,
+                    question=question,
+                    rubric=rubric,
+                    history=history,
+                    answer=text,
+                )
             else:
                 score = await self._score(
                     speaker=by,
@@ -110,7 +131,7 @@ class TurnScorer:
         if generation != self._generation:
             return
         try:
-            if answer:
+            if kind:
                 await self._state.apply_answer(score.damage, score.recovery, score.reason)
             else:
                 await self._state.apply_hit(by, score.damage, score.recovery, score.reason)

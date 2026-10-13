@@ -237,3 +237,49 @@ async def test_in_sparring_the_question_is_heard_and_the_answer_is_scored_as_an_
     ]
     assert rig.state.health == {"user": 88, "bot": 100}
     assert rig.scorer.heard("sparring", "bot") == 1
+
+
+async def test_in_a_check_the_question_is_heard_and_the_answer_is_scored_against_the_rubric():
+    checks = []
+
+    async def score_understanding(**kwargs):
+        checks.append(kwargs)
+        return TurnScore(16, 0, "Described a local response.")
+
+    rig = Rig()
+    rig.scorer._score_understanding = score_understanding
+    rubric = {"text": "a sudden brain-wide burst"}
+    rig.scorer._rubric = lambda: rubric["text"]
+    await rig.state.set_mode("learn")
+    await rig.state.set_solo("gwt", "Global Workspace Theory", "The Tutor")
+    rig.stage = "check"
+
+    rig.scorer.submit("bot", "What is ignition?")
+    rig.scorer.submit("user", "The visual area lights up.")
+    # The handler moves on to the next question before the judge replies; the
+    # rubric that was current when the answer was heard is the one it is scored by.
+    rubric["text"] = "the rubric for question two"
+    await rig.scorer.drain()
+
+    assert rig.calls == []
+    assert checks == [
+        {
+            "theory": "Global Workspace Theory",
+            "question": "What is ignition?",
+            "rubric": "a sudden brain-wide burst",
+            "history": [("bot", "What is ignition?")],
+            "answer": "The visual area lights up.",
+        }
+    ]
+    assert rig.state.health == {"user": 84, "bot": 100}
+    assert rig.scorer.heard("check", "bot") == 1
+
+
+async def test_the_lesson_is_heard_but_nothing_in_it_is_scored():
+    rig = Rig()
+    rig.stage = "lesson"
+    rig.scorer.submit("bot", "Here is the idea.")
+    rig.scorer.submit("user", "What do you mean by broadcast?")
+    await rig.scorer.drain()
+    assert rig.calls == [] and rig.state.hits == []
+    assert rig.scorer.heard("lesson", "bot") == 1
