@@ -2560,6 +2560,8 @@ git push origin debate-mode
 git merge-base --is-ancestor origin/master debate-mode && git branch -f master debate-mode && git push origin master
 ```
 
+> **STOP after Task 12.** The user runs Tasks 3 to 12 on Opus 5.5 and switches back to Fable 5.1 for Part 4, where prompt tuning from failing evals needs the most judgement. After Task 12's push, end the session with the ledger up to date and tell the user to switch models; do not start Task 13.
+
 ---
 
 # Part 4 — Evals, docs, and the one spoken session
