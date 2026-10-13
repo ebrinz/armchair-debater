@@ -1,0 +1,116 @@
+/* THE LESSON: the card, the tutor's chair, and the four steps beneath. */
+
+.lesson {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  gap: clamp(8px, 1.4vh, 16px);
+  height: 100%;
+  padding: clamp(12px, 2vh, 24px) clamp(16px, 3vw, 40px);
+}
+
+.lesson__head {
+  text-align: center;
+}
+
+.lesson__title {
+  margin: 0;
+  color: var(--accent);
+  font-size: clamp(16px, 2vw, 26px);
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+.lesson__sub {
+  margin: 0.4em 0 0;
+  color: var(--ink-dim);
+  font-size: clamp(16px, 1.5vw, 22px);
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.lesson__plate {
+  display: flex;
+  justify-content: center;
+}
+
+.lesson__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(16px, 3vw, 40px);
+  align-items: center;
+  min-height: 0;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.lesson__card {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.lesson__tutor {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  /* The sprite fills its box's width, so the box sets its size. */
+  width: clamp(120px, 16vw, 220px);
+}
+
+.lesson__name {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(9px, 0.8vw, 12px);
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+.lesson__steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 1vw, 14px);
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson__step {
+  display: flex;
+  gap: 0.6em;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  color: var(--ink-dim);
+  font-size: clamp(16px, 1.4vw, 20px);
+  box-shadow: 4px 4px 0 var(--shadow);
+  opacity: 0.6;
+}
+
+.lesson__step--done {
+  opacity: 0.85;
+}
+
+.lesson__step--now {
+  color: var(--ink);
+  opacity: 1;
+  box-shadow:
+    0 0 0 3px var(--accent),
+    4px 4px 0 var(--shadow);
+}
+
+.lesson__step-num {
+  font-size: clamp(9px, 0.8vw, 12px);
+  color: var(--accent);
+}
+
+.lesson__hint {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: clamp(16px, 1.4vw, 20px);
+  text-align: center;
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lesson__step--now {
+    transition: box-shadow 200ms steps(3);
+  }
+}

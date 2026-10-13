@@ -25,12 +25,21 @@ import bundledDeck from './fixtures/theory-cards.json';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
 import { mockKind, startMockReplay } from './mock';
-import { DEBATE_THIS_LINE, MENU_LINE, MODE_LINES, SPAR_THIS_LINE, againLine, askLine } from './modes';
+import {
+  DEBATE_THIS_LINE,
+  MENU_LINE,
+  MODE_LINES,
+  SPAR_THIS_LINE,
+  againLine,
+  askLine,
+  teachLine,
+} from './modes';
 import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
 import type { SplashState } from './screen';
 import { pickLine } from './selection';
 import { DeckScreen } from './screens/DeckScreen';
 import { DecisionScreen } from './screens/DecisionScreen';
+import { LessonScreen } from './screens/LessonScreen';
 import { ModeScreen } from './screens/ModeScreen';
 import { FightScreen } from './screens/FightScreen';
 import { SelectScreen } from './screens/SelectScreen';
@@ -65,6 +74,10 @@ const announce = (
   if (screen === 'fight') return fightText;
   if (screen === 'versus') {
     return `${snapshot.user.theory_name ?? 'You'} versus ${snapshot.bot.theory_name ?? 'the house'}`;
+  }
+  if (screen === 'lesson' && snapshot.lesson) {
+    const { step, of, title } = snapshot.lesson;
+    return `${ROUND_LABELS.lesson}. Step ${step} of ${of}, ${title}`;
   }
   const lines = [ROUND_LABELS[snapshot.stage]];
   if (screen === 'decision' && snapshot.verdict) {
@@ -172,10 +185,14 @@ const ArcadeView = ({
           <SelectScreen
             snapshot={snapshot}
             cards={cards}
-            solo={snapshot?.mode === 'sparring'}
-            onPick={(mine, house) => say(pickLine(mine, house))}
+            solo={snapshot?.mode === 'sparring' || snapshot?.mode === 'learn'}
+            learn={snapshot?.mode === 'learn'}
+            onPick={(mine, house) =>
+              say(snapshot?.mode === 'learn' ? teachLine(mine.name) : pickLine(mine, house))
+            }
           />
         )}
+        {screen === 'lesson' && snapshot && <LessonScreen snapshot={snapshot} cards={deck} />}
         {screen === 'explore' && (
           <DeckScreen
             cards={deck}

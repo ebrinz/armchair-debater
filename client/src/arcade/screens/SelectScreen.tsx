@@ -34,12 +34,20 @@ export interface SelectScreenProps {
   onPick: (mine: TheoryCard, house: TheoryCard | null) => void;
   /** Sparring: there is no house theory to choose, so the pick is one step. */
   solo?: boolean;
+  /** Learn mode: the pick is the theory to be taught, and the words say so. */
+  learn?: boolean;
 }
 
 /** How long a sent pick keeps the roster shut while waiting for the server to lock it in. */
 const PICK_PATIENCE_MS = 12000;
 
-export const SelectScreen = ({ snapshot, cards, onPick, solo = false }: SelectScreenProps) => {
+export const SelectScreen = ({
+  snapshot,
+  cards,
+  onPick,
+  solo = false,
+  learn = false,
+}: SelectScreenProps) => {
   const [focused, setFocused] = useState(0);
   // Step two begins once the player has a theory of their own.
   const [mine, setMine] = useState<TheoryCard | null>(null);
@@ -104,10 +112,14 @@ export const SelectScreen = ({ snapshot, cards, onPick, solo = false }: SelectSc
     >
       <header className="select__head">
         <h2 className="select__title pixel-text">
-          {mine ? 'Choose the house’s theory' : 'Choose your theory'}
+          {mine ? 'Choose the house’s theory' : learn ? 'Choose a theory to learn' : 'Choose your theory'}
         </h2>
         <p className="select__sub">
-          {mine ? '— or let the house pick —' : '— or just say what you think —'}
+          {mine
+            ? '— or let the house pick —'
+            : learn
+              ? '— or just say which one —'
+              : '— or just say what you think —'}
         </p>
       </header>
 
@@ -159,7 +171,9 @@ export const SelectScreen = ({ snapshot, cards, onPick, solo = false }: SelectSc
           to give up room to it. */}
       <footer className="select__foot">
         <p className="select__hint">
-          {solo
+          {learn
+            ? 'Your mic is already open. Name a theory and the tutor will teach it in four steps, then check that it has landed — or pick one here.'
+            : solo
             ? 'Your mic is already open. Say what you think consciousness is and the examiner will put five questions to it — or pick a theory here.'
             : mine
             ? `These are the rivals of ${mine.name}. Pick the one the house must defend, or let it choose.`

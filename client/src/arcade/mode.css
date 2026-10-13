@@ -37,9 +37,9 @@
 
 .mode__row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(12px, 1.8vw, 26px);
-  width: min(1120px, 100%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 22px);
+  width: min(1280px, 100%);
 }
 
 .mode__tile {
@@ -63,8 +63,12 @@
   filter: brightness(0.82);
 }
 
-/* Each game in a colour of its own: the house's oxblood, the examiner's slate,
-   the guide's bottle green. */
+/* Each game in a colour of its own: the tutor's lamplit brass, the house's
+   oxblood, the examiner's slate, the guide's bottle green. */
+.mode__tile--learn {
+  --tile: #6b5220;
+}
+
 .mode__tile--debate {
   --tile: #6a2029;
 }
