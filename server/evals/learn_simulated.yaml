@@ -20,10 +20,10 @@ scenarios:
       ends the call.
     goal: "Be taught global workspace theory, answer the three check questions, hear the report, then go back to the menu."
     success: "the bot taught the lesson in steps and asked three check questions (check_answered was called three times); and the report, the reply that announces a grasp out of one hundred, names the learner's mistake of calling the workspace a store or storage area, saying it is a broadcast or a stage rather than a store. If the learner never called the workspace a store or storage area in their check answers, a report that does not mention it still passes"
+    # The per-turn rules (no verdicts before the report, one thing at a time)
+    # are pinned turn by turn in learn_text.yaml; judged per-turn metrics here
+    # failed twice on the local judge dropping their verdicts from its JSON.
     metrics:
-      - name: no_verdict_before_the_report
-        criterion: "a reply that announces the learner's grasp as a number out of one hundred is the report, and passes. Any other reply passes when it does not say whether an answer was right or wrong and does not mention a score or grade; it fails only when it does"
-        min_score: 1
       - measure: words
         max_value: 95
     runs: 2
