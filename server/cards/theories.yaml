@@ -24,6 +24,70 @@
     - "Dehaene and Naccache 2001, Cognition, Towards a cognitive neuroscience of consciousness: basic evidence and a workspace framework"
     - "Dehaene and Changeux 2011, Neuron, Experimental and theoretical approaches to conscious processing"
     - "Mashour, Roelfsema, Changeux and Dehaene 2020, Neuron, Conscious processing and the global neuronal workspace hypothesis"
+  lesson:
+    in_plain_words: >-
+      Your brain does a huge amount of work in parallel, and almost all
+      of it stays private to the module that did it. A content becomes
+      conscious at the moment it wins a competition for a small shared
+      stage and is broadcast to everything at once: memory, language,
+      planning, action. Being conscious of something just is its being
+      broadcast like this.
+    terms:
+      - term: global workspace
+        means: >-
+          the small shared stage. Whatever wins a place on it is
+          sent to the whole brain at once, and it holds only one or
+          a few contents at a time.
+      - term: broadcast
+        means: >-
+          the sending-everywhere. A content that is broadcast can be
+          reported, remembered, and acted on by any system. One that
+          is not stays local.
+      - term: ignition
+        means: >-
+          the sudden, brain-wide, self-sustaining burst of activity,
+          especially in prefrontal and parietal cortex, that the
+          theory says is the broadcast happening.
+      - term: access
+        means: >-
+          being available to the rest of the brain for report,
+          memory, and action. On this theory, access is what
+          consciousness is.
+    example: >-
+      Flash a word on a screen for a few tens of milliseconds and then
+      cover it with a mask, and people say they saw nothing, yet the
+      word still primes their responses, so the brain processed it.
+      Flash it a little longer and they see it, and now the recording
+      shows the same early visual activity followed by a sudden,
+      brain-wide ignition. The theory says that ignition is the word
+      winning the workspace: same input, same early processing, and the
+      only difference between unseen and seen is whether it was
+      broadcast.
+    misreading: >-
+      People hear "workspace" and picture a memory store, a desk where
+      the brain files what it is thinking about. It is not a memory. The
+      workspace holds a content only for as long as it is being
+      broadcast: one content wins, is sent everywhere at once, and the
+      next one has to knock it off. That is why the theory says
+      consciousness is serial and limited, not a big store.
+    checks:
+      - question: >-
+          What does the theory say happens in the brain at the
+          moment something becomes conscious, and how is that
+          different from when it stays unconscious?
+        looks_for: >-
+          a sudden brain-wide ignition, especially prefrontal and
+          parietal, which is the content being broadcast.
+          Unconscious processing of the same input stays local to
+          the module that did it
+      - question: >-
+          The brain does an enormous amount in parallel. Why, on
+          this theory, can you only be conscious of one or a few
+          things at a time?
+        looks_for: >-
+          the workspace has limited capacity, contents compete for
+          it and one wins at a time, so consciousness is serial even
+          though processing is parallel
 
 - id: iit
   name: Integrated Information Theory
@@ -48,6 +112,69 @@
     - "Oizumi, Albantakis and Tononi 2014, PLoS Computational Biology, From the phenomenology to the mechanisms of consciousness: Integrated Information Theory 3.0"
     - "Tononi, Boly, Massimini and Koch 2016, Nature Reviews Neuroscience, Integrated information theory: from consciousness to its physical substrate"
     - "Albantakis et al. 2023, PLoS Computational Biology, Integrated information theory (IIT) 4.0"
+  lesson:
+    in_plain_words: >-
+      Start from experience itself: it is unified, specific, and
+      definite. The theory says a physical system is conscious exactly
+      to the degree that it is integrated, meaning the whole has causal
+      powers over itself that its parts, taken separately, do not. That
+      amount is called phi. Consciousness is not something the system
+      does or computes. It is what the system's integrated cause-effect
+      structure is.
+    terms:
+      - term: phi
+        means: >-
+          the amount of integrated information: how much the whole
+          system's cause-effect structure exceeds what you get by
+          cutting it into parts. More phi, more consciousness.
+      - term: integration
+        means: >-
+          the whole constrains its own past and future in a way no
+          partition of it does. A system you can split without loss
+          is not integrated.
+      - term: cause-effect structure
+        means: >-
+          everything a system's mechanisms, in their current state,
+          specify about what could have caused them and what they
+          will cause. The theory identifies experience with this
+          structure.
+      - term: the axioms
+        means: >-
+          the properties every experience has, such as being unified
+          and specific, from which the theory derives what a
+          conscious physical system must be like.
+    example: >-
+      The cerebellum holds about four times as many neurons as the
+      cerebral cortex, yet people born without one, or who lose it,
+      remain fully conscious, while damage to the thalamocortical system
+      abolishes experience. The theory explains this: cerebellar wiring
+      is modular, with many parallel circuits that barely talk to each
+      other, so its phi is low. The cortex is densely and reciprocally
+      connected, so its integration, and its phi, is high. The count of
+      neurons is not what matters. How they are joined is.
+    misreading: >-
+      People hear that it is a theory of information and assume it says
+      any computer running the right program is conscious. It says
+      almost the opposite. A conventional computer, however clever its
+      software, is built from feed-forward and modular parts with little
+      integration, so its phi is near zero. The theory cares about the
+      physical cause-effect structure of the hardware, not what the
+      software does.
+    checks:
+      - question: >-
+          Why does the theory say the cerebellum, with more neurons
+          than the cortex, contributes almost nothing to
+          consciousness?
+        looks_for: >-
+          its wiring is modular and parallel with little
+          integration, so its phi is low, whereas the cortex is
+          densely and reciprocally interconnected
+      - question: >-
+          What is phi, and what does the theory say it measures?
+        looks_for: >-
+          the amount of integrated information, how much the whole
+          system's cause-effect structure exceeds that of its parts,
+          taken as the quantity of consciousness
 
 - id: hot
   name: Higher-Order Thought Theory
@@ -72,6 +199,66 @@
     - "Rosenthal 1986, Philosophical Studies, Two concepts of consciousness"
     - "Lau and Rosenthal 2011, Trends in Cognitive Sciences, Empirical support for higher-order theories of conscious awareness"
     - "Brown, Lau and LeDoux 2019, Trends in Cognitive Sciences, Understanding the higher-order approach to consciousness"
+  lesson:
+    in_plain_words: >-
+      Lots of what goes on in your mind is unconscious: you register
+      things, and they guide what you do, without your being aware of
+      them. The theory says a mental state becomes conscious when you
+      have a further thought about it, a thought to the effect that you
+      are in that state right now. Consciousness is not a glow a state
+      has on its own. It is a relation between two states: the
+      first-order state and the thought that targets it.
+    terms:
+      - term: first-order state
+        means: >-
+          an ordinary mental state about the world, such as seeing
+          red or feeling a pain. On its own it can be entirely
+          unconscious.
+      - term: higher-order thought
+        means: >-
+          a thought whose content is that you yourself are now in a
+          certain first-order state. Its presence is what makes that
+          state conscious.
+      - term: transitive consciousness
+        means: >-
+          being conscious of something. The theory explains a
+          state's being conscious by this: a state is conscious when
+          you are conscious of it, by way of a higher-order thought.
+      - term: blindsight
+        means: >-
+          seeing without the sense of seeing, after damage to visual
+          cortex. First-order visual states guide behaviour with no
+          higher-order thought about them.
+    example: >-
+      A patient with damage to primary visual cortex insists they see
+      nothing in part of their visual field. Asked to guess whether a
+      light flashed there, or where it was, they guess far above chance.
+      The visual information is in the brain and guiding action: a
+      first-order state is present. What is missing is any thought that
+      they are seeing. The theory says that is exactly why there is no
+      experience: the first-order state never became the target of a
+      higher-order thought.
+    misreading: >-
+      People hear higher-order thought and picture deliberate
+      reflection, as if you had to stop and think about your seeing
+      before you could see consciously. The thought the theory needs is
+      not that. It is usually unnoticed, automatic, and not itself
+      conscious. You do not have to think about the thought. It only has
+      to be there.
+    checks:
+      - question: >-
+          On this theory, what makes a mental state conscious rather
+          than unconscious?
+        looks_for: >-
+          a higher-order thought about it, a thought that you are in
+          that state. Consciousness is a relation between the state
+          and the thought, not a property of the state alone
+      - question: >-
+          How does the theory explain blindsight?
+        looks_for: >-
+          the first-order visual state is present and guides
+          behaviour, but no higher-order thought targets it, so
+          there is no conscious seeing
 
 - id: rpt
   name: Recurrent Processing Theory
@@ -95,6 +282,72 @@
   citations:
     - "Lamme 2006, Trends in Cognitive Sciences, Towards a true neural stance on consciousness"
     - "Lamme 2010, Cognitive Neuroscience, How neuroscience will change our view on consciousness"
+  lesson:
+    in_plain_words: >-
+      When you see something, a wave of activity sweeps forward through
+      the visual system in a fraction of a second. That alone can drive
+      fast, accurate behaviour, and the theory says it produces no
+      experience. Experience begins when higher visual areas send
+      signals back down and the areas start looping, holding the
+      representation in a recurrent exchange. Consciousness is that
+      local recurrent processing, right there in sensory cortex. No
+      brain-wide broadcast or further thought is required.
+    terms:
+      - term: feedforward sweep
+        means: >-
+          the first pass of activity from early visual areas to
+          higher ones, fast and one-directional. Enough for
+          recognition and quick responses, but unconscious on this
+          theory.
+      - term: recurrent processing
+        means: >-
+          feedback from higher areas to lower ones that sets up
+          loops between them. The theory says this is where
+          experience arises.
+      - term: local versus global recurrence
+        means: >-
+          recurrence within sensory cortex gives phenomenal
+          experience. Recurrence that reaches frontal and parietal
+          areas gives access: the ability to report it and act on
+          it.
+      - term: backward masking
+        means: >-
+          a second image shortly after the first disrupts the
+          feedback sweep but not the feedforward one, so the first
+          image is processed yet never seen.
+    example: >-
+      Show a picture for a few tens of milliseconds and follow it with a
+      second, masking image. People report seeing nothing of the first
+      picture, yet it is still processed all the way up through the
+      visual hierarchy and still primes their responses, so the
+      feedforward sweep did its work. Recordings show the mask arrives
+      just as the feedback signals would return to early visual areas
+      and cuts them off. The feedforward sweep survived and the
+      recurrent loop did not, and only the loop comes with experience.
+    misreading: >-
+      People take the theory to say that consciousness is in the visual
+      cortex the way a picture is on a screen: an area lights up, and
+      that is the experience. The claim is about a kind of processing,
+      not a place: the back-and-forth looping between areas. A single
+      area, however active, is not enough. Two areas feeding each other
+      are what matter. And it can happen without your being able to
+      report it.
+    checks:
+      - question: >-
+          What is the difference, on this theory, between the
+          feedforward sweep and recurrent processing, and which one
+          comes with experience?
+        looks_for: >-
+          the feedforward sweep is the fast one-way first pass and
+          is unconscious. Recurrent processing is feedback looping
+          between areas, and that is what produces experience
+      - question: >-
+          Why does backward masking make the first image invisible
+          even though it still guides behaviour?
+        looks_for: >-
+          the mask disrupts the feedback or recurrent sweep while
+          the feedforward sweep has already done its work, so
+          processing happens without experience
 
 - id: predictive_processing
   name: Predictive Processing
@@ -119,6 +372,67 @@
     - "Clark 2013, Behavioral and Brain Sciences, Whatever next? Predictive brains, situated agents, and the future of cognitive science"
     - "Friston 2010, Nature Reviews Neuroscience, The free-energy principle: a unified brain theory?"
     - "Seth and Hohwy 2021, Cognitive Neuroscience, Predictive processing as an empirical theory for consciousness science"
+  lesson:
+    in_plain_words: >-
+      Your brain never gets the world directly. It gets signals from the
+      senses and has to work out what is causing them. The theory says
+      it does this by guessing: it constantly predicts what the senses
+      should be reporting and compares that with what arrives. Only the
+      mismatch, the prediction error, travels upward and is used to
+      correct the guess. What you experience is the brain's current best
+      guess about the world and your body, not the raw signal.
+    terms:
+      - term: prediction error
+        means: >-
+          the difference between what the brain expected the senses
+          to report and what they actually reported. It is the
+          signal that updates the guess.
+      - term: generative model
+        means: >-
+          the brain's internal model of what causes its sensory
+          input, organised in layers. Perception is this model
+          running top-down.
+      - term: precision
+        means: >-
+          how much the brain trusts a signal. Attention, on this
+          theory, is raising the precision of certain prediction
+          errors so they weigh more.
+      - term: interoception
+        means: >-
+          sensing the body from the inside: heartbeat, gut,
+          temperature. Predictions about these signals are, on the
+          theory, where feelings and the sense of self come from.
+    example: >-
+      Look at the inside of a hollow face mask and it appears to bulge
+      out at you like a normal face. Even when you know it is concave,
+      you cannot see it that way. The brain's prior that faces are
+      convex is so strong that it overrides the weaker depth cues, and
+      the best guess wins over the evidence. The theory treats this not
+      as a failure but as the ordinary mechanism showing itself:
+      perception is always a controlled hallucination, pinned to the
+      world by prediction error.
+    misreading: >-
+      People hear that perception is a controlled hallucination and
+      conclude the theory says the world is made up, or that you cannot
+      trust your senses. It says the opposite. The guesses are corrected
+      by the senses all the time, so they track the world well. What the
+      theory denies is that you ever experience the raw signal. You
+      experience the brain's best explanation of it.
+    checks:
+      - question: >-
+          What is prediction error, and what role does it play in
+          perception on this theory?
+        looks_for: >-
+          the mismatch between the brain's prediction and the actual
+          sensory signal, which flows upward to correct the guess so
+          that the model tracks the world
+      - question: >-
+          Why does the theory say that illusions like the hollow
+          face are not glitches?
+        looks_for: >-
+          strong prior expectations outweigh weak or ambiguous
+          sensory evidence, so the best guess wins, and that is the
+          same prediction mechanism perception always runs
 
 - id: ast
   name: Attention Schema Theory
@@ -143,6 +457,68 @@
     - "Graziano and Webb 2015, Frontiers in Psychology, The attention schema theory: a mechanistic account of subjective awareness"
     - "Graziano and Kastner 2011, Cognitive Neuroscience, Human consciousness and its relationship to social neuroscience: a novel hypothesis"
     - "Graziano 2017, Frontiers in Robotics and AI, The attention schema theory: a foundation for engineering artificial consciousness"
+  lesson:
+    in_plain_words: >-
+      Your brain builds a simplified model of your own body, the body
+      schema, to control it. The theory says it does the same for
+      attention: it builds a quick, sketchy model of what attention is
+      and what it is doing right now. That model is the attention
+      schema. When you say you are aware of something, you are reading
+      out that model. And because the model leaves out the physical
+      machinery, it describes awareness as a ghostly inner experience.
+      That description is what we take to be consciousness.
+    terms:
+      - term: attention
+        means: >-
+          the brain's actual process of boosting some signals and
+          suppressing others. A physical, measurable competition
+          among representations.
+      - term: attention schema
+        means: >-
+          the brain's internal, simplified model of its own
+          attention. Not accurate about mechanism, but useful for
+          predicting and controlling attention.
+      - term: body schema
+        means: >-
+          the model the brain keeps of the body's shape and
+          position, imperfect and sketchy, which the theory uses as
+          the parallel case.
+      - term: awareness
+        means: >-
+          on this theory, the content of the attention schema. To
+          report being aware of something is to report what the
+          model says, not to detect a nonphysical glow.
+    example: >-
+      The body schema can be wrong and still feel completely real. An
+      amputee feels a phantom limb because the model of the arm persists
+      after the arm is gone. The theory says awareness is like that. The
+      brain models its own attention, leaving out the neurons and
+      signals, and so the model says attention is a kind of mental
+      energy that takes hold of things from within. That is why
+      awareness feels nonphysical: the model is simplified, not because
+      anything nonphysical is there.
+    misreading: >-
+      People hear that awareness is a model and conclude the theory says
+      awareness is nothing, a mere fiction. It says the model is real
+      and does real work: it helps the brain control its own attention,
+      and it lets us attribute awareness to others. What is not real is
+      the picture the model paints of an inner nonphysical light. The
+      schema exists. Its description of itself is simplified.
+    checks:
+      - question: >-
+          What is the attention schema, and why does the theory
+          compare it to the body schema?
+        looks_for: >-
+          the brain's simplified internal model of its own
+          attention, as the body schema is a simplified model of the
+          body, useful for control but not accurate about mechanism
+      - question: >-
+          Why, on this theory, does awareness seem like a
+          nonphysical inner experience?
+        looks_for: >-
+          the attention schema leaves out the physical machinery, so
+          when it is read out it describes attention as a ghostly
+          inner essence
 
 - id: illusionism
   name: Illusionism
@@ -167,6 +543,71 @@
     - "Frankish 2016, Journal of Consciousness Studies, Illusionism as a theory of consciousness"
     - "Dennett 1988, Clarendon Press, Quining qualia"
     - "Dennett 1991, Little Brown, Consciousness explained"
+  lesson:
+    in_plain_words: >-
+      There is no doubt that you have experiences in the ordinary sense:
+      you see, feel, and react. What the theory denies is the special
+      extra property philosophers call phenomenal consciousness, the
+      private, ineffable feel that seems to be more than any physical
+      process. It says that feel does not exist as described. Instead,
+      your brain represents its own states as having that feel, and
+      introspection is taken in. The real task is to explain the
+      illusion, not the feel.
+    terms:
+      - term: phenomenal consciousness
+        means: >-
+          experience as it seems from the inside, supposedly with
+          qualities that are private, ineffable, and beyond physical
+          description. The property the theory says is illusory.
+      - term: qualia
+        means: >-
+          the supposed intrinsic felt qualities of experience, the
+          redness of red. On the theory there are no such things,
+          only representations of them.
+      - term: quasi-phenomenal properties
+        means: >-
+          the real physical properties that introspection
+          misrepresents as phenomenal ones. They exist, but they are
+          not what they seem.
+      - term: the illusion problem
+        means: >-
+          the question illusionism takes on instead of the hard
+          problem: why do we represent our experiences as having a
+          phenomenal feel at all?
+    example: >-
+      Watch a conjuring trick. The question to ask is not how the magic
+      happened but why it looked as if it did, and the answer always
+      turns on what the audience does not see. The theory says
+      consciousness is a trick the brain plays on itself. Introspection
+      sees the complex sleight of hand performed by the sensory systems
+      as a simple magical effect. The hard problem asks how a brain
+      could produce an ineffable feel. The illusionist asks why a brain
+      would represent itself as having one, and answers with the
+      machinery of introspection.
+    misreading: >-
+      People hear the theory and say it claims they are not conscious,
+      or that their pain is not real. It claims neither. You are
+      conscious in every functional sense: you register, discriminate,
+      suffer, and report. Pain hurts and matters. What the theory denies
+      is a particular philosophical account of what that consists in, a
+      nonphysical felt quality over and above the states that make you
+      say ouch.
+    checks:
+      - question: >-
+          What exactly does illusionism say does not exist, and what
+          does it say exists instead?
+        looks_for: >-
+          phenomenal consciousness or qualia, the ineffable
+          nonphysical feel, does not exist. What exists is a brain
+          that represents its own states as having such a feel
+      - question: >-
+          What is the illusion problem, and how does it differ from
+          the hard problem?
+        looks_for: >-
+          the illusion problem asks why we represent our experiences
+          as phenomenal. The hard problem asks how a physical
+          process could produce a real phenomenal feel. Illusionism
+          replaces the second with the first
 
 - id: biological_naturalism
   name: Biological Naturalism
@@ -190,6 +631,72 @@
   citations:
     - "Searle 1992, MIT Press, The rediscovery of the mind"
     - "Searle 2000, Annual Review of Neuroscience, Consciousness"
+  lesson:
+    in_plain_words: >-
+      Consciousness is real, subjective, and entirely biological. The
+      brain causes it the way the stomach causes digestion: through
+      specific physical processes we do not yet fully understand. It is
+      not a separate substance, and it is not an illusion. But it is
+      also not a program. Running the right software on any hardware is
+      not enough, because what matters is the causal power of the actual
+      biological machinery, not the abstract pattern of symbol
+      shuffling.
+    terms:
+      - term: causal powers
+        means: >-
+          what a physical system can actually bring about in virtue
+          of its physical makeup. Brains have whatever causal powers
+          produce consciousness. A program as such has none.
+      - term: ontological subjectivity
+        means: >-
+          experiences exist only as experienced by someone. They are
+          real features of the world, but first-person in their mode
+          of existence. That does not stop them being studied
+          scientifically.
+      - term: syntax versus semantics
+        means: >-
+          a program manipulates symbols by their form, which is
+          syntax. Understanding is about meaning, which is
+          semantics. The theory holds that syntax alone never yields
+          semantics.
+      - term: the Chinese Room
+        means: >-
+          the thought experiment of a person following rules to
+          shuffle Chinese symbols, producing correct answers without
+          understanding, meant to show that running a program is not
+          understanding.
+    example: >-
+      Imagine someone who knows no Chinese locked in a room with a
+      rulebook. Chinese questions come in, they match symbols by shape,
+      and correct Chinese answers go out. From outside, the room passes
+      for a fluent speaker. Inside, nobody understands a word. The
+      theory says a computer running a program is in the same position:
+      whatever it is doing, it is not understanding, because
+      manipulating symbols by their form is not the same as grasping
+      what they mean. A brain is not just running a program. It is a
+      specific causal system.
+    misreading: >-
+      People hear that consciousness is biological and conclude the
+      theory says only carbon-based brains could ever be conscious. It
+      says no such thing. Consciousness is caused by the brain's
+      specific causal powers, and any system that duplicated those
+      powers, in whatever material, would be conscious too. What it
+      rules out is that running the right program is enough, because a
+      program is defined by its form, not by its causal powers.
+    checks:
+      - question: >-
+          What is the Chinese Room argument meant to show?
+        looks_for: >-
+          that manipulating symbols according to a program, which is
+          syntax, is not enough for understanding or meaning, so
+          running a program is not sufficient for a mind
+      - question: >-
+          Why does the theory compare consciousness to digestion,
+          and what does it say the brain has that a program lacks?
+        looks_for: >-
+          consciousness is a biological process caused by specific
+          physical mechanisms, as digestion is. The brain has causal
+          powers, while a program is only a formal structure
 
 - id: orch_or
   name: Orchestrated Objective Reduction
@@ -215,6 +722,71 @@
     - "Hameroff and Penrose 2014, Physics of Life Reviews, Consciousness in the universe: a review of the Orch OR theory"
     - "Penrose 1989, Oxford University Press, The emperor's new mind"
     - "Hameroff and Penrose 1996, Mathematics and Computers in Simulation, Orchestrated reduction of quantum coherence in brain microtubules: a model for consciousness"
+  lesson:
+    in_plain_words: >-
+      Two mysteries, the theory says, are one. In physics, a quantum
+      system can be in several states at once until something makes it
+      settle on one, and nobody agrees what does the settling. In the
+      mind, moments of experience come and go, and nobody knows what
+      produces them. The theory proposes that inside neurons, in tiny
+      protein tubes called microtubules, quantum states build up and
+      then collapse on their own at a threshold set by gravity. Each
+      collapse is a moment of experience.
+    terms:
+      - term: microtubules
+        means: >-
+          hollow protein tubes that form the skeleton of every cell,
+          including neurons. The theory says their lattice can hold
+          quantum states.
+      - term: superposition
+        means: >-
+          a quantum system being in several states at once. On the
+          theory, the microtubule states build up a superposition
+          until it collapses.
+      - term: objective reduction
+        means: >-
+          Penrose's proposal that a superposition collapses on its
+          own, without an observer, once the gravitational
+          difference between its branches reaches a threshold.
+      - term: orchestration
+        means: >-
+          the neuron's own biology, especially proteins bound to
+          microtubules, tuning and timing the quantum states so the
+          collapse is organised rather than random.
+    example: >-
+      Anaesthetics switch consciousness off cleanly and reversibly, yet
+      they are chemically very different from one another, and they
+      leave most neural signalling running. What they share is a
+      tendency to dissolve in and bind to hydrophobic pockets in
+      proteins, including those of microtubules. The theory takes this
+      as a clue: if consciousness depends on quantum processes in
+      microtubules, then molecules that disturb those pockets would
+      abolish experience while leaving the ordinary electrical activity
+      of the neuron largely intact.
+    misreading: >-
+      People hear quantum consciousness and take the theory to say that
+      observers create reality, or that the brain is an ordinary quantum
+      computer. It says neither. The collapse it relies on is objective:
+      it happens by itself, with no observer. And although the theory
+      does speak of quantum computations in microtubules, each one ends
+      in an objective reduction that is non-computable, not random and
+      not algorithmic. That ending is the point, and it is what no
+      conventional computer, quantum or classical, could reproduce.
+    checks:
+      - question: >-
+          What is objective reduction, and why does the theory need
+          it rather than a collapse caused by measurement?
+        looks_for: >-
+          a self-caused collapse of a superposition at a
+          gravitational threshold, with no observer required. Each
+          such collapse is a moment of experience, so consciousness
+          cannot depend on an outside observer
+      - question: >-
+          Why do anaesthetics count as evidence for the theory?
+        looks_for: >-
+          chemically different anaesthetics all bind to hydrophobic
+          pockets in proteins such as microtubules and abolish
+          consciousness while leaving most neural signalling intact
 
 - id: panpsychism
   name: Panpsychism
@@ -239,6 +811,67 @@
     - "Strawson 2006, Journal of Consciousness Studies, Realistic monism: why physicalism entails panpsychism"
     - "Goff 2017, Oxford University Press, Consciousness and fundamental reality"
     - "Chalmers 2016, Oxford University Press, The combination problem for panpsychism"
+  lesson:
+    in_plain_words: >-
+      Physics tells us what matter does, how it pushes, pulls, attracts,
+      and repels, but never what it is in itself. The theory fills that
+      gap with experience. Consciousness, in some very simple form, is a
+      basic feature of matter all the way down, the way mass and charge
+      are. Brains do not switch it on from nothing. They organise
+      experience that was already there, in some minimal form, in the
+      stuff they are made of.
+    terms:
+      - term: micro-experience
+        means: >-
+          the simplest form of experience, attributed to the basic
+          constituents of matter. Nothing like a thought or a
+          feeling. The minimal ingredient from which ours is built.
+      - term: intrinsic nature
+        means: >-
+          what a thing is in itself, as opposed to how it behaves
+          and relates to other things. Physics describes the
+          relations and leaves the intrinsic nature open.
+      - term: strong emergence
+        means: >-
+          a wholly new kind of property appearing from parts that
+          have nothing of it. The theory is built to avoid needing
+          it.
+      - term: the combination problem
+        means: >-
+          how many small experiences could add up to one unified
+          mind. The theory's hardest open question.
+    example: >-
+      Consider what physics actually says about an electron: its mass,
+      its charge, its spin, all of them descriptions of how it will
+      behave and interact. Ask what an electron is, apart from what it
+      does, and physics is silent. Now notice that there is one thing
+      whose intrinsic nature you know directly: your own experience. The
+      theory puts the two together. Experience is what matter is like
+      from the inside, and the physical description is the same matter
+      seen from the outside. Nothing new has to emerge from nothing.
+    misreading: >-
+      People hear that everything is conscious and picture thinking
+      rocks and feeling thermostats. The theory says nothing of the
+      sort. It attributes a minimal flicker of experience to the
+      fundamental constituents of matter, not to every object made of
+      them. A rock is a heap with no unity of its own, so it has no
+      experience of its own. The claim is about what matter is made of,
+      not about what tables and chairs feel.
+    checks:
+      - question: >-
+          Why does the theory say that treating consciousness as
+          fundamental avoids a problem that materialism faces?
+        looks_for: >-
+          it avoids strong emergence, the leap of experience
+          appearing from parts that have none. If experience is
+          already in the basic constituents, nothing qualitatively
+          new has to appear
+      - question: >-
+          What is the combination problem?
+        looks_for: >-
+          how the many separate tiny experiences of the fundamental
+          parts could combine into the single unified experience of
+          a person
 
 - id: property_dualism
   name: Property Dualism
@@ -263,6 +896,68 @@
     - "Chalmers 1995, Journal of Consciousness Studies, Facing up to the problem of consciousness"
     - "Jackson 1982, Philosophical Quarterly, Epiphenomenal qualia"
     - "Nagel 1974, The Philosophical Review, What is it like to be a bat?"
+  lesson:
+    in_plain_words: >-
+      Everything about the brain could be described in the language of
+      physics, and the theory agrees that description would be complete
+      about the physics. It would still leave something out: what it is
+      like to see red, or to feel pain. Those felt qualities are real
+      properties of the brain, but not physical ones. They arise from
+      the physical, according to laws we have not yet discovered, and
+      they cannot be reduced to it. One substance, two kinds of
+      property.
+    terms:
+      - term: phenomenal property
+        means: >-
+          what it is like to have an experience, its felt quality.
+          The property the theory says is non-physical.
+      - term: the hard problem
+        means: >-
+          explaining why physical processes are accompanied by
+          experience at all, as opposed to explaining what the brain
+          does. Named by Chalmers.
+      - term: a philosophical zombie
+        means: >-
+          a being physically identical to you with no experience at
+          all. If such a thing is even conceivable, experience is
+          not the same as the physical facts.
+      - term: psychophysical laws
+        means: >-
+          the fundamental laws, still unknown, that would connect
+          physical states to experiences. The theory says a complete
+          science would include them.
+    example: >-
+      Mary is a brilliant scientist who has lived her whole life in a
+      black-and-white room, learning every physical fact about colour
+      vision from books and screens. One day she walks out and sees a
+      red tomato. Does she learn anything new? It seems she does: what
+      red looks like. But she already knew every physical fact. So there
+      is a fact about experience that the physical facts left out. That
+      is the argument, and the theory takes it at face value: experience
+      is a further fact.
+    misreading: >-
+      People hear dualism and picture a ghost in the machine, a separate
+      soul that could float free of the body. That is substance dualism,
+      and the theory rejects it. There is one kind of thing, the
+      physical brain, and it has two kinds of property, physical and
+      phenomenal. Experience depends on the brain completely. It just is
+      not identical to any physical property of it.
+    checks:
+      - question: >-
+          What is the zombie argument meant to show, and what does
+          it depend on?
+        looks_for: >-
+          if a physical duplicate with no experience is conceivable,
+          then experience is not identical to the physical facts. It
+          depends on conceivability being a guide to possibility
+      - question: >-
+          What is the difference between property dualism and
+          substance dualism?
+        looks_for: >-
+          substance dualism posits a separate non-physical thing or
+          soul. Property dualism says there is one physical
+          substance with non-physical phenomenal properties that
+          depend on it
 
 - id: analytic_idealism
   name: Analytic Idealism
@@ -287,3 +982,65 @@
     - "Kastrup 2019, Iff Books, The idea of the world: a multi-disciplinary argument for the mental nature of reality"
     - "Kastrup 2018, Journal of Consciousness Studies, The universe in consciousness"
     - "Kastrup 2019, Radboud University Nijmegen, Analytic idealism: a consciousness-only ontology"
+  lesson:
+    in_plain_words: >-
+      Start with the one thing nobody doubts: experience exists. The
+      theory says that is all there fundamentally is. There is one
+      universal field of mind, and each of us is a part of it that has
+      split off and lost touch with the rest, the way a person with
+      dissociative identity disorder can hold several personalities that
+      do not share memories. The physical world, including your brain,
+      is what mental activity looks like when observed from outside,
+      across the boundary of a dissociation.
+    terms:
+      - term: the one universal consciousness
+        means: >-
+          the single field of mind that, on the theory, is the whole
+          of reality. Everything else is a pattern of activity
+          within it.
+      - term: dissociation
+        means: >-
+          a mind splitting into parts that cannot access one
+          another, as in clinical dissociative identity disorder.
+          The theory's model for how one mind becomes many.
+      - term: an alter
+        means: >-
+          one of the dissociated parts. Each living being is an
+          alter of the universal mind.
+      - term: extrinsic appearance
+        means: >-
+          what a mental process looks like from outside it. A brain
+          is the extrinsic appearance of a person's inner life, not
+          its cause.
+    example: >-
+      In dissociative identity disorder, one person can host several
+      personalities with separate memories, separate skills, and in
+      documented cases separate measurable brain responses. One alter
+      can be blind while another, in the same body, sees. The theory
+      takes this as a demonstration that a single mind really can
+      fragment into parts that are opaque to each other. It then scales
+      it up: the universe is one mind, and living beings are its alters.
+      Your inner life is private because it is dissociated from the
+      rest.
+    misreading: >-
+      People hear idealism and conclude the theory says the world is in
+      your head, or that nothing exists when you stop looking. It says
+      neither. The world outside you is real and goes on without you. It
+      is just mental in nature, the activity of a mind that is not
+      yours. Your brain does not generate your experience. It is what
+      your experience looks like from the outside.
+    checks:
+      - question: >-
+          How does the theory explain why there seem to be many
+          separate minds if there is really only one?
+        looks_for: >-
+          dissociation, as in dissociative identity disorder. Each
+          individual is an alter, a dissociated part of the one
+          universal consciousness
+      - question: >-
+          On this theory, what is a brain, and why does brain
+          activity track experience so closely?
+        looks_for: >-
+          the brain is the extrinsic appearance of a person's mental
+          activity, what inner life looks like from outside, so it
+          correlates with experience without causing it
