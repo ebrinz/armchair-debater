@@ -25,7 +25,7 @@ import bundledDeck from './fixtures/theory-cards.json';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
 import { mockKind, startMockReplay } from './mock';
-import { MENU_LINE, MODE_LINES, againLine, askLine } from './modes';
+import { DEBATE_THIS_LINE, MENU_LINE, MODE_LINES, SPAR_THIS_LINE, againLine, askLine } from './modes';
 import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
 import type { SplashState } from './screen';
 import { pickLine } from './selection';
@@ -199,6 +199,8 @@ const ArcadeView = ({
             snapshot={snapshot}
             onRematch={() => say(againLine(snapshot.mode))}
             onMenu={() => say(MENU_LINE)}
+            onSpar={() => say(SPAR_THIS_LINE)}
+            onDebate={() => say(DEBATE_THIS_LINE)}
             mock={mock}
           />
         )}

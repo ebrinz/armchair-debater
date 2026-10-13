@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { decisionBanners } from '../battleText';
+import { decisionBanners, isSolo } from '../battleText';
 import { PixelButton } from '../components/PixelButton';
 import '../fight.css';
 import { useCountdown } from '../hooks/useCountdown';
@@ -20,6 +20,9 @@ export interface DecisionScreenProps {
   onMenu: () => void;
   /** No Pipecat client behind the UI, so no transcript button in the box. */
   mock?: boolean;
+  /** Learn mode's two hand-offs: the next rungs. Absent outside learn mode. */
+  onSpar?: () => void;
+  onDebate?: () => void;
 }
 
 /**
@@ -56,7 +59,14 @@ const COUNT_FROM = 9;
  * `screenFor` from the server's state, and clicking REMATCH does not switch
  * screens — it asks, and the next snapshot moves the game on.
  */
-export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: DecisionScreenProps) => {
+export const DecisionScreen = ({
+  snapshot,
+  onRematch,
+  onMenu,
+  onSpar,
+  onDebate,
+  mock = false,
+}: DecisionScreenProps) => {
   const reduced = useReducedMotion();
   const verdict = snapshot.verdict;
   const banners = decisionBanners(snapshot);
@@ -100,14 +110,15 @@ export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: De
   useSfx(phase >= CONTINUE && !asked && left > 0 && left < COUNT_FROM ? 'tick' : null, left);
   useSfx(phase >= CONTINUE && !asked && left === 0 ? 'gameOver' : null, left === 0);
 
-  const sparring = snapshot.mode === 'sparring';
+  const learn = snapshot.mode === 'learn';
+  const solo = isSolo(snapshot.mode);
   const winner: Side | null =
     verdict && verdict.winner !== 'draw' ? verdict.winner : null;
   // The examiner has nothing at stake, so it neither celebrates nor slumps.
   const poses = winner
     ? ({
         user: winner === 'user' ? 'win' : 'lose',
-        ...(sparring ? {} : { bot: winner === 'bot' ? ('win' as const) : ('lose' as const) }),
+        ...(solo ? {} : { bot: winner === 'bot' ? ('win' as const) : ('lose' as const) }),
       } as const)
     : undefined;
 
@@ -130,7 +141,7 @@ export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: De
             reach a screen reader through the app's one live region. */}
         <div className="decision__plate" aria-hidden="true">
           <p className="decision__title pixel-text">
-            {sparring ? 'THE FINDING' : 'JUDGE’S DECISION'}
+            {learn ? 'THE REPORT' : solo ? 'THE FINDING' : 'JUDGE’S DECISION'}
           </p>
 
           {verdict && phase >= COUNT && (
@@ -139,7 +150,7 @@ export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: De
                 {counted(snapshot.user.health)}
               </span>
               {/* One bar, one number: sparring has nobody on the other side. */}
-              {!sparring && (
+              {!solo && (
                 <>
                   {' — '}
                   <span
@@ -169,7 +180,13 @@ export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: De
           <div className="decision__continue">
             <p className="decision__prompt pixel-text">
               {asked ? (
-                sparring ? 'FIVE MORE QUESTIONS…' : 'HERE COMES A NEW CHALLENGER…'
+                learn ? (
+                  'ONCE MORE, FROM THE TOP…'
+                ) : solo ? (
+                  'FIVE MORE QUESTIONS…'
+                ) : (
+                  'HERE COMES A NEW CHALLENGER…'
+                )
               ) : left > 0 ? (
                 <>
                   CONTINUE? <span className="decision__count">{left}</span>
@@ -186,8 +203,28 @@ export const DecisionScreen = ({ snapshot, onRematch, onMenu, mock = false }: De
                 onRematch();
               }}
             >
-              {sparring ? 'AGAIN' : 'REMATCH'}
+              {solo ? 'AGAIN' : 'REMATCH'}
             </PixelButton>
+            {learn && onSpar && (
+              <PixelButton
+                onClick={() => {
+                  setAsked(true);
+                  onSpar();
+                }}
+              >
+                SPAR WITH IT
+              </PixelButton>
+            )}
+            {learn && onDebate && (
+              <PixelButton
+                onClick={() => {
+                  setAsked(true);
+                  onDebate();
+                }}
+              >
+                DEBATE WITH IT
+              </PixelButton>
+            )}
             <PixelButton
               onClick={() => {
                 setAsked(true);

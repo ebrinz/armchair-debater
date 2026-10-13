@@ -188,4 +188,29 @@ describe('learn mode', () => {
     expect(SPAR_THIS_LINE).toBe('Let me spar with it: question me on this theory.');
     expect(DEBATE_THIS_LINE).toBe('Let me debate with it.');
   });
+
+  it('reads a scored check answer as the tutor’s question, felt at double', () => {
+    const answer = frames.learn.find((f) => f.last_hit && f.last_hit.recovery > 0)!.last_hit!;
+    const lines = battleLines(answer, 'learn');
+    expect(lines[0]).toBe(`THE TUTOR: "${answer.reason}"`);
+    expect(lines.at(-1)).toBe(`YOU won some back!  +${answer.recovery}`);
+    const at = (damage: number) => battleLines({ ...answer, damage, recovery: 0 }, 'learn')[1];
+    expect(at(0)).toBe('Got it!');
+    expect(at(5)).toBe('Nearly…  −5');
+    expect(at(14)).toBe('A gap.  −14');
+    expect(at(20)).toBe('Missed the point.  −20');
+    expect(feltDamage({ ...answer, damage: 25 }, 'learn')).toBe(50);
+    expect(turnCue(null, 'check')).toBe('ANSWER THE TUTOR');
+    expect(turnCue(answer, 'check')).toBe('ANSWER THE TUTOR');
+  });
+
+  it('calls the report from the grasp bar alone', () => {
+    const end = frames.learn.at(-1)!;
+    const at = (health: number) => ({ ...end, user: { ...end.user, health } });
+    expect(decisionBanners(at(70))).toEqual(["YOU'VE GOT IT"]);
+    expect(decisionBanners(at(69))).toEqual(['NEARLY']);
+    expect(decisionBanners(at(40))).toEqual(['NEARLY']);
+    expect(decisionBanners(at(39))).toEqual(['NOT YET']);
+    expect(decisionBanners(end)).toEqual(["YOU'VE GOT IT"]);
+  });
 });

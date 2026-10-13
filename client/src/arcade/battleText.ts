@@ -32,7 +32,24 @@ const EFFECTIVENESS: Record<HitTier, (damage: number) => string> = {
  * it is felt at double: the worst answer shakes the room like the hardest blow.
  */
 export const feltDamage = (hit: Hit, mode: Mode | null): number =>
-  mode === 'sparring' ? hit.damage * 2 : hit.damage;
+  isSolo(mode) ? hit.damage * 2 : hit.damage;
+
+/** The modes with one bar and a questioner on the other side. */
+export function isSolo(mode: Mode | null): boolean {
+  return mode === 'sparring' || mode === 'learn';
+}
+
+/** Who is on the other side of a solo bar. */
+export const questionerName = (mode: Mode | null): string =>
+  mode === 'learn' ? 'THE TUTOR' : 'THE EXAMINER';
+
+/** A check answer's damage, worded as what was missing. */
+const GRASPED: Record<HitTier, (damage: number) => string> = {
+  miss: () => 'Got it!',
+  glancing: (damage) => `Nearly…  −${damage}`,
+  solid: (damage) => `A gap.  −${damage}`,
+  super: (damage) => `Missed the point.  −${damage}`,
+};
 
 /** Sparring's damage, worded from the side that is defending. */
 const HELD: Record<HitTier, (damage: number) => string> = {
@@ -47,8 +64,9 @@ export const battleLines = (hit: Hit, mode: Mode | null = null): string[] => {
   // Sparring records each scored ANSWER as a hit by the examiner: the reason
   // names the question and what the answer did with it, the damage is what the
   // player lost, and the recovery is what the PLAYER won back.
-  if (mode === 'sparring') {
-    const lines = [`THE EXAMINER: "${hit.reason}"`, HELD[hitTier(feltDamage(hit, mode))](hit.damage)];
+  if (isSolo(mode)) {
+    const words = mode === 'learn' ? GRASPED : HELD;
+    const lines = [`${questionerName(mode)}: "${hit.reason}"`, words[hitTier(feltDamage(hit, mode))](hit.damage)];
     if (hit.recovery > 0) lines.push(`YOU won some back!  +${hit.recovery}`);
     return lines;
   }
@@ -73,6 +91,7 @@ export const battleLines = (hit: Hit, mode: Mode | null = null): string[] => {
 export const turnCue = (hit: Hit | null, stage: Stage): string => {
   // The examiner only asks, so once a question is out the floor is the player's.
   if (stage === 'sparring') return 'ANSWER THE EXAMINER';
+  if (stage === 'check') return 'ANSWER THE TUTOR';
   if (!hit) return stage === 'opening' ? 'THE HOUSE steps up…' : 'YOUR MOVE';
   if (stage === 'crossexam') {
     return hit.by === 'user' ? 'ASK THE HOUSE ONE QUESTION' : 'ANSWER THE HOUSE';
@@ -93,6 +112,10 @@ export const turnCue = (hit: Hit | null, stage: Stage): string => {
 export const decisionBanners = (snapshot: DebateSnapshot): string[] => {
   const { user, bot, verdict } = snapshot;
   if (!verdict) return [];
+  // A lesson's report is the grasp bar alone.
+  if (snapshot.mode === 'learn') {
+    return [user.health >= 70 ? "YOU'VE GOT IT" : user.health >= 40 ? 'NEARLY' : 'NOT YET'];
+  }
   // Sparring has one bar and no opponent: the finding is how much of it is left.
   if (snapshot.mode === 'sparring') {
     return [user.health >= 70 ? 'YOUR VIEW HOLDS' : user.health >= 40 ? 'SHAKEN' : 'IN TATTERS'];

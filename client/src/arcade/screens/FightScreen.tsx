@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { feltDamage } from '../battleText';
+import { feltDamage, isSolo, questionerName } from '../battleText';
 import type { HitTier } from '../battleText';
 import { Announcer } from '../components/Announcer';
 import { Armchair } from '../components/Armchair';
@@ -67,11 +67,11 @@ export const FightScreen = ({
   const felt = hit ? { ...hit, damage: feltDamage(hit, snapshot.mode) } : null;
   const fx = useHitEffects(hitCount, felt, frozen);
   const tier = fx.tier;
-  const sparring = snapshot.mode === 'sparring';
+  const solo = isSolo(snapshot.mode);
   // In a debate the side that lands a hit is the side that shakes one off. In
   // sparring every hit is the examiner's question, and what is won back is the
   // player's.
-  const healedSide: Side | null = fx.healed ? (sparring ? 'user' : fx.healed) : null;
+  const healedSide: Side | null = fx.healed ? (solo ? 'user' : fx.healed) : null;
   // The blow, and a beat later the shake-off if the speaker recovered. `frozen`
   // is the decision screen's replay of this HUD, where nothing lands.
   useSfx(!frozen && hit && tier ? sfxForHit(tier) : null, hitCount);
@@ -98,17 +98,23 @@ export const FightScreen = ({
       <div className="fight__bars">
         <HealthBar
           side="user"
-          label="1P YOU"
+          label={snapshot.mode === 'learn' ? '1P GRASP' : '1P YOU'}
           theory={snapshot.user.theory_name}
           health={snapshot.user.health}
         />
         <RoundPlate snapshot={snapshot} />
         <HealthBar
           side="bot"
-          label={sparring ? 'THE EXAMINER' : 'CPU THE HOUSE'}
-          theory={sparring ? 'asks the questions' : snapshot.bot.theory_name}
+          label={solo ? questionerName(snapshot.mode) : 'CPU THE HOUSE'}
+          theory={
+            snapshot.mode === 'learn'
+              ? 'checks your grasp'
+              : solo
+                ? 'asks the questions'
+                : snapshot.bot.theory_name
+          }
           health={snapshot.bot.health}
-          barless={sparring}
+          barless={solo}
         />
       </div>
 
