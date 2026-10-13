@@ -418,6 +418,9 @@ async def test_choose_lesson_seats_the_tutor_and_opens_step_one():
     assert (fm.state["lesson_step"], fm.state["check_q"]) == (1, 1)
     assert fm.state["lesson_title"] == "The idea"
     assert "in plain words" in fm.state["lesson_material"]
+    # The first check question is ready before the node that asks it is entered:
+    # Flows renders a node's prompt from state as it enters, before pre-actions.
+    assert fm.state["check_question"].startswith("In your own words")
     assert fm.state["bot_theory_name"] == "The Tutor"
     assert "report_task" not in fm.state
     snapshot = fm.state["debate"].snapshot()
@@ -459,33 +462,37 @@ async def test_step_done_waits_until_the_tutor_has_taught():
 async def test_the_fourth_step_done_opens_the_check():
     fm = await lesson_at(4)
     fm.state["check_q"] = 2  # a stale value from an earlier lesson
+    fm.state["check_question"] = "stale"
     result, _ = await handlers.step_done(fm)
     assert result == {"status": "done"}
     assert fm.state["check_q"] == 1
+    assert fm.state["check_question"].startswith("In your own words")
+    assert "broadcast" in fm.state["check_rubric"]
 
 
-async def test_emit_check_puts_the_question_and_rubric_in_state_and_resets_the_scorer_first():
+async def test_emit_check_resets_the_scorer_on_the_first_question_and_tells_the_client():
     fm = await check_at(1)
     await handlers.emit_check({"type": "emit_check"}, fm)
     assert fm.state["scorer"].log == ["reset"]
-    assert fm.state["check_question"] == "Explain Global Workspace Theory to me in your own words."
-    assert "broadcast" in fm.state["check_rubric"]
     assert fm.state["debate"].snapshot()["question"] == {"number": 1, "of": 3}
 
-    # The second and third questions come from the card, and do not reset.
+    # The second and third questions do not reset the exam's transcript.
     fm.state["check_q"] = 2
     fm.state["scorer"].log.clear()
     await handlers.emit_check({"type": "emit_check"}, fm)
     assert fm.state["scorer"].log == []
-    assert fm.state["check_question"].endswith("?")
     assert fm.state["debate"].snapshot()["question"] == {"number": 2, "of": 3}
 
 
-async def test_check_answered_moves_to_the_next_question():
+async def test_check_answered_moves_to_the_next_question_and_readies_it():
     fm = await check_at(1)
     result, _ = await handlers.check_answered(fm)
     assert result == {"status": "more", "question": 2, "of": 3}
     assert fm.state["check_q"] == 2
+    # The card's first check, and its rubric, are in state before the node re-enters.
+    assert fm.state["check_question"].endswith("?")
+    assert "In your own words" not in fm.state["check_question"]
+    assert "ignition" in fm.state["check_rubric"]
 
 
 async def test_check_answered_waits_until_the_tutor_has_asked():

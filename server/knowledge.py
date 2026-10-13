@@ -233,7 +233,7 @@ def check_questions(theory: Theory) -> list[tuple[str, str]]:
     """The exam: ``(question, rubric)`` for each of the three checks, in order."""
     lesson = theory.lesson
     own_words = (
-        f"Explain {theory.name} to me in your own words.",
+        f"In your own words, how would you explain {theory.name} to a friend?",
         lesson.in_plain_words
         + " Key terms: "
         + "; ".join(f"{t.term} ({t.means})" for t in lesson.terms),

@@ -279,7 +279,7 @@ def test_check_questions_start_with_own_words_then_the_cards_two(tmp_path):
     theory = knowledge.load(write(tmp_path, [card(), beta()]))["alpha"]
     checks = knowledge.check_questions(theory)
     assert knowledge.CHECKS == len(checks) == 3
-    assert checks[0][0] == "Explain Alpha Theory to me in your own words."
+    assert checks[0][0] == "In your own words, how would you explain Alpha Theory to a friend?"
     assert "Alpha, in plain words." in checks[0][1] and "alpha (the first thing)" in checks[0][1]
     assert checks[1] == ("What is alpha?", "the first thing")
     assert checks[2] == ("Why not beta?", "beta is the second thing")

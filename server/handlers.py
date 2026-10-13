@@ -261,6 +261,17 @@ def _begin_step(state: dict) -> None:
     state["lesson_material"] = knowledge.lesson_step(_lesson_theory(state), step)
 
 
+def _begin_check(state: dict) -> None:
+    """Put the current check question, and its rubric for the scorer, in state.
+
+    Called by the handler that leads INTO the check node, not by the node's
+    pre-action: Flows renders a node's prompt from state as it enters, before
+    the pre-actions run, so a question set there would arrive one visit late.
+    """
+    question, rubric = knowledge.check_questions(_lesson_theory(state))[state["check_q"] - 1]
+    state["check_question"], state["check_rubric"] = question, rubric
+
+
 async def choose_lesson(flow_manager: FlowManager, theory_id: str):
     """Record which theory the user wants to learn, and start its lesson.
 
@@ -284,6 +295,7 @@ async def choose_lesson(flow_manager: FlowManager, theory_id: str):
         check_q=1,
     )
     _begin_step(state)
+    _begin_check(state)
     state.pop("report_task", None)
     state["scorer"].reset()
     await state["debate"].set_solo(theory.id, theory.name, TUTOR)
@@ -320,20 +332,20 @@ async def step_done(flow_manager: FlowManager):
             "title": state["lesson_title"],
         }, TRANSITION_IN_YAML
     state["check_q"] = 1
+    _begin_check(state)
     return {"status": "done"}, TRANSITION_IN_YAML
 
 
 async def emit_check(action: dict, flow_manager: FlowManager) -> None:
-    """Pre-action: the check's current question for the prompt, its rubric for the
-    scorer, and its number for the client."""
+    """Pre-action: which check question this is, for the client; and on the first,
+    a clean transcript for the judge. The question itself is already in state
+    (see ``_begin_check``)."""
     state = flow_manager.state
     number = state["check_q"]
     if number == 1:
         # The lesson's turns were heard (so the tutor's could be counted) but they
         # are not the exam: the judge reads only the check's own transcript.
         state["scorer"].reset()
-    question, rubric = knowledge.check_questions(_lesson_theory(state))[number - 1]
-    state["check_question"], state["check_rubric"] = question, rubric
     await state["debate"].set_question(number, CHECK_QUESTIONS)
 
 
@@ -350,6 +362,7 @@ async def check_answered(flow_manager: FlowManager):
         }, TRANSITION_IN_YAML
     if state["check_q"] < CHECK_QUESTIONS:
         state["check_q"] += 1
+        _begin_check(state)
         return {
             "status": "more",
             "question": state["check_q"],

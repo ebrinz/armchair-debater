@@ -577,9 +577,10 @@ nodes:
           The lesson on {{ user_theory_name }} is over; now you check that it
           has landed. This is check question {{ check_q }} of three. On the
           first only, say in one sentence that you will ask three questions.
-          Then ask this question, and only this question, in your own words:
-
-          {{ check_question }}
+          Then put this question to the user, as written or very close to it,
+          and only this question. It is addressed to the user, not to you; do
+          not replace it with a question of your own, and do not number it or
+          say "first", "second", or "third". The question: "{{ check_question }}"
 
           Do not answer it, do not hint, and do not say whether their previous
           answer was right. When the user has answered, call check_answered

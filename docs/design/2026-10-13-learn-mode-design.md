@@ -1,6 +1,6 @@
 # Learn Mode — Design
 
-**Date:** 2026-10-13 · **Status:** approved in conversation (approach: a lesson
+**Date:** 2026-10-13 · **Status:** implemented 2026-10-13 ([plan](2026-10-13-learn-mode-plan.md)); approved in conversation (approach: a lesson
 loop built like sparring; mastery: explain it back, judged; hierarchy: a ladder
 per theory, nothing locked) · **Builds on:**
 [`modes-design`](2026-09-20-modes-design.md),
@@ -82,8 +82,11 @@ only from the card; `{{ voice_rules }}` shared as in the other modes.
   and `check_answered` refuses (`ask_first`) until the tutor has finished a
   turn in that visit to the node. An `emit_check` pre-action on `check`
   mirrors sparring's `emit_question`: it sets the snapshot's `question` for
-  the plate and puts the current question's rubric in flow state for the
-  scorer; for question one that rubric is `in_plain_words` plus the terms.
+  the plate. The question text and its rubric are put in flow state by the
+  handler that leads into the node (`step_done` on the fourth step,
+  `check_answered` on a `more`), because Flows renders a node's prompt from
+  state as it enters, before its pre-actions run; for question one the rubric
+  is `in_plain_words` plus the terms.
 - **Going back is free.** "Say that again" or "what was that term" stays in
   the node; the tutor re-explains. There is no backwards transition.
 - **The hand-offs carry the theory and switch the mode.** `spar_this` sets
