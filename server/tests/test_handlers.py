@@ -568,3 +568,24 @@ async def test_debate_this_switches_the_mode_and_tells_the_llm_what_the_user_hol
     assert result["status"] == "ok" and result["user_theory"] == "gwt"
     assert "set_positions" in result["instruction"] and "gwt" in result["instruction"]
     assert fm.state["debate"].snapshot()["mode"] == "debate"
+
+
+async def test_the_hand_offs_never_emit_the_lessons_verdict_under_the_new_mode():
+    """The client lights a rung on any snapshot with a won verdict in a scored
+    mode, so the lesson's verdict must be gone before the mode changes."""
+    for hand_off in (handlers.spar_this, handlers.debate_this):
+        fm = await check_at(3)
+        seen = []
+
+        async def on_change(snapshot):
+            seen.append(snapshot)
+
+        fm.state["debate"]._on_change = on_change
+        await fm.state["debate"].set_verdict("You have got it.")
+        seen.clear()
+
+        await hand_off(fm)
+
+        assert seen, hand_off.__name__
+        for snapshot in seen:
+            assert snapshot["verdict"] is None, (hand_off.__name__, snapshot["mode"])

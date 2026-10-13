@@ -63,6 +63,26 @@ describe('the ladder', () => {
   });
 });
 
+describe('a blocked localStorage', () => {
+  it('reads as an empty ladder instead of throwing at boot', async () => {
+    // Chrome with cookies blocked, or a sandboxed iframe: the identifier itself
+    // throws a SecurityError when touched, which `typeof` does not guard.
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('SecurityError: access denied');
+      },
+    });
+    try {
+      const { loadBrowserLadder, saveBrowserLadder } = await import('../ladder');
+      expect(loadBrowserLadder()).toEqual({});
+      expect(() => saveBrowserLadder({ gwt: { learn: true } })).not.toThrow();
+    } finally {
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
+});
+
 describe('the store keeps the ladder', () => {
   // vitest runs in the node environment here (vitest.config.ts), so there is
   // no localStorage unless the test provides one; the ladder reads

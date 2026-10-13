@@ -50,8 +50,16 @@ export const saveLadder = (storage: Storage | null, ladder: Ladder): void => {
   }
 };
 
-const browserStorage = (): Storage | null =>
-  typeof localStorage === 'undefined' ? null : localStorage;
+/** The browser's storage, or null where there is none or touching it throws
+ *  (cookies blocked, a sandboxed frame): `typeof` guards only an undefined
+ *  name, not an accessor that throws. */
+const browserStorage = (): Storage | null => {
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage;
+  } catch {
+    return null;
+  }
+};
 
 export const loadBrowserLadder = (): Ladder => loadLadder(browserStorage());
 export const saveBrowserLadder = (ladder: Ladder): void => saveLadder(browserStorage(), ladder);

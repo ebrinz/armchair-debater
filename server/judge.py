@@ -103,10 +103,12 @@ and score the substance. An answer in the learner's own words that covers the ru
 answer; the rubric's exact words are not required.
 
 Return ONLY a JSON object with these keys:
-  "damage": integer 0-25. What the answer was missing. 0 for an answer that covers the rubric. \
-5-10 for an answer with the main idea that misses part of the rubric. 15-20 for an answer that \
-gets the main idea wrong or confuses this theory with another. 21-25 for a blank, a dodge, or \
-the common misreading stated as the theory.
+  "damage": integer 0-25. What the answer was missing. 0 for an answer that covers the rubric, \
+and 0 for a request to repeat or rephrase the question, which is not an answer and costs \
+nothing. 5-10 for an answer with the main idea that misses part of the rubric. 11-14 for one \
+that has less than half of it. 15-20 for an answer that gets the main idea wrong or confuses \
+this theory with another. 21-25 for a blank, a dodge, or the common misreading stated as the \
+theory.
   "recovery": integer 0-15. How far this answer also covers what an EARLIER answer missed. \
 0 if it did not, or there was none.
   "reason": one declarative sentence of 10 to 15 words naming what was asked and what the answer \

@@ -75,9 +75,13 @@ class DebateState:
         await self._changed()
 
     async def set_mode(self, mode: str) -> None:
+        """A change of mode ends whatever game was on: its verdict, hits, and bars
+        go with it, so no snapshot ever carries one mode's verdict under another
+        (the client lights a ladder rung on exactly that)."""
         if mode not in MODES:
             raise ValueError(f"unknown mode '{mode}'")
         self.mode = mode
+        self._reset_scores()
         await self._changed()
 
     async def set_focus(self, theory_id: str | None) -> None:

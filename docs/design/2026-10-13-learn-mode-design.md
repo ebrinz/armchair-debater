@@ -96,8 +96,10 @@ only from the card; `{{ voice_rules }}` shared as in the other modes.
   node, skipping `spar_setup`'s question. `debate_this` sets the mode to
   `debate` and transitions to `setup` with a result telling the LLM the user
   holds this theory, so `setup`'s "unless they have already told you" rule
-  fires and it calls `set_positions` without asking. Switching the mode first
-  matters: the client's labels and `winner()`'s threshold both read it.
+  fires and it calls `set_positions` without asking. `set_mode` itself resets
+  the scores and the verdict, so no snapshot ever carries the lesson's won
+  verdict under the new mode: the client lights a ladder rung on exactly that
+  shape, and a hand-off must not light SPAR or DEBATE unearned.
 - **`choose_lesson`** mirrors `take_position`: unknown id → `unknown_theory`
   with the valid ids; otherwise sets `user_card`, `user_theory_name`,
   `bot_theory_name = "The Tutor"`, the lesson material, `lesson_step = 1`,

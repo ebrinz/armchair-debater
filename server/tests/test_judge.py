@@ -272,3 +272,9 @@ async def test_write_report_retries_on_empty_then_raises():
         await judge.write_report(
             theory="T", health=50, steps=[], hits=[], complete=scripted("", "  ")
         )
+
+
+def test_the_understanding_judge_does_not_score_a_request_to_rephrase_as_a_dodge():
+    system = judge.UNDERSTANDING_SYSTEM.lower()
+    assert "rephrase" in system or "repeat" in system
+    assert "0" in system
