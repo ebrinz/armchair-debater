@@ -130,8 +130,10 @@ only from the card; `{{ voice_rules }}` shared as in the other modes.
   `score_turn`; the bot's turns in `sparring` and `check` are heard but not
   scored. The `check` handler puts the current question's rubric in flow state
   on entering the node, and the scorer reads it through a callable, as it
-  reads the stage. `lesson` is not a heard node: nothing in it is scored, and
-  the exam should not read the tutor's own words back as the user's.
+  reads the stage. `lesson` is heard but unscored, like the cross-examination's question node,
+  so `step_done`'s guard can count the tutor's turns; `emit_check` resets the
+  scorer as the first check question is put, so the exam's transcript never
+  contains the lesson.
 
 ## State contract
 

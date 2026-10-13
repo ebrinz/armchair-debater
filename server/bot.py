@@ -147,6 +147,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
             flow_manager.state["user_theory_name"],
             flow_manager.state["bot_theory_name"],
         ),
+        rubric=lambda: flow_manager.state.get("check_rubric", ""),
     )
     flow_manager.state.update(
         {
@@ -163,6 +164,13 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
             "bot_card": "",
             "verdict_text": "",
             "finding_text": "",
+            "lesson_step": 1,
+            "lesson_title": "",
+            "lesson_material": "",
+            "check_q": 1,
+            "check_question": "",
+            "check_rubric": "",
+            "report_text": "",
             # Only when the verdict really is read in another voice is the bot
             # told to read it as someone else.
             "judge_persona": handlers.JUDGE_PERSONA if providers.voices() else "",

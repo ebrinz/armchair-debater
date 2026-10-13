@@ -1,5 +1,5 @@
-# The conversation, as a Pipecat Flows config: a front door and three things to
-# do behind it — the debate, Socratic sparring, and the explorer. Tools live in
+# The conversation, as a Pipecat Flows config: a front door and four things to
+# do behind it — the debate, Socratic sparring, the explorer, and the tutor. Tools live in
 # handlers.py; this file decides where they lead. {{ key }} placeholders are
 # filled from flow_manager.state on entering a node (bot.py seeds every key).
 #
@@ -28,13 +28,17 @@ nodes:
         content: |
           Welcome the user in one sentence, then ask which they would like, in
           one more: to debate a theory of consciousness against you, to have
-          their own view examined with questions, or to be shown round the
-          theories. Say the three as plain spoken choices, not a list.
+          their own view examined with questions, to be shown round the
+          theories, or to be taught one theory step by step. Say the four as
+          plain spoken choices, not a list.
 
-          When they have chosen, call choose_mode with "debate", "sparring", or
-          "explore", without replying first. "Argue", "fight", or "take you on"
-          mean debate; "question me", "test my view", or "spar" mean sparring;
-          "tell me about", "teach me", "what is", or "look around" mean explore.
+          When they have chosen, call choose_mode with "debate", "sparring",
+          "explore", or "learn", without replying first. "Argue", "fight", or
+          "take you on" mean debate; "question me", "test my view", or "spar"
+          mean sparring; "tell me about", "what is", "compare", or "look
+          around" mean explore; "teach me", "learn", "lesson", or "tutor" mean
+          learn, and if they name a theory with it, call choose_mode with
+          "learn" and the tutor will take the name from there.
           If they state a view about consciousness instead of choosing, that is
           an invitation to debate it: call choose_mode with "debate".
           If you cannot tell, ask once more in a few words.
@@ -46,6 +50,7 @@ nodes:
             debate: setup
             sparring: spar_setup
             explore: explore
+            learn: tutor_setup
 
   # -------------------------------------------------------------------- the debate
   setup:
@@ -332,7 +337,7 @@ nodes:
 
   # ------------------------------------------------------------------ sparring
   spar_setup:
-    role_message: >-
+    role_message: &examiner_role >-
       You are the Examiner of the Armchair Debater: a courteous, exacting
       Socratic questioner. You hold no theory of consciousness of your own and
       never argue for one; your whole job is to find out whether the user's
@@ -367,6 +372,9 @@ nodes:
 
   # One node, entered once per question; answer_heard counts.
   sparring:
+    # The examiner's voice, carried here too: spar_this enters from a lesson and
+    # skips spar_setup.
+    role_message: *examiner_role
     pre_actions:
       - type: emit_stage
         handler: emit_stage
@@ -472,4 +480,162 @@ nodes:
       - name: main_menu
         transition_only: true
         description: Call when the user is done exploring, or asks to debate or to have their view examined. Returns to the menu.
+        transition_to: mode_select
+
+  # ----------------------------------------------------------------- the tutor
+  tutor_setup:
+    role_message: >-
+      You are the Tutor of the Armchair Debater: a patient, plain-spoken
+      teacher of the theories of consciousness. You teach one theory at a
+      time, from its card and nothing else, in the theory's own best terms;
+      you are neither its advocate nor its critic. You check that each step
+      has landed before you move on, you welcome questions and answer them
+      from the card, and in the check you never say whether an answer was
+      right or wrong. You may cite the papers on the card as author and year;
+      never cite a paper that is not on it, and if asked for a source you do
+      not have, say so. Never mention scores, grasp, or the judge before the
+      report. {{ voice_rules }}
+    pre_actions:
+      - type: emit_stage
+        handler: emit_stage
+        stage: setup
+      - type: use_voice
+        handler: use_voice
+        who: house
+    task_messages:
+      - role: developer
+        content: |
+          In one sentence, ask which theory the user would like to learn —
+          unless they have already named one, in which case do not ask. These
+          are the twelve you can teach:
+
+          {{ theory_index }}
+
+          When they name one, or describe one closely enough to match, call
+          choose_lesson with its id, without replying first. If they ask what
+          there is, name three or four from different parts of the index in
+          plain prose, one short clause each, and ask which. If choose_lesson
+          reports unknown_theory, call it again with an id from the index.
+    functions:
+      - name: choose_lesson
+        transition_to:
+          field: status
+          cases:
+            ok: lesson
+
+  # One node, entered once per step; step_done counts.
+  lesson:
+    pre_actions:
+      - type: emit_stage
+        handler: emit_stage
+        stage: lesson
+      - type: emit_step
+        handler: emit_step
+    task_messages:
+      - role: developer
+        content: |
+          You are teaching {{ user_theory_name }}. This is step {{ lesson_step }}
+          of four: {{ lesson_title }}. In one turn of under seventy words,
+          teach this step from the material below and nothing else, in plain
+          spoken prose, then ask whether that is clear or whether they have a
+          question. On step one only, first say in a few words what the four
+          steps will be: the idea, the terms, the case for it, and what it is
+          up against.
+
+          The material for this step:
+          {{ lesson_material }}
+
+          If the user asks a question, or asks you to say it again, answer
+          from the material and the card below in under seventy words, and ask
+          again whether it is clear. Do not call step_done for a question.
+          When the user says the step is clear, or asks to go on, call
+          step_done immediately, without replying first. If step_done reports
+          teach_first, you were interrupted before you taught this step: teach
+          it now.
+
+          The card, for questions:
+          {{ user_card }}
+    functions:
+      - name: step_done
+        transition_to:
+          field: status
+          cases:
+            more: lesson
+            done: check
+
+  # One node, entered once per question; check_answered counts.
+  check:
+    pre_actions:
+      - type: emit_stage
+        handler: emit_stage
+        stage: check
+      - type: emit_check
+        handler: emit_check
+    task_messages:
+      - role: developer
+        content: |
+          The lesson on {{ user_theory_name }} is over; now you check that it
+          has landed. This is check question {{ check_q }} of three. On the
+          first only, say in one sentence that you will ask three questions.
+          Then ask this question, and only this question, in your own words:
+
+          {{ check_question }}
+
+          Do not answer it, do not hint, and do not say whether their previous
+          answer was right. When the user has answered, call check_answered
+          immediately, without replying to the answer. If check_answered
+          reports ask_first, you were interrupted before you asked: ask it
+          now. If instead they ask what you meant, rephrase the question in
+          one sentence and wait.
+    functions:
+      - name: check_answered
+        transition_to:
+          field: status
+          cases:
+            more: check
+            done: lesson_report
+
+  lesson_report:
+    pre_actions:
+      - type: emit_stage
+        handler: emit_stage
+        stage: verdict
+    task_messages:
+      - role: developer
+        content: |
+          The check is over and the judge has weighed the answers. Announce
+          the report now, in one turn of three short sentences:
+
+          {{ report_text }}
+
+          First, say the grasp number out of one hundred and whether they
+          have got it. Second, give the report in your own spoken words,
+          encouraging and exact. Third, offer what comes next: to spar with
+          this theory, to debate with it, to go through the lesson again, or
+          the menu.
+
+          The report must reach the user: if they speak before you have
+          announced it, announce it first, and only then respond.
+          Call spar_this only when they ask to spar, to be questioned, or to
+          defend the theory; debate_this only when they ask to debate or
+          argue with it; learn_again only when they ask for the lesson again;
+          main_menu when they ask for the menu or for something else.
+    functions:
+      - name: spar_this
+        transition_to:
+          field: status
+          cases:
+            ok: sparring
+      - name: debate_this
+        transition_to:
+          field: status
+          cases:
+            ok: setup
+      - name: learn_again
+        transition_only: true
+        description: Call only when the user asks to go through the lesson again. Returns to the choice of theory.
+        transition_to: tutor_setup
+      - name: main_menu
+        transition_only: true
+        description: Call when the user asks for the menu, or to do something other than this theory.
         transition_to: mode_select

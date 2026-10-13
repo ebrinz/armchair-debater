@@ -48,6 +48,7 @@ def test_a_debate_runs_setup_three_rounds_a_two_part_cross_examination_and_a_ver
         "debate": "setup",
         "sparring": "spar_setup",
         "explore": "explore",
+        "learn": "tutor_setup",
     }
     assert walk("setup") == [
         "setup",
@@ -94,7 +95,7 @@ def test_the_explorer_is_one_node_with_a_tool_that_stays_in_it():
 
 
 def test_every_mode_has_a_way_back_to_the_front_door():
-    for last in ("verdict", "spar_verdict", "explore"):
+    for last in ("verdict", "spar_verdict", "explore", "lesson_report"):
         assert "mode_select" in targets(CONFIG.nodes[last]).values(), last
 
 
@@ -105,3 +106,47 @@ def test_the_scorer_hears_every_debate_node_and_only_those():
     assert set(scorer.HEARD_NODES) == debate_nodes | set(scorer.ANSWER_NODES) | {"lesson"}
     assert set(scorer.UNSCORED_NODES) == {"crossexam_question", "lesson"}
     assert set(scorer.UNSCORED_NODES) <= set(scorer.HEARD_NODES)
+
+
+def transitions(node) -> dict[str, object]:
+    """Each function's transition: a node name, or its branch table."""
+    out = {}
+    for function in node.functions or []:
+        target = function.transition_to
+        out[function.name] = target if isinstance(target, str) or target is None else target.cases
+    return out
+
+
+def test_a_lesson_is_a_pick_four_steps_three_checks_and_a_report():
+    assert walk("tutor_setup")[:4] == ["tutor_setup", "lesson", "check", "lesson_report"]
+    assert targets(CONFIG.nodes["lesson"]) == {"more": "lesson", "done": "check"}
+    assert targets(CONFIG.nodes["check"]) == {"more": "check", "done": "lesson_report"}
+
+
+def test_the_report_hands_off_to_sparring_and_the_debate_with_the_theory_in_hand():
+    assert transitions(CONFIG.nodes["lesson_report"]) == {
+        "spar_this": {"ok": "sparring"},
+        "debate_this": {"ok": "setup"},
+        "learn_again": "tutor_setup",
+        "main_menu": "mode_select",
+    }
+
+
+def test_sparring_speaks_as_the_examiner_however_it_is_entered():
+    # spar_this skips spar_setup, so the questions node must carry the role itself.
+    assert CONFIG.nodes["sparring"].role_message == CONFIG.nodes["spar_setup"].role_message
+
+
+def test_the_lesson_and_check_nodes_emit_their_stages():
+    stages = {
+        name: [
+            a["stage"]
+            for a in (node.model_dump().get("pre_actions") or [])
+            if a.get("type") == "emit_stage"
+        ]
+        for name, node in CONFIG.nodes.items()
+    }
+    assert stages["tutor_setup"] == ["setup"]
+    assert stages["lesson"] == ["lesson"]
+    assert stages["check"] == ["check"]
+    assert stages["lesson_report"] == ["verdict"]
