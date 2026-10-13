@@ -210,3 +210,62 @@ async def test_write_finding_names_the_bar_and_the_costliest_question():
     assert text == "The view held, mostly."
     _, user = complete.calls[0]
     assert "80" in user and "Dodged the machine question." in user
+
+
+async def test_score_understanding_shows_the_judge_the_question_rubric_and_answer():
+    complete = scripted(
+        '{"damage": 16, "recovery": 0, "reason": "Asked what ignition is, described a local response."}'
+    )
+
+    score = await judge.score_understanding(
+        theory="Global Workspace Theory",
+        question="What is ignition?",
+        rubric="a sudden brain-wide burst, especially prefrontal",
+        history=[("bot", "What is ignition?")],
+        answer="It's when the visual area lights up for the word.",
+        complete=complete,
+    )
+
+    assert score == TurnScore(16, 0, "Asked what ignition is, described a local response.")
+    system, user = complete.calls[0]
+    assert "rubric" in system.lower() and "damage" in system
+    assert "What is ignition?" in user
+    assert "a sudden brain-wide burst, especially prefrontal" in user
+    assert "It's when the visual area lights up for the word." in user
+    assert "Global Workspace Theory" in user
+
+
+async def test_score_understanding_retries_once_then_gives_up():
+    with pytest.raises(JudgeError):
+        await judge.score_understanding(
+            theory="T",
+            question="q",
+            rubric="r",
+            history=[],
+            answer="a",
+            complete=scripted("nope", "still nope"),
+        )
+
+
+async def test_write_report_names_the_grasp_the_steps_and_the_answers():
+    complete = scripted("You have the broadcast. Go back over The terms.")
+
+    text = await judge.write_report(
+        theory="Global Workspace Theory",
+        health=83,
+        steps=["The idea", "The terms", "The case for it", "What it's up against"],
+        hits=[{"by": "bot", "damage": 16, "recovery": 0, "reason": "Described a local response."}],
+        complete=complete,
+    )
+
+    assert text == "You have the broadcast. Go back over The terms."
+    system, user = complete.calls[0]
+    assert "two" in system.lower()
+    assert "83" in user and "The terms" in user and "Described a local response." in user
+
+
+async def test_write_report_retries_on_empty_then_raises():
+    with pytest.raises(JudgeError):
+        await judge.write_report(
+            theory="T", health=50, steps=[], hits=[], complete=scripted("", "  ")
+        )
