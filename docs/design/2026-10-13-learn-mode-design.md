@@ -92,8 +92,10 @@ only from the card; `{{ voice_rules }}` shared as in the other modes.
 - **`choose_lesson`** mirrors `take_position`: unknown id → `unknown_theory`
   with the valid ids; otherwise sets `user_card`, `user_theory_name`,
   `bot_theory_name = "The Tutor"`, the lesson material, `lesson_step = 1`,
-  resets the scorer, and calls `DebateState.set_solo`-style state for the
-  tutor.
+  and resets the scorer. `DebateState.set_solo` gains a `bot_name` argument
+  (default `EXAMINER`) so the tutor can take the examiner's seat under its own
+  name. An `emit_step` pre-action on `lesson` sets the snapshot's `lesson`
+  field, as `emit_question` does for the check.
 - **Mode select gains `learn`.** "Teach me", "learn", "lesson", "tutor" route
   there; "tell me about", "what is", "look around" stay with explore. Today
   "teach me" means explore; it moves.
