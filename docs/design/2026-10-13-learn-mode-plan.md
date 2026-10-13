@@ -2733,8 +2733,8 @@ In `server/evals/suite.yaml`, change the scenarios list to `[debate_text, modes_
 Run, from `server/`, with the bot's env in `.env` and Ollama running:
 
 ```bash
-uv run pipecat eval suite evals/suite.yaml -k script --logs-dir eval-runs -v 2>&1 | tail -40
-uv run pipecat eval suite evals/suite.yaml -k simulation --logs-dir eval-runs -v 2>&1 | tail -60
+uv run pipecat eval suite evals/suite.yaml -k script -d -n learn-script 2>&1 | tail -40
+uv run pipecat eval suite evals/suite.yaml -k simulation -d -n learn-sim 2>&1 | tail -60
 ```
 
 Expected: exit 0 for both. On a failure, read the printed conversation and the assertion, fix the prompt in `flow.yaml` (never the assertion, unless it is asking for something the spec does not), and re-run that scenario alone with `uv run pipecat eval run evals/learn_text.yaml -v -d` against `uv run bot.py -t eval`. Typical first-run fixes: the tutor answering a question *and* calling `step_done`; the tutor on question one of the check reading the answer back; the report not offering all four next steps.
