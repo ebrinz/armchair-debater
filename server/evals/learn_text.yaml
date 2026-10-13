@@ -1,0 +1,102 @@
+name: learn_text
+
+# Scripted, text mode: a lesson from the front door to the report, and the
+# hand-off into sparring. Run from server/:
+#
+#   uv run pipecat eval suite evals/suite.yaml -k script
+#
+# `eval:` criteria are judged by local Ollama (`ollama pull gemma4:12b`).
+
+scenarios:
+  - name: a_lesson_in_four_steps_then_three_checks_then_the_report_then_sparring
+    turns:
+      - expect:
+          - event: response
+            eval: "the bot welcomes the user and offers them things to do, including being taught a theory"
+
+      # A theory named at the door: no second question about which theory.
+      - user: "Teach me global workspace theory."
+        expect:
+          - event: function_call
+            calls:
+              - name: choose_mode
+                args: {mode: learn}
+              - name: choose_lesson
+                args: {theory_id: gwt}
+          - event: response
+            eval: "the bot teaches the first step of a lesson on global workspace theory: it describes a content becoming conscious by winning a place on a shared stage or workspace and being broadcast across the brain, and it asks whether that is clear or whether the user has a question. It does not ask which theory to learn."
+            text_excludes: "*"
+
+      # A question does not advance the step.
+      - user: "What do you mean by broadcast exactly?"
+        expect:
+          - event: response
+            eval: "the bot explains broadcast as the content being sent to or made available to the whole brain at once, for memory, language, and action, and asks again whether it is clear"
+
+      - user: "Clear. Go on."
+        expect:
+          - event: function_call
+            calls:
+              - name: step_done
+          - event: response
+            eval: "the bot teaches the terms of global workspace theory: it defines at least two of workspace, broadcast, ignition, and access, and asks whether that is clear"
+            text_excludes: "_"
+
+      - user: "Yes, clear."
+        expect:
+          - event: function_call
+            calls:
+              - name: step_done
+          - event: response
+            eval: "the bot gives the case for the theory: an example or experiment such as masking, and an argument such as brain-wide ignition, serial capacity, or testable predictions, and asks whether that is clear"
+
+      - user: "Got it, next."
+        expect:
+          - event: function_call
+            calls:
+              - name: step_done
+          - event: response
+            eval: "the bot says what the theory is up against: an objection such as broadcast not explaining why access feels like anything, the adversarial collaboration result, or reliance on report, and the misreading of the workspace as a store, and asks whether that is clear"
+            text_excludes: "#"
+
+      - user: "Clear."
+        expect:
+          - event: function_call
+            calls:
+              - name: step_done
+          - event: response
+            eval: "the bot says it will ask three questions and asks the user to explain global workspace theory in their own words; it does not answer for them"
+
+      - user: "A thought becomes conscious when it wins a competition for a small shared stage and gets broadcast to the whole brain, so memory, speech and action can all use it. Being broadcast like that is what being conscious is."
+        expect:
+          - event: function_call
+            calls:
+              - name: check_answered
+          - event: response
+            eval: "the bot asks one question about global workspace theory, not the same question as before, without saying whether the previous answer was right or wrong"
+
+      - user: "I think ignition is when the visual area lights up for the word."
+        expect:
+          - event: function_call
+            calls:
+              - name: check_answered
+          - event: response
+            eval: "the bot asks one question about global workspace theory, not the same question as before, without saying whether the previous answer was right or wrong"
+
+      - user: "Because the workspace can only hold one or a few things at a time. Everything competes for it, one wins, and the rest wait, so even though the brain works in parallel, what you're conscious of comes one thing at a time."
+        expect:
+          - event: function_call
+            calls:
+              - name: check_answered
+          - event: response
+            eval: "the bot announces a report: it states a number out of one hundred for the user's grasp, says whether they have got it, says what to go back over, and offers to spar with the theory, debate with it, repeat the lesson, or return to the menu"
+            text_excludes: "`"
+
+      # The hand-off: straight into the examiner's first question, no "what do you think".
+      - user: "Let me spar with it: question me on this theory."
+        expect:
+          - event: function_call
+            calls:
+              - name: spar_this
+          - event: response
+            eval: "the bot, now as an examiner, asks the user one question that puts pressure on global workspace theory; it does not ask what the user thinks consciousness is, and does not argue for a theory of its own"

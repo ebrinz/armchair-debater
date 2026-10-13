@@ -1,0 +1,35 @@
+name: learn_simulated
+
+# A learner played by the local model: understands most of the lesson, but
+# holds the card's misreading. The report must name it.
+
+scenarios:
+  - name: a_learner_who_pictures_the_workspace_as_a_store
+    simulator: {service: ollama, model: gemma4:12b, extra: {reasoning_effort: none}}
+    persona: |
+      Sam, curious, has read a little popular science. Wants to learn global
+      workspace theory: at the start, says "Teach me global workspace theory."
+      After each step of the lesson says it is clear and to go on, with at most
+      one short question in the whole lesson. In the check, explains things
+      mostly well, but believes the workspace is a storage area where the brain
+      keeps everything it is currently thinking about, and says so when asked to
+      explain the theory or why only a few things are conscious at once. After
+      the report, asks to go back to the menu, then ends the call.
+    goal: "Be taught global workspace theory, answer the three check questions, hear the report, then go back to the menu."
+    success: "the bot taught the lesson in steps, asked three check questions (check_answered was called three times), and in the report named the gap: that the workspace is not a store, or that consciousness is serial because one content at a time is broadcast"
+    metrics:
+      - name: one_thing_at_a_time
+        criterion: "the reply teaches or asks about one thing and is not a list; a reply that is a greeting, a question, or a report passes"
+        min_score: 0.9
+      - name: no_verdict_before_the_report
+        criterion: "the reply does not say whether an answer was right or wrong, or mention a score, unless it is the report itself; a reply with no such remark passes"
+        min_score: 1
+      - measure: words
+        max_value: 95
+      - measure: function_calls
+        calls:
+          - name: choose_mode
+            args: {mode: learn}
+          - name: choose_lesson
+            args: {theory_id: gwt}
+    runs: 2
