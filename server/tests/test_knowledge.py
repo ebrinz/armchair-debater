@@ -8,6 +8,25 @@ import knowledge
 from knowledge import CardError
 
 
+def lesson(**overrides):
+    base = {
+        "in_plain_words": "Alpha, in plain words.",
+        "terms": [
+            {"term": "alpha", "means": "the first thing"},
+            {"term": "beta", "means": "the second thing"},
+            {"term": "gamma", "means": "the third thing"},
+        ],
+        "example": "An example alpha handles well.",
+        "misreading": "People think alpha is beta. It is not.",
+        "checks": [
+            {"question": "What is alpha?", "looks_for": "the first thing"},
+            {"question": "Why not beta?", "looks_for": "beta is the second thing"},
+        ],
+    }
+    base.update(overrides)
+    return base
+
+
 def card(**overrides):
     base = {
         "id": "alpha",
@@ -20,6 +39,7 @@ def card(**overrides):
         "objections": ["o1", "o2", "o3"],
         "rivals": ["beta"],
         "citations": ["Author 2000, Journal, Title", "Author 2001, Journal, Title"],
+        "lesson": lesson(),
     }
     base.update(overrides)
     return base
@@ -192,3 +212,79 @@ def test_the_bundled_deck_is_the_real_deck():
     # The client bundles this fixture so THE DECK can be browsed before
     # connecting; it must say exactly what the server would send.
     assert CARDS_FIXTURE == {"type": "theory_cards", "cards": knowledge.client_cards()}
+
+
+# --- the lesson -----------------------------------------------------------------
+
+
+def test_a_card_carries_its_lesson(tmp_path):
+    theory = knowledge.load(write(tmp_path, [card(), beta()]))["alpha"]
+    assert theory.lesson.in_plain_words == "Alpha, in plain words."
+    assert theory.lesson.terms[0] == knowledge.Term("alpha", "the first thing")
+    assert theory.lesson.checks[1] == knowledge.Check("Why not beta?", "beta is the second thing")
+
+
+def test_rejects_a_card_with_no_lesson(tmp_path):
+    bad = card()
+    del bad["lesson"]
+    with pytest.raises(CardError, match="alpha.*lesson"):
+        knowledge.load(write(tmp_path, [bad, beta()]))
+
+
+@pytest.mark.parametrize("field", ["in_plain_words", "example", "misreading"])
+def test_rejects_an_empty_lesson_text(tmp_path, field):
+    with pytest.raises(CardError, match=field):
+        knowledge.load(write(tmp_path, [card(lesson=lesson(**{field: "  "})), beta()]))
+
+
+@pytest.mark.parametrize("count", [2, 5])
+def test_rejects_terms_outside_three_to_four(tmp_path, count):
+    terms = [{"term": f"t{i}", "means": f"m{i}"} for i in range(count)]
+    with pytest.raises(CardError, match="terms"):
+        knowledge.load(write(tmp_path, [card(lesson=lesson(terms=terms)), beta()]))
+
+
+def test_rejects_three_checks(tmp_path):
+    checks = [{"question": f"q{i}", "looks_for": f"r{i}"} for i in range(3)]
+    with pytest.raises(CardError, match="checks"):
+        knowledge.load(write(tmp_path, [card(lesson=lesson(checks=checks)), beta()]))
+
+
+def test_rejects_a_check_without_a_rubric(tmp_path):
+    checks = [{"question": "q1", "looks_for": "r1"}, {"question": "q2"}]
+    with pytest.raises(CardError, match="looks_for"):
+        knowledge.load(write(tmp_path, [card(lesson=lesson(checks=checks)), beta()]))
+
+
+def test_lesson_steps_draw_on_the_lesson_and_the_card(tmp_path):
+    theory = knowledge.load(write(tmp_path, [card(), beta()]))["alpha"]
+    assert knowledge.LESSON_STEPS == (
+        "The idea",
+        "The terms",
+        "The case for it",
+        "What it's up against",
+    )
+    assert "Alpha, in plain words." in knowledge.lesson_step(theory, 1)
+    assert "Consciousness is alpha." in knowledge.lesson_step(theory, 1)
+    assert "- alpha: the first thing" in knowledge.lesson_step(theory, 2)
+    three = knowledge.lesson_step(theory, 3)
+    assert "An example alpha handles well." in three and "- a1" in three and "Author 2000" in three
+    four = knowledge.lesson_step(theory, 4)
+    assert "- o1" in four and "People think alpha is beta." in four
+    with pytest.raises(ValueError):
+        knowledge.lesson_step(theory, 5)
+
+
+def test_check_questions_start_with_own_words_then_the_cards_two(tmp_path):
+    theory = knowledge.load(write(tmp_path, [card(), beta()]))["alpha"]
+    checks = knowledge.check_questions(theory)
+    assert knowledge.CHECKS == len(checks) == 3
+    assert checks[0][0] == "Explain Alpha Theory to me in your own words."
+    assert "Alpha, in plain words." in checks[0][1] and "alpha (the first thing)" in checks[0][1]
+    assert checks[1] == ("What is alpha?", "the first thing")
+    assert checks[2] == ("Why not beta?", "beta is the second thing")
+
+
+def test_client_cards_never_leak_the_lesson():
+    for card_ in knowledge.client_cards():
+        assert "lesson" not in card_

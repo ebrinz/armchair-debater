@@ -21,6 +21,27 @@ class CardError(ValueError):
 
 
 @dataclass(frozen=True)
+class Term:
+    term: str
+    means: str
+
+
+@dataclass(frozen=True)
+class Check:
+    question: str
+    looks_for: str
+
+
+@dataclass(frozen=True)
+class Lesson:
+    in_plain_words: str
+    terms: tuple[Term, ...]
+    example: str
+    misreading: str
+    checks: tuple[Check, ...]
+
+
+@dataclass(frozen=True)
 class Theory:
     id: str
     name: str
@@ -32,6 +53,46 @@ class Theory:
     objections: tuple[str, ...]
     rivals: tuple[str, ...]
     citations: tuple[str, ...]
+    lesson: Lesson
+
+
+_LESSON_TEXT_FIELDS = ("in_plain_words", "example", "misreading")
+
+
+def _pairs(label: str, items, kind: str, keys: tuple[str, str]) -> list[tuple[str, str]]:
+    out = []
+    for item in items:
+        if not isinstance(item, dict) or not all(
+            isinstance(item.get(k), str) and item[k].strip() for k in keys
+        ):
+            raise CardError(
+                f"card {label}: each lesson {kind} needs a non-empty '{keys[0]}' and '{keys[1]}'"
+            )
+        out.append((item[keys[0]].strip(), item[keys[1]].strip()))
+    return out
+
+
+def _parse_lesson(label: str, raw) -> Lesson:
+    if not isinstance(raw, dict):
+        raise CardError(f"card {label}: 'lesson' must be a mapping")
+    for field in _LESSON_TEXT_FIELDS:
+        if not isinstance(raw.get(field), str) or not raw[field].strip():
+            raise CardError(f"card {label}: lesson '{field}' must be a non-empty string")
+    terms = raw.get("terms")
+    if not isinstance(terms, list) or not 3 <= len(terms) <= 4:
+        raise CardError(f"card {label}: lesson 'terms' must have three or four entries")
+    checks = raw.get("checks")
+    if not isinstance(checks, list) or len(checks) != 2:
+        raise CardError(f"card {label}: lesson 'checks' must have exactly two entries")
+    return Lesson(
+        in_plain_words=raw["in_plain_words"].strip(),
+        terms=tuple(Term(*t) for t in _pairs(label, terms, "term", ("term", "means"))),
+        example=raw["example"].strip(),
+        misreading=raw["misreading"].strip(),
+        checks=tuple(
+            Check(*c) for c in _pairs(label, checks, "check", ("question", "looks_for"))
+        ),
+    )
 
 
 def _parse(raw: dict) -> Theory:
@@ -63,6 +124,7 @@ def _parse(raw: dict) -> Theory:
         **{f: raw[f].strip() for f in _TEXT_FIELDS},
         **{f: tuple(raw[f]) for f in _LIST_FIELDS if f != "moves"},
         moves=tuple(moves),
+        lesson=_parse_lesson(label, raw.get("lesson")),
     )
 
 
@@ -130,6 +192,53 @@ def brief(theory: Theory) -> str:
         f"Known objections:\n{bullets(theory.objections)}\n"
         f"Papers you may cite:\n{bullets(theory.citations)}"
     )
+
+
+# The four steps of a lesson, in order. Steps one and two are the lesson's own
+# material; three and four add the card's arguments and objections to it.
+LESSON_STEPS = ("The idea", "The terms", "The case for it", "What it's up against")
+# The check: "in your own words", then the card's two questions.
+CHECKS = 3
+
+
+def _bullets(items) -> str:
+    return "\n".join(f"- {item}" for item in items)
+
+
+def lesson_step(theory: Theory, step: int) -> str:
+    """The material the tutor teaches in lesson step ``step`` (1 to 4), as prompt text."""
+    lesson = theory.lesson
+    if step == 1:
+        return (
+            f"The idea, in plain words: {lesson.in_plain_words}\n"
+            f"The claim as the card states it: {theory.claim}"
+        )
+    if step == 2:
+        return "The terms:\n" + "\n".join(f"- {t.term}: {t.means}" for t in lesson.terms)
+    if step == 3:
+        return (
+            f"An example the theory handles well: {lesson.example}\n"
+            f"The arguments for it:\n{_bullets(theory.arguments)}\n"
+            f"Papers you may cite:\n{_bullets(theory.citations)}"
+        )
+    if step == 4:
+        return (
+            f"Known objections:\n{_bullets(theory.objections)}\n"
+            f"A common misreading, and the correction: {lesson.misreading}"
+        )
+    raise ValueError(f"no lesson step {step}")
+
+
+def check_questions(theory: Theory) -> list[tuple[str, str]]:
+    """The exam: ``(question, rubric)`` for each of the three checks, in order."""
+    lesson = theory.lesson
+    own_words = (
+        f"Explain {theory.name} to me in your own words.",
+        lesson.in_plain_words
+        + " Key terms: "
+        + "; ".join(f"{t.term} ({t.means})" for t in lesson.terms),
+    )
+    return [own_words, *((c.question, c.looks_for) for c in lesson.checks)]
 
 
 def client_cards() -> list[dict]:
