@@ -258,6 +258,21 @@ async def bot(runner_args: RunnerArguments):
 
 
 if __name__ == "__main__":
+    import os
+
     from pipecat.runner.run import main
+
+    # Local production mode, set by the `armchair` launcher: serve the built
+    # arcade from this process and refuse requests from any other origin.
+    if os.environ.get("ARMCHAIR_LOCAL") == "1":
+        from pipecat.runner.run import app
+
+        import local_app
+
+        local_app.install(
+            app,
+            dist=Path(__file__).parents[1] / "client" / "dist",
+            origin=os.environ["ARMCHAIR_ORIGIN"],
+        )
 
     main()

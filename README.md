@@ -87,6 +87,7 @@ server/
   debate_state.py   Mode, health, hits, verdict; emits a full snapshot on every change
   providers.py      LLM_PROVIDER / SPEECH_PROVIDER switches; the optional judge's voice
   quiet_llm.py      Drops whitespace-only LLM replies (they confuse anything counting turns)
+  local_app.py      Local production mode: serves the built arcade, refuses foreign origins and hosts
   skip_tts_sync.py  Keeps text-mode evals from synthesizing speech nobody hears
   make_fixtures.py  Generates the JSON contract fixtures from DebateState
   cards/            The twelve theory cards
@@ -109,6 +110,27 @@ Two things worth knowing about how it was built:
   that could drift.
 
 ## Run it
+
+### One command, local only
+
+```bash
+./armchair            # builds the arcade if it changed, starts the bot, opens your browser
+./armchair --rebuild  # force a fresh client build
+```
+
+This is the way to use it rather than develop it. The bot serves the built arcade
+itself at `http://127.0.0.1:7860`, so there is no Vite dev server and no second
+port. It listens on `127.0.0.1` only, so nothing else on your network can reach
+it, and it refuses any request that comes from another website's origin or under
+another host name, so a page open in your browser cannot start a session on your
+keys. It asks no public STUN server for your address. Keys come from
+`server/.env`, as in development. Set `ARMCHAIR_PORT` to use another port.
+
+One thing still touches the network: WebRTC audio uses short-lived UDP ports on
+your LAN address for the length of a session, because the library never uses the
+loopback address. Nothing can use them without credentials exchanged over the
+local-only connection, and with the macOS firewall on (System Settings, Network,
+Firewall) nothing else on your network can reach them at all.
 
 ### Server
 

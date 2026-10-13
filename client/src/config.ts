@@ -23,11 +23,19 @@ export const TRANSPORT_LABELS: Record<TransportType, string> = {
 
 export const DEFAULT_TRANSPORT: TransportType = 'smallwebrtc';
 
-const botStartUrl =
-  import.meta.env.VITE_BOT_START_URL || 'http://localhost:7860/start';
+/**
+ * Local production mode (the `armchair` launcher): the bot serves this build
+ * itself, so it starts sessions at its own origin, and asks for no public STUN
+ * server, since the browser and the bot are on the same machine.
+ */
+const sameOrigin = import.meta.env.VITE_SAME_ORIGIN === '1';
+
+const botStartUrl = sameOrigin
+  ? `${window.location.origin}/start`
+  : import.meta.env.VITE_BOT_START_URL || 'http://localhost:7860/start';
 const botStartPublicApiKey = import.meta.env.VITE_BOT_START_PUBLIC_API_KEY;
 
-if (!import.meta.env.VITE_BOT_START_URL) {
+if (!sameOrigin && !import.meta.env.VITE_BOT_START_URL) {
   console.warn(
     'VITE_BOT_START_URL not configured, using default: http://localhost:7860/start'
   );
@@ -52,7 +60,7 @@ const smallWebRTCConfig: APIRequest = {
   headers,
   requestData: {
     createDailyRoom: false,
-    enableDefaultIceServers: true,
+    enableDefaultIceServers: !sameOrigin,
     transport: 'webrtc',
   },
 };

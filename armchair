@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Armchair Debater, local production mode: one command, nothing on the network.
+#
+#   ./armchair            build the client if it changed, start the bot, open the arcade
+#   ./armchair --rebuild  force a client rebuild first
+#
+# The bot binds to 127.0.0.1 only and serves the built client itself (no Vite,
+# no second port), and refuses requests from any other origin or host name.
+# Keys come from server/.env as in development. WebRTC audio still uses
+# short-lived UDP ports on your LAN address for the length of a session; with
+# the macOS firewall on, nothing else on your network can reach them.
+set -euo pipefail
+
+PORT="${ARMCHAIR_PORT:-7860}"
+ORIGIN="http://127.0.0.1:${PORT}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLIENT="$ROOT/client"
+SERVER="$ROOT/server"
+STAMP="$CLIENT/dist/.armchair-build"
+
+[[ -f "$SERVER/.env" ]] || { echo "server/.env is missing: copy server/.env.example and add your keys." >&2; exit 1; }
+
+needs_build() {
+  [[ "${1:-}" == "--rebuild" || ! -f "$STAMP" ]] && return 0
+  [[ -n "$(find "$CLIENT/src" "$CLIENT/index.html" "$CLIENT/package.json" "$CLIENT/vite.config.ts" -newer "$STAMP" -print -quit)" ]]
+}
+
+if needs_build "${1:-}"; then
+  echo "Building the arcade…"
+  ( cd "$CLIENT" && { [[ -d node_modules ]] || npm ci --silent; } \
+      && VITE_SAME_ORIGIN=1 npx vite build --base=/arcade/ --logLevel warn )
+  touch "$STAMP"
+fi
+
+# Open the browser once the bot answers.
+( for _ in $(seq 60); do
+    if curl -sf -o /dev/null "$ORIGIN/arcade/"; then open "$ORIGIN/"; exit 0; fi
+    sleep 1
+  done ) &
+
+cd "$SERVER"
+ARMCHAIR_LOCAL=1 ARMCHAIR_ORIGIN="$ORIGIN" exec uv run bot.py \
+  --host 127.0.0.1 --port "$PORT" --allowed-origins "$ORIGIN" "http://localhost:${PORT}"
