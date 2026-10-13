@@ -15,9 +15,16 @@ the closings wins, and the bot reads you the judge's verdict.
 Every paper the bot cites comes from a curated, fact-checked knowledge base — never
 from the LLM's memory.
 
-There are two other things to do in the study, chosen at the door by voice or on
+There are three other things to do in the study, chosen at the door by voice or on
 an arcade MODE SELECT:
 
+- **Learn** — the tutor teaches one theory in four steps (the idea, the terms,
+  the case for it, what it's up against), takes questions as it goes, then asks
+  three check questions. A judge grades each answer against the card's rubric
+  into a GRASP bar; 70 or more and *you've got it*, which lights the LEARN rung
+  on that card. Each card carries three rungs, LEARN → SPAR → DEBATE, kept in
+  the browser; nothing is locked, the ladder just shows where you are with each
+  of the twelve.
 - **Sparring** — the bot takes no side. As *the examiner* it puts five escalating
   questions to your own view, drawn from the known objections to your theory, and
   the judge scores each answer against a single bar: how much of the position is
@@ -55,8 +62,11 @@ Each card has a claim, three arguments (each with a fighting-game "move name"),
 three objections its real critics press, its rivals, and 2–4 citations. **Every
 citation was checked against a primary source (Crossref / publisher) by an agent
 other than the one that wrote it** — that second check caught two errors the
-first pass had marked "confirmed". A card that breaks the schema stops the bot at
-boot, not mid-debate.
+first pass had marked "confirmed". Each card also carries a **lesson**: the claim
+in plain words, three or four terms, an example, the common misreading, and two
+check questions with a rubric for the judge, fact-checked the same way (that pass
+caught one error and four unsourced details). A card that breaks the schema stops
+the bot at boot, not mid-debate.
 
 ## Architecture
 
@@ -64,13 +74,16 @@ boot, not mid-debate.
 server/
   bot.py            Pipecat cascade pipeline: Gradium STT → General Compute LLM → Gradium TTS
   flow.yaml         Pipecat Flows graph: a front door, then the debate (setup → opening → rebuttal →
-                    cross-examination → closing → verdict), sparring, or the explorer
+                    cross-examination → closing → verdict), sparring, the explorer, or the tutor
+                    (tutor_setup → lesson ×4 → check ×3 → lesson_report)
   handlers.py       Flow tools: choose_mode, set_positions, answer_given, judge_debate, take_position,
-                    answer_heard, show_theory; emit_stage / emit_question / use_voice actions
+                    answer_heard, show_theory, choose_lesson, step_done, check_answered, spar_this,
+                    debate_this; emit_stage / emit_question / emit_step / emit_check / use_voice actions
   knowledge.py      Loads + validates the cards; client_cards() for the UI
   turns.py          TurnObserver — reads both sides' turns from pipeline frames
   scorer.py         Ordered background scoring; never blocks the voice path
-  judge.py          The judge's LLM calls: score a turn or an answer; write the rationale or the finding
+  judge.py          The judge's LLM calls: score a turn, an answer, or a check against its rubric;
+                    write the rationale, the finding, or the lesson's report
   debate_state.py   Mode, health, hits, verdict; emits a full snapshot on every change
   providers.py      LLM_PROVIDER / SPEECH_PROVIDER switches; the optional judge's voice
   quiet_llm.py      Drops whitespace-only LLM replies (they confuse anything counting turns)
@@ -80,7 +93,7 @@ server/
   evals/            Scripted + simulated behavioural evals (pipecat eval)
   tests/            Unit tests
 client/
-  src/arcade/       The arcade UI: state → screen logic, stage, theme, screens
+  src/arcade/       The arcade UI: state → screen logic, stage, theme, screens; the ladder (localStorage)
 docs/design/        Specs, plans, and the JSON contract fixtures
 ```
 
@@ -116,20 +129,23 @@ npm run dev              # http://localhost:5173
 
 - `http://localhost:5173/` — the arcade UI. **PRESS START** connects and asks for the mic.
 - `http://localhost:5173/?mock` — replays a recorded debate through the UI with no server
-  (`?mock=sparring` and `?mock=explore` replay the other two modes).
+  (`?mock=sparring`, `?mock=explore` and `?mock=learn` replay the other modes).
 - `http://localhost:5173/?console` — the Pipecat debugging console.
 
 ### Arcade UI
 
-Seven screens, chosen from the server's state: **TITLE** (PRESS START
-connects and unlocks the mic), **MODE SELECT** (debate, sparring, or explore),
+Eight screens, chosen from the server's state: **TITLE** (PRESS START
+connects and unlocks the mic), **MODE SELECT** (learn, debate, sparring, or explore),
 **SELECT** (a twelve-card roster of the theories,
 trading-card style), **VERSUS** (your theory against the one the house picked),
 **FIGHT** (two health bars draining toward the centre, with
 hit-by-hit battle text — in sparring, one bar facing THE EXAMINER and a plate
-counting the questions), **DECISION** (the judge's verdict, or the examiner's
-finding, with a rematch and the way back to the menu), and **EXPLORE** (the deck,
-turning to whichever card the guide is talking about). On SELECT you can just say what you think consciousness is, or pick
+counting the questions; in a lesson's check, a GRASP bar facing THE TUTOR),
+**LESSON** (the theory's card beside the tutor's chair, with a plate for the step),
+**DECISION** (the judge's verdict, the examiner's finding, or the tutor's report
+with its SPAR WITH IT and DEBATE WITH IT hand-offs, and the way back to the menu),
+and **EXPLORE** (the deck, turning to whichever card the guide is talking about).
+Every card on SELECT and THE DECK shows its three rung marks. On SELECT you can just say what you think consciousness is, or pick
 your theory and then the rival the house must defend (or leave that to the house).
 **THE DECK**, on the title screen, browses all twelve cards with no connection. `?mock` replays a recorded debate
 through the UI with no server; `?console` swaps in the Pipecat debugging console
@@ -179,7 +195,8 @@ model.
 ## Status
 
 **Working end to end:** the spoken (or typed) debate over all twelve theories, live
-per-turn judging, the balance rules, the verdict and rematch, the evals, and the
+per-turn judging, the balance rules, the verdict and rematch, sparring, the
+explorer, the tutor with its judged check and the ladder, the evals, and the
 server → client state contract.
 
 **UI:** the full arcade treatment is in — the "study at night" stage and pixel theme;
