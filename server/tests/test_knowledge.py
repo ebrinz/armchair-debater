@@ -281,8 +281,13 @@ def test_check_questions_start_with_own_words_then_the_cards_two(tmp_path):
     assert knowledge.CHECKS == len(checks) == 3
     assert checks[0][0] == "In your own words, how would you explain Alpha Theory to a friend?"
     assert "Alpha, in plain words." in checks[0][1] and "alpha (the first thing)" in checks[0][1]
-    assert checks[1] == ("What is alpha?", "the first thing")
-    assert checks[2] == ("Why not beta?", "beta is the second thing")
+    # Every rubric names the card's misreading, so the judge can recognise it
+    # in an answer and the report can name it.
+    for _, rubric in checks:
+        assert "People think alpha is beta. It is not." in rubric
+        assert "misreading" in rubric
+    assert checks[1][0] == "What is alpha?" and checks[1][1].startswith("the first thing.")
+    assert checks[2][0] == "Why not beta?" and checks[2][1].startswith("beta is the second thing.")
 
 
 def test_client_cards_never_leak_the_lesson():

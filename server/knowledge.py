@@ -230,15 +230,26 @@ def lesson_step(theory: Theory, step: int) -> str:
 
 
 def check_questions(theory: Theory) -> list[tuple[str, str]]:
-    """The exam: ``(question, rubric)`` for each of the three checks, in order."""
+    """The exam: ``(question, rubric)`` for each of the three checks, in order.
+
+    Every rubric ends with the card's misreading, so the judge can recognise it
+    when an answer states it, score it as the misreading, and name it; the
+    report is written from those reasons.
+    """
     lesson = theory.lesson
+    misreading = (
+        " The common misreading, which an answer must not state as the theory: "
+        f"{lesson.misreading}"
+    )
     own_words = (
         f"In your own words, how would you explain {theory.name} to a friend?",
         lesson.in_plain_words
         + " Key terms: "
-        + "; ".join(f"{t.term} ({t.means})" for t in lesson.terms),
+        + "; ".join(f"{t.term} ({t.means})" for t in lesson.terms)
+        + "."
+        + misreading,
     )
-    return [own_words, *((c.question, c.looks_for) for c in lesson.checks)]
+    return [own_words, *((c.question, c.looks_for + "." + misreading) for c in lesson.checks)]
 
 
 def client_cards() -> list[dict]:
