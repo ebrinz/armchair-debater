@@ -9,6 +9,7 @@ import '../fight.css';
 import '../select.css';
 import { rivalIndices } from '../selection';
 import { playSfx } from '../sfxPlayer';
+import { useArcadeStore } from '../store';
 import type { DebateSnapshot, TheoryCard } from '../types';
 
 /**
@@ -49,6 +50,7 @@ export const SelectScreen = ({
   learn = false,
 }: SelectScreenProps) => {
   const [focused, setFocused] = useState(0);
+  const ladder = useArcadeStore((s) => s.ladder);
   // Step two begins once the player has a theory of their own.
   const [mine, setMine] = useState<TheoryCard | null>(null);
   const [sent, setSent] = useState<TheoryCard | null>(null);
@@ -138,6 +140,7 @@ export const SelectScreen = ({
             open={rivals}
             mineIndex={mineIndex >= 0 ? mineIndex : null}
             cursorLabel={mine ? 'CPU' : '1P'}
+            ladder={ladder}
           />
 
           {mine && !waiting && (

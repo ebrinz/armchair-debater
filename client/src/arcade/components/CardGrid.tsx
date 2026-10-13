@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react';
 
 import type { GridKey } from '../gridNav';
 import { moveFocus } from '../gridNav';
+import { RUNGS } from '../ladder';
+import type { Ladder } from '../ladder';
 import { moveAmong } from '../selection';
 import { playSfx } from '../sfxPlayer';
 import { inkOn, typeOf } from '../theme';
@@ -20,6 +22,12 @@ import type { TheoryCard } from '../types';
 
 export const COLUMNS = 1;
 export const SLOTS = 12;
+
+/** What a screen reader hears for a card's rung marks. */
+const rungsLabel = (rungs: Ladder[string] | undefined): string => {
+  const lit = RUNGS.filter((rung) => rungs?.[rung]);
+  return lit.length ? `Cleared: ${lit.join(', ')}` : 'No rungs cleared';
+};
 
 const NAV_KEYS: GridKey[] = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
 const isNavKey = (key: string): key is GridKey => (NAV_KEYS as string[]).includes(key);
@@ -40,6 +48,8 @@ export interface CardGridProps {
   /** Whose pick the cursor is making: the player's, or the house's. `null`
    *  plants no flag — the deck has a cursor but nobody choosing. */
   cursorLabel?: '1P' | 'CPU' | null;
+  /** The rungs cleared per theory, shown as three marks on each card. */
+  ladder?: Ladder;
 }
 
 export const CardGrid = ({
@@ -52,6 +62,7 @@ export const CardGrid = ({
   open = null,
   mineIndex = null,
   cursorLabel = '1P',
+  ladder = {},
 }: CardGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const slots = useRef<Array<HTMLButtonElement | null>>([]);
@@ -134,6 +145,18 @@ export const CardGrid = ({
             }}
           >
             <span className="slot__name">{card ? card.name : ''}</span>
+            {card && (
+              <span className="slot__rungs" role="img" aria-label={rungsLabel(ladder[card.id])}>
+                {RUNGS.map((rung) => (
+                  <span
+                    key={rung}
+                    className={`slot__rung pixel-text${ladder[card.id]?.[rung] ? ' slot__rung--lit' : ''}`}
+                  >
+                    {rung[0].toUpperCase()}
+                  </span>
+                ))}
+              </span>
+            )}
             {(mine || (i === focused && cursorLabel)) && (
               <span
                 className={`slot__cursor pixel-text${mine || !cursorLabel ? '' : ` slot__cursor--${cursorLabel.toLowerCase()}`}`}

@@ -6,6 +6,7 @@ import { TheoryCardFace } from '../components/TheoryCardFace';
 import '../fight.css';
 import '../select.css';
 import { playSfx } from '../sfxPlayer';
+import { useArcadeStore } from '../store';
 import type { TheoryCard } from '../types';
 
 export interface DeckScreenProps {
@@ -28,6 +29,7 @@ export interface DeckScreenProps {
  */
 export const DeckScreen = ({ cards, onBack, follow = null, onAsk }: DeckScreenProps) => {
   const [focused, setFocused] = useState(0);
+  const ladder = useArcadeStore((s) => s.ladder);
   // Following is an event, not a binding: when the guide turns to a new card the
   // cursor goes with it, once, and the player can still wander off afterwards.
   // Applied during render, like the other derived state in this UI.
@@ -79,6 +81,7 @@ export const DeckScreen = ({ cards, onBack, follow = null, onAsk }: DeckScreenPr
             lockedId={null}
             disabled={false}
             cursorLabel={null}
+            ladder={ladder}
           />
           <div className="select__house">
             <PixelButton onClick={leave}>{exploring ? 'Menu' : 'Back'}</PixelButton>
