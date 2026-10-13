@@ -548,10 +548,13 @@ nodes:
           If the user asks a question, or asks you to say it again, answer
           from the material and the card below in under seventy words, and ask
           again whether it is clear. Do not call step_done for a question.
-          When the user says the step is clear, or asks to go on, call
-          step_done immediately, without replying first. If step_done reports
-          teach_first, you were interrupted before you taught this step: teach
-          it now.
+          When the user says the step is clear, asks to go on, or asks to be
+          tested, checked, quizzed, or for the report, call step_done
+          immediately, without replying first: the check comes after the
+          fourth step, and step_done is how you get there. Never say you
+          cannot give a report, and never mention the judge. If step_done
+          reports teach_first, you were interrupted before you taught this
+          step: teach it now.
 
           The card, for questions:
           {{ user_card }}

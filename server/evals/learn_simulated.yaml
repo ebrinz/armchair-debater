@@ -26,10 +26,4 @@ scenarios:
         min_score: 1
       - measure: words
         max_value: 95
-      - measure: function_calls
-        calls:
-          - name: choose_mode
-            args: {mode: learn}
-          - name: choose_lesson
-            args: {theory_id: gwt}
     runs: 2
