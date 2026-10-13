@@ -12,10 +12,12 @@ export type Stage =
   | 'closing'
   | 'verdict'
   | 'sparring'
-  | 'explore';
+  | 'explore'
+  | 'lesson'
+  | 'check';
 
 /** What the player chose at the front door. */
-export type Mode = 'debate' | 'sparring' | 'explore';
+export type Mode = 'debate' | 'sparring' | 'explore' | 'learn';
 export type Side = 'user' | 'bot';
 
 export interface Debater {
@@ -50,6 +52,8 @@ export interface DebateSnapshot {
   focus: string | null;
   /** Sparring: which question this is. */
   question: { number: number; of: number } | null;
+  /** The tutor: which step of the lesson this is. */
+  lesson: { step: number; of: number; title: string } | null;
 }
 
 export interface TheoryCard {
@@ -71,12 +75,14 @@ export interface TheoryCardsMessage {
 const hasType = (data: unknown, type: string): boolean =>
   typeof data === 'object' && data !== null && (data as { type?: unknown }).type === type;
 
-const MODE_NAMES: readonly string[] = ['debate', 'sparring', 'explore'];
+const MODE_NAMES: readonly string[] = ['debate', 'sparring', 'explore', 'learn'];
 
 const STAGES: readonly string[] = [
   'mode',
   'sparring',
   'explore',
+  'lesson',
+  'check',
   'setup',
   'opening',
   'rebuttal',
@@ -118,7 +124,12 @@ export const isDebateSnapshot = (data: unknown): data is DebateSnapshot => {
     (s.question == null ||
       (typeof s.question === 'object' &&
         typeof s.question.number === 'number' &&
-        typeof s.question.of === 'number'))
+        typeof s.question.of === 'number')) &&
+    (s.lesson == null ||
+      (typeof s.lesson === 'object' &&
+        typeof s.lesson.step === 'number' &&
+        typeof s.lesson.of === 'number' &&
+        typeof s.lesson.title === 'string'))
   );
 };
 

@@ -1,6 +1,6 @@
 import type { DebateSnapshot, Stage } from './types';
 
-export type Screen = 'title' | 'mode' | 'select' | 'versus' | 'fight' | 'decision' | 'explore';
+export type Screen = 'title' | 'mode' | 'select' | 'versus' | 'fight' | 'decision' | 'explore' | 'lesson';
 
 /** Which screen to show. A pure function of the server's state, so the UI cannot drift from it. */
 export const screenFor = (connected: boolean, snapshot: DebateSnapshot | null): Screen => {
@@ -8,6 +8,7 @@ export const screenFor = (connected: boolean, snapshot: DebateSnapshot | null): 
   // Connected with nothing heard yet: the front door is where everything starts.
   if (!snapshot || snapshot.stage === 'mode') return 'mode';
   if (snapshot.stage === 'explore') return 'explore';
+  if (snapshot.stage === 'lesson') return 'lesson';
   // The lock-in: both sides matched to a theory, the first round not yet begun.
   if (snapshot.stage === 'setup') return splashKey(snapshot) ? 'versus' : 'select';
   return snapshot.stage === 'verdict' ? 'decision' : 'fight';
@@ -52,6 +53,8 @@ export const ROUND_LABELS: Record<Stage, string> = {
   mode: 'CHOOSE YOUR GAME',
   sparring: 'EXAMINATION',
   explore: 'THE DECK',
+  lesson: 'THE LESSON',
+  check: 'THE CHECK',
   setup: 'CHOOSE YOUR THEORY',
   opening: 'ROUND 1 · OPENING',
   rebuttal: 'ROUND 2 · REBUTTAL',
@@ -74,6 +77,8 @@ export const roundNumber = (stage: Stage): number =>
     verdict: ROUNDS,
     sparring: 0,
     explore: 0,
+    lesson: 0,
+    check: 0,
   })[stage];
 
 /** What the plate between the bars says: rounds in a debate, questions in sparring. */
@@ -85,9 +90,14 @@ export interface Plate {
 }
 
 export const plateFor = (snapshot: DebateSnapshot): Plate => {
+  if (snapshot.lesson) {
+    const { step, of, title } = snapshot.lesson;
+    return { title: `STEP ${step}`, sub: title.toUpperCase(), pips: of, lit: step };
+  }
   if (snapshot.question) {
     const { number, of } = snapshot.question;
-    return { title: `QUESTION ${number}`, sub: `OF ${of}`, pips: of, lit: number };
+    const what = snapshot.mode === 'learn' ? 'CHECK' : 'QUESTION';
+    return { title: `${what} ${number}`, sub: `OF ${of}`, pips: of, lit: number };
   }
   const [title, ...rest] = ROUND_LABELS[snapshot.stage].split(' · ');
   return { title, sub: rest.join(' · '), pips: ROUNDS, lit: roundNumber(snapshot.stage) };
@@ -112,6 +122,10 @@ export const ANNOUNCER_SEQUENCE: Partial<Record<Stage, Array<[text: string, ms: 
     ['CROSS-EXAMINE!', 800],
   ],
   closing: [['FINAL ROUND', 900]],
+  check: [
+    ['THE CHECK', 900],
+    ['BEGIN!', 700],
+  ],
 };
 
 /** The same words the banners show, for the one shared live region. */

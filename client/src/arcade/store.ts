@@ -28,7 +28,7 @@ export const useArcadeStore = create<ArcadeStore>((set) => ({
     }
     if (!isDebateSnapshot(data)) return;
     // A server from before the modes sends none of their fields.
-    const snapshot = { ...data, mode: data.mode ?? null, focus: data.focus ?? null, question: data.question ?? null };
+    const snapshot = { ...data, mode: data.mode ?? null, focus: data.focus ?? null, question: data.question ?? null, lesson: data.lesson ?? null };
     set((state) => ({
       snapshot,
       hitCount:

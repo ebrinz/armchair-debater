@@ -1,6 +1,7 @@
 import cards from './fixtures/theory-cards.json';
 import debate from './fixtures/debate-state.json';
 import explore from './fixtures/explore-state.json';
+import learn from './fixtures/learn-state.json';
 import sparring from './fixtures/sparring-state.json';
 import { useArcadeStore } from './store';
 import type { DebateSnapshot, Mode } from './types';
@@ -19,12 +20,13 @@ const FIXTURES: Record<Mode, DebateSnapshot[]> = {
   debate: debate as DebateSnapshot[],
   sparring: sparring as DebateSnapshot[],
   explore: explore as DebateSnapshot[],
+  learn: learn as DebateSnapshot[],
 };
 
 /** `?mock` replays the debate; `?mock=sparring` and `?mock=explore` the other two. */
 export const mockKind = (search: string): Mode => {
   const value = new URLSearchParams(search).get('mock');
-  return value === 'sparring' || value === 'explore' ? value : 'debate';
+  return value === 'sparring' || value === 'explore' || value === 'learn' ? value : 'debate';
 };
 
 /**

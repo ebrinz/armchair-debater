@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { battleLines, decisionBanners, feltDamage, turnCue } from '../battleText';
 import explore from '../fixtures/explore-state.json';
+import learn from '../fixtures/learn-state.json';
 import debate from '../fixtures/debate-state.json';
 import sparring from '../fixtures/sparring-state.json';
-import { MODE_LINES, MENU_LINE, againLine } from '../modes';
+import { DEBATE_THIS_LINE, MODES, MODE_LINES, MENU_LINE, SPAR_THIS_LINE, againLine, teachLine } from '../modes';
 import { ROUND_LABELS, plateFor, screenFor, splashKey } from '../screen';
 import { useArcadeStore } from '../store';
 import { isDebateSnapshot } from '../types';
@@ -14,6 +15,7 @@ const frames = {
   debate: debate as DebateSnapshot[],
   sparring: sparring as DebateSnapshot[],
   explore: explore as DebateSnapshot[],
+  learn: learn as DebateSnapshot[],
 };
 
 describe('the contract’s three fixtures', () => {
@@ -132,6 +134,7 @@ describe('what the mode buttons say', () => {
       debate: "Let's debate.",
       sparring: "I'd like to spar: test my view with questions.",
       explore: 'I want to explore the theories.',
+      learn: 'Teach me a theory.',
     });
     expect(MENU_LINE).toBe('Take me back to the menu.');
   });
@@ -140,5 +143,49 @@ describe('what the mode buttons say', () => {
     expect(againLine('debate')).toBe("I'd like a rematch.");
     expect(againLine(null)).toBe("I'd like a rematch.");
     expect(againLine('sparring')).toBe("I'd like another round of questions.");
+  });
+});
+
+describe('learn mode', () => {
+  it('accepts the learn fixture, with the lesson field present', () => {
+    for (const frame of frames.learn) {
+      expect(isDebateSnapshot(frame)).toBe(true);
+      expect(frame).toHaveProperty('lesson');
+    }
+    expect(isDebateSnapshot({ ...frames.learn[0], lesson: { step: 'two', of: 4, title: 'x' } })).toBe(false);
+  });
+
+  it('fills lesson in as null for a server that predates it', () => {
+    const old: Record<string, unknown> = { ...frames.debate.at(-1)! };
+    delete old.lesson;
+    const store = useArcadeStore.getState();
+    store.clear();
+    store.receive(old);
+    expect(useArcadeStore.getState().snapshot?.lesson).toBeNull();
+  });
+
+  it('runs a lesson on the select, lesson, fight and decision screens', () => {
+    const seen = frames.learn.map((f) => screenFor(true, f));
+    expect([...new Set(seen)]).toEqual(['mode', 'select', 'lesson', 'fight', 'decision']);
+    const seated = frames.learn.find((f) => f.stage === 'setup' && f.user.theory_id)!;
+    expect(splashKey(seated)).toBeNull();
+  });
+
+  it('plates the lesson by step and the check by question', () => {
+    const second = frames.learn.find((f) => f.lesson?.step === 2)!;
+    expect(plateFor(second)).toEqual({ title: 'STEP 2', sub: 'THE TERMS', pips: 4, lit: 2 });
+    const check = frames.learn.find((f) => f.question?.number === 3)!;
+    expect(plateFor(check)).toEqual({ title: 'CHECK 3', sub: 'OF 3', pips: 3, lit: 3 });
+    expect(ROUND_LABELS.lesson).toBe('THE LESSON');
+    expect(ROUND_LABELS.check).toBe('THE CHECK');
+  });
+
+  it('puts LEARN first on the menu and says each line the way a person would', () => {
+    expect(MODES[0].id).toBe('learn');
+    expect(MODE_LINES.learn).toBe('Teach me a theory.');
+    expect(teachLine('Illusionism')).toBe('Teach me Illusionism.');
+    expect(againLine('learn')).toBe('Teach me that one again.');
+    expect(SPAR_THIS_LINE).toBe('Let me spar with it: question me on this theory.');
+    expect(DEBATE_THIS_LINE).toBe('Let me debate with it.');
   });
 });

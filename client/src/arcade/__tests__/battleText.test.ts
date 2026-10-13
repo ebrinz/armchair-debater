@@ -26,6 +26,7 @@ const snapshot = (stage: DebateSnapshot['stage'], last_hit: Hit | null): DebateS
   mode: null,
   focus: null,
   question: null,
+  lesson: null,
 });
 
 describe('hitTier', () => {
@@ -228,6 +229,7 @@ describe('decisionBanners', () => {
     mode: null,
     focus: null,
     question: null,
+    lesson: null,
   });
 
   // The Style guide's rule table, one case per row, checked in its order.
