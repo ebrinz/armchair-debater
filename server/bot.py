@@ -141,8 +141,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         params=PipelineParams(
             enable_metrics=True,
             enable_usage_metrics=True,
-            idle_timeout_frames=IDLE_TIMEOUT_FRAMES,
         ),
+        idle_timeout_frames=IDLE_TIMEOUT_FRAMES,
         observers=[],
     )
 
