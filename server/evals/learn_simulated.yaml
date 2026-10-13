@@ -19,7 +19,7 @@ scenarios:
     success: "the bot taught the lesson in steps, asked three check questions (check_answered was called three times), and in the report named the gap: that the workspace is not a store, or that consciousness is serial because one content at a time is broadcast"
     metrics:
       - name: no_verdict_before_the_report
-        criterion: "the reply does not say whether an answer was right or wrong, or mention a score, unless it is the report itself; a reply with no such remark passes"
+        criterion: "a reply that announces the learner's grasp as a number out of one hundred is the report, and passes. Any other reply passes when it does not say whether an answer was right or wrong and does not mention a score or grade; it fails only when it does"
         min_score: 1
       - measure: words
         max_value: 95
