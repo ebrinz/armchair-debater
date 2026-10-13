@@ -16,8 +16,8 @@ from pipecat.services.settings import TTSSettings
 
 import knowledge
 import providers
-from debate_state import EXAMINER, MODES
-from judge import JudgeError, write_finding, write_rationale
+from debate_state import EXAMINER, MODES, TUTOR
+from judge import JudgeError, write_finding, write_rationale, write_report
 
 _WINNER_TEXT = {
     "user": "The user wins.",
@@ -44,7 +44,8 @@ async def choose_mode(flow_manager: FlowManager, mode: str):
 
     Args:
         mode: "debate" to argue a theory against you, "sparring" to have their own
-            view examined with questions, or "explore" to be shown round the theories.
+            view examined with questions, "explore" to be shown round the theories,
+            or "learn" to be taught one theory.
     """
     if mode not in MODES:
         return {"status": "unknown_mode", "valid_modes": list(MODES)}, TRANSITION_IN_YAML
@@ -125,6 +126,21 @@ async def answer_given(flow_manager: FlowManager):
 SPAR_QUESTIONS = 5
 
 
+async def _seat_for_sparring(flow_manager: FlowManager, user: knowledge.Theory) -> dict:
+    """Seat the player alone with their theory, facing the examiner, at question one."""
+    state = flow_manager.state
+    state.update(
+        user_card=knowledge.brief(user),
+        user_theory_name=user.name,
+        bot_theory_name=EXAMINER,
+        spar_q=1,
+    )
+    state.pop("finding_task", None)
+    state["scorer"].reset()
+    await state["debate"].set_solo(user.id, user.name)
+    return {"status": "ok", "user_theory": user.name}
+
+
 async def take_position(flow_manager: FlowManager, user_theory: str):
     """Record the theory whose defence you are about to examine.
 
@@ -136,18 +152,7 @@ async def take_position(flow_manager: FlowManager, user_theory: str):
     user = knowledge.get(user_theory)
     if user is None:
         return {"status": "unknown_theory", "valid_ids": knowledge.ids()}, TRANSITION_IN_YAML
-
-    state = flow_manager.state
-    state.update(
-        user_card=knowledge.brief(user),
-        user_theory_name=user.name,
-        bot_theory_name=EXAMINER,
-        spar_q=1,
-    )
-    state.pop("finding_task", None)
-    state["scorer"].reset()
-    await state["debate"].set_solo(user.id, user.name)
-    return {"status": "ok", "user_theory": user.name}, TRANSITION_IN_YAML
+    return await _seat_for_sparring(flow_manager, user), TRANSITION_IN_YAML
 
 
 async def answer_heard(flow_manager: FlowManager):
@@ -236,6 +241,196 @@ async def show_theory(flow_manager: FlowManager, theory_id: str):
         "status": "shown",
         "card": knowledge.brief(theory),
         "rivals": [knowledge.THEORIES[rival].name for rival in theory.rivals],
+    }, TRANSITION_IN_YAML
+
+
+# --- the tutor -------------------------------------------------------------------
+
+LESSON_STEPS = knowledge.LESSON_STEPS
+CHECK_QUESTIONS = knowledge.CHECKS
+
+
+def _lesson_theory(state: dict) -> knowledge.Theory:
+    return knowledge.THEORIES[state["lesson_theory"]]
+
+
+def _begin_step(state: dict) -> None:
+    """Put the current step's title and material where the lesson prompt reads them."""
+    step = state["lesson_step"]
+    state["lesson_title"] = LESSON_STEPS[step - 1]
+    state["lesson_material"] = knowledge.lesson_step(_lesson_theory(state), step)
+
+
+async def choose_lesson(flow_manager: FlowManager, theory_id: str):
+    """Record which theory the user wants to learn, and start its lesson.
+
+    Call this once they have named a theory, or described one closely enough to
+    match. Use an id from the theory index.
+
+    Args:
+        theory_id: The id of the theory to teach.
+    """
+    theory = knowledge.get(theory_id)
+    if theory is None:
+        return {"status": "unknown_theory", "valid_ids": knowledge.ids()}, TRANSITION_IN_YAML
+
+    state = flow_manager.state
+    state.update(
+        user_card=knowledge.brief(theory),
+        user_theory_name=theory.name,
+        bot_theory_name=TUTOR,
+        lesson_theory=theory.id,
+        lesson_step=1,
+        check_q=1,
+    )
+    _begin_step(state)
+    state.pop("report_task", None)
+    state["scorer"].reset()
+    await state["debate"].set_solo(theory.id, theory.name, TUTOR)
+    return {"status": "ok", "theory": theory.name, "steps": list(LESSON_STEPS)}, TRANSITION_IN_YAML
+
+
+async def emit_step(action: dict, flow_manager: FlowManager) -> None:
+    """Pre-action: tell the client which step of the lesson this is."""
+    state = flow_manager.state
+    await state["debate"].set_lesson(state["lesson_step"], len(LESSON_STEPS), state["lesson_title"])
+
+
+async def step_done(flow_manager: FlowManager):
+    """The user has understood this step of the lesson and is ready for the next.
+
+    Call this when they say the step is clear or ask to go on, without replying first.
+    """
+    state = flow_manager.state
+    # The same guard as sparring: this is visit number `lesson_step` to the node,
+    # so the tutor must have finished that many turns in it. Otherwise the user
+    # spoke over the tutor before the step was taught, and it must not be skipped.
+    if state["scorer"].heard("lesson", "bot") < state["lesson_step"]:
+        return {
+            "status": "teach_first",
+            "instruction": "You have not taught this step yet. Teach it now.",
+        }, TRANSITION_IN_YAML
+    if state["lesson_step"] < len(LESSON_STEPS):
+        state["lesson_step"] += 1
+        _begin_step(state)
+        return {
+            "status": "more",
+            "step": state["lesson_step"],
+            "of": len(LESSON_STEPS),
+            "title": state["lesson_title"],
+        }, TRANSITION_IN_YAML
+    state["check_q"] = 1
+    return {"status": "done"}, TRANSITION_IN_YAML
+
+
+async def emit_check(action: dict, flow_manager: FlowManager) -> None:
+    """Pre-action: the check's current question for the prompt, its rubric for the
+    scorer, and its number for the client."""
+    state = flow_manager.state
+    number = state["check_q"]
+    if number == 1:
+        # The lesson's turns were heard (so the tutor's could be counted) but they
+        # are not the exam: the judge reads only the check's own transcript.
+        state["scorer"].reset()
+    question, rubric = knowledge.check_questions(_lesson_theory(state))[number - 1]
+    state["check_question"], state["check_rubric"] = question, rubric
+    await state["debate"].set_question(number, CHECK_QUESTIONS)
+
+
+async def check_answered(flow_manager: FlowManager):
+    """The user has answered the check question you just asked.
+
+    Call this as soon as they have answered, without saying whether it was right.
+    """
+    state = flow_manager.state
+    if state["scorer"].heard("check", "bot") < state["check_q"]:
+        return {
+            "status": "ask_first",
+            "instruction": "You have not asked this question yet. Ask it now.",
+        }, TRANSITION_IN_YAML
+    if state["check_q"] < CHECK_QUESTIONS:
+        state["check_q"] += 1
+        return {
+            "status": "more",
+            "question": state["check_q"],
+            "of": CHECK_QUESTIONS,
+        }, TRANSITION_IN_YAML
+
+    # The third answer. One decision, shared by any repeat; a failed one forgotten.
+    if "report_task" not in state:
+        state["report_task"] = asyncio.ensure_future(_report(flow_manager))
+    try:
+        return await state["report_task"], TRANSITION_IN_YAML
+    except BaseException:
+        state.pop("report_task", None)
+        raise
+
+
+def fallback_report(hits: list[dict]) -> str:
+    """What to say when the judge cannot write the report."""
+    if not hits:
+        return "The judge could not score this check, so the bar stands alone."
+    widest = max(hits, key=lambda hit: hit["damage"])
+    return f"The question that showed the biggest gap was this. {widest['reason']}"
+
+
+async def _report(flow_manager: FlowManager) -> dict:
+    state = flow_manager.state
+    debate, scorer = state["debate"], state["scorer"]
+
+    scorer.close()
+    await flow_manager.worker.queue_frames(
+        [TTSSpeakFrame("Thank you. Let me see how much of it has landed.", append_to_context=False)]
+    )
+    await scorer.drain()
+
+    grasp = debate.health["user"]
+    try:
+        report = await write_report(
+            theory=state["user_theory_name"],
+            health=grasp,
+            steps=list(LESSON_STEPS),
+            hits=list(debate.hits),
+        )
+    except JudgeError:
+        report = fallback_report(debate.hits)
+    await debate.set_verdict(report)
+
+    got_it = debate.winner() == "user"
+    state["report_text"] = (
+        f"Grasp of {state['user_theory_name']}: {grasp} out of 100. "
+        f"{'They have got it.' if got_it else 'Not yet.'} The report: {report}"
+    )
+    return {"status": "done", "grasp": grasp, "got_it": got_it}
+
+
+async def spar_this(flow_manager: FlowManager):
+    """Take the theory just learned into sparring: the examiner's five questions.
+
+    Call only when the user asks to spar with, defend, or be questioned on this theory.
+    """
+    state = flow_manager.state
+    theory = _lesson_theory(state)
+    await state["debate"].set_mode("sparring")
+    return await _seat_for_sparring(flow_manager, theory), TRANSITION_IN_YAML
+
+
+async def debate_this(flow_manager: FlowManager):
+    """Take the theory just learned into a debate against the house.
+
+    Call only when the user asks to debate, fight, or argue with this theory.
+    """
+    state = flow_manager.state
+    theory = _lesson_theory(state)
+    await state["debate"].set_mode("debate")
+    return {
+        "status": "ok",
+        "user_theory": theory.id,
+        "instruction": (
+            f"The user holds {theory.name} ({theory.id}). Do not ask what they think "
+            f"consciousness is: call set_positions with user_theory '{theory.id}' and "
+            "one of its rivals from the index."
+        ),
     }, TRANSITION_IN_YAML
 
 

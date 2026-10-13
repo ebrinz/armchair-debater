@@ -367,3 +367,197 @@ async def test_show_theory_reports_an_unknown_id_and_leaves_the_focus_alone():
 
     assert result["status"] == "unknown_theory" and "iit" in result["valid_ids"]
     assert fm.state["debate"].snapshot()["focus"] == "iit"
+
+
+# --- the tutor ------------------------------------------------------------------
+
+
+async def lesson_at(step: int, heard_by_tutor: int | None = None):
+    fm = FakeFlowManager()
+    await fm.state["debate"].set_mode("learn")
+    await handlers.choose_lesson(fm, theory_id="gwt")
+    fm.state["lesson_step"] = step
+    fm.state["scorer"].heard_turns[("lesson", "bot")] = (
+        step if heard_by_tutor is None else heard_by_tutor
+    )
+    fm.state["scorer"].log.clear()
+    return fm
+
+
+async def check_at(question: int, heard_by_tutor: int | None = None):
+    fm = FakeFlowManager()
+    await fm.state["debate"].set_mode("learn")
+    await handlers.choose_lesson(fm, theory_id="gwt")
+    fm.state["check_q"] = question
+    fm.state["scorer"].heard_turns[("check", "bot")] = (
+        question if heard_by_tutor is None else heard_by_tutor
+    )
+    fm.state["scorer"].log.clear()
+    return fm
+
+
+async def test_choose_mode_knows_learn():
+    fm = FakeFlowManager()
+    result, _ = await handlers.choose_mode(fm, mode="learn")
+    assert result == {"status": "learn"}
+    assert fm.state["debate"].snapshot()["mode"] == "learn"
+
+
+async def test_choose_lesson_seats_the_tutor_and_opens_step_one():
+    fm = FakeFlowManager()
+    await fm.state["debate"].set_mode("learn")
+    fm.state.update(check_q=3, report_task="stale")
+
+    result, nxt = await handlers.choose_lesson(fm, theory_id="GWT")
+
+    assert nxt is TRANSITION_IN_YAML
+    assert result["status"] == "ok" and result["theory"] == "Global Workspace Theory"
+    assert result["steps"] == ["The idea", "The terms", "The case for it", "What it's up against"]
+    assert fm.state["scorer"].log == ["reset"]
+    assert fm.state["lesson_theory"] == "gwt"
+    assert (fm.state["lesson_step"], fm.state["check_q"]) == (1, 1)
+    assert fm.state["lesson_title"] == "The idea"
+    assert "in plain words" in fm.state["lesson_material"]
+    assert fm.state["bot_theory_name"] == "The Tutor"
+    assert "report_task" not in fm.state
+    snapshot = fm.state["debate"].snapshot()
+    assert snapshot["user"]["theory_id"] == "gwt" and snapshot["bot"]["theory_name"] == "The Tutor"
+    assert snapshot["user"]["health"] == 100
+
+
+async def test_choose_lesson_reports_an_unknown_id():
+    fm = FakeFlowManager()
+    result, _ = await handlers.choose_lesson(fm, theory_id="nope")
+    assert result["status"] == "unknown_theory" and "gwt" in result["valid_ids"]
+
+
+async def test_emit_step_tells_the_client_where_the_lesson_is():
+    fm = await lesson_at(2)
+    fm.state["lesson_title"] = "The terms"
+    await handlers.emit_step({"type": "emit_step"}, fm)
+    assert fm.state["debate"].snapshot()["lesson"] == {"step": 2, "of": 4, "title": "The terms"}
+
+
+async def test_step_done_moves_to_the_next_step_with_its_material():
+    fm = await lesson_at(2)
+
+    result, nxt = await handlers.step_done(fm)
+
+    assert result == {"status": "more", "step": 3, "of": 4, "title": "The case for it"}
+    assert nxt is TRANSITION_IN_YAML
+    assert fm.state["lesson_step"] == 3
+    assert "arguments for it" in fm.state["lesson_material"]
+
+
+async def test_step_done_waits_until_the_tutor_has_taught():
+    fm = await lesson_at(3, heard_by_tutor=2)
+    result, _ = await handlers.step_done(fm)
+    assert result["status"] == "teach_first"
+    assert fm.state["lesson_step"] == 3
+
+
+async def test_the_fourth_step_done_opens_the_check():
+    fm = await lesson_at(4)
+    fm.state["check_q"] = 2  # a stale value from an earlier lesson
+    result, _ = await handlers.step_done(fm)
+    assert result == {"status": "done"}
+    assert fm.state["check_q"] == 1
+
+
+async def test_emit_check_puts_the_question_and_rubric_in_state_and_resets_the_scorer_first():
+    fm = await check_at(1)
+    await handlers.emit_check({"type": "emit_check"}, fm)
+    assert fm.state["scorer"].log == ["reset"]
+    assert fm.state["check_question"] == "Explain Global Workspace Theory to me in your own words."
+    assert "broadcast" in fm.state["check_rubric"]
+    assert fm.state["debate"].snapshot()["question"] == {"number": 1, "of": 3}
+
+    # The second and third questions come from the card, and do not reset.
+    fm.state["check_q"] = 2
+    fm.state["scorer"].log.clear()
+    await handlers.emit_check({"type": "emit_check"}, fm)
+    assert fm.state["scorer"].log == []
+    assert fm.state["check_question"].endswith("?")
+    assert fm.state["debate"].snapshot()["question"] == {"number": 2, "of": 3}
+
+
+async def test_check_answered_moves_to_the_next_question():
+    fm = await check_at(1)
+    result, _ = await handlers.check_answered(fm)
+    assert result == {"status": "more", "question": 2, "of": 3}
+    assert fm.state["check_q"] == 2
+
+
+async def test_check_answered_waits_until_the_tutor_has_asked():
+    fm = await check_at(2, heard_by_tutor=1)
+    result, _ = await handlers.check_answered(fm)
+    assert result["status"] == "ask_first"
+    assert fm.state["check_q"] == 2
+
+
+async def test_the_third_answer_brings_the_report(monkeypatch):
+    async def write_report(**kwargs):
+        assert kwargs["theory"] == "Global Workspace Theory"
+        assert kwargs["health"] == 84
+        assert kwargs["steps"] == ["The idea", "The terms", "The case for it", "What it's up against"]
+        return "You have the broadcast. Go back over The terms."
+
+    monkeypatch.setattr(handlers, "write_report", write_report)
+    fm = await check_at(3)
+    await fm.state["debate"].apply_answer(16, 0, "Described a local response.")
+
+    first, _ = await handlers.check_answered(fm)
+    again, _ = await handlers.check_answered(fm)
+
+    assert first == again == {"status": "done", "grasp": 84, "got_it": True}
+    assert fm.state["scorer"].log == ["close", "drain"]
+    assert len(fm.worker.frames) == 1 and isinstance(fm.worker.frames[0], TTSSpeakFrame)
+    assert fm.state["debate"].snapshot()["verdict"] == {
+        "winner": "user",
+        "rationale": "You have the broadcast. Go back over The terms.",
+    }
+    assert "84" in fm.state["report_text"] and "got it" in fm.state["report_text"]
+
+
+async def test_the_report_falls_back_to_the_question_with_the_biggest_gap(monkeypatch):
+    async def write_report(**kwargs):
+        raise handlers.JudgeError("down")
+
+    monkeypatch.setattr(handlers, "write_report", write_report)
+    fm = await check_at(3)
+    await fm.state["debate"].apply_answer(4, 0, "A small slip.")
+    await fm.state["debate"].apply_answer(21, 0, "Stated the misreading as the theory.")
+
+    await handlers.check_answered(fm)
+
+    assert (
+        "Stated the misreading as the theory."
+        in fm.state["debate"].snapshot()["verdict"]["rationale"]
+    )
+
+
+def test_fallback_report_with_no_hits():
+    assert "could not score" in handlers.fallback_report([])
+
+
+async def test_spar_this_switches_the_mode_and_seats_the_player_for_sparring():
+    fm = await check_at(3)
+    result, nxt = await handlers.spar_this(fm)
+    assert nxt is TRANSITION_IN_YAML
+    assert result == {"status": "ok", "user_theory": "Global Workspace Theory"}
+    assert fm.state["spar_q"] == 1
+    assert fm.state["bot_theory_name"] == "The Examiner"
+    assert fm.state["scorer"].log == ["reset"]
+    snapshot = fm.state["debate"].snapshot()
+    assert snapshot["mode"] == "sparring"
+    assert snapshot["user"]["theory_id"] == "gwt"
+    assert snapshot["bot"]["theory_name"] == "The Examiner"
+
+
+async def test_debate_this_switches_the_mode_and_tells_the_llm_what_the_user_holds():
+    fm = await check_at(3)
+    result, nxt = await handlers.debate_this(fm)
+    assert nxt is TRANSITION_IN_YAML
+    assert result["status"] == "ok" and result["user_theory"] == "gwt"
+    assert "set_positions" in result["instruction"] and "gwt" in result["instruction"]
+    assert fm.state["debate"].snapshot()["mode"] == "debate"
