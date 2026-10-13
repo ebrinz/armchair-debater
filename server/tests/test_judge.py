@@ -262,6 +262,9 @@ async def test_write_report_names_the_grasp_the_steps_and_the_answers():
     system, user = complete.calls[0]
     assert "two" in system.lower()
     assert "83" in user and "The terms" in user and "Described a local response." in user
+    # The report must name the gap in the costliest answer, in the judge's own words.
+    assert "costliest" in system.lower() or "cost the most" in system.lower()
+    assert "The answer that cost the most: Described a local response." in user
 
 
 async def test_write_report_retries_on_empty_then_raises():

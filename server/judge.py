@@ -117,8 +117,11 @@ rather than a brain-wide one."
 REPORT_SYSTEM = """You are the impartial judge of a lesson about a theory of consciousness. The \
 lesson is over and the learner's grasp has a score out of 100, already decided; do not dispute \
 it. In exactly two short spoken sentences: first, what the learner has understood; second, the \
-one thing to go back over, naming the lesson step it belongs to by its title. Plain prose, no \
-markup, lists, or numbers other than the score. Address the learner as "you"."""
+one thing to go back over, naming the lesson step it belongs to by its title. The second \
+sentence must name the specific gap in the answer that cost the most, in concrete terms taken \
+from that answer's verdict (if the learner stated a misreading, say what they said and what is \
+true instead); never a vague "strengthen your understanding". Plain prose, no markup, lists, or \
+numbers other than the score. Address the learner as "you"."""
 
 
 async def _complete(system: str, user: str) -> str:
@@ -303,10 +306,12 @@ async def write_report(
         "\n".join(f"- lost {h['damage']}, won back {h['recovery']}: {h['reason']}" for h in hits)
         or "(no answers were scored)"
     )
+    costliest = max(hits, key=lambda h: h["damage"])["reason"] if hits else "(none)"
     prompt = (
         f"The theory learned: {theory}\nGrasp at the end: {health} out of 100.\n"
         f"The lesson's steps, by title: {', '.join(steps) or '(none)'}\n\n"
-        f"Each answer, in order:\n{lines}"
+        f"Each answer, in order:\n{lines}\n\n"
+        f"The answer that cost the most: {costliest}"
     )
 
     async def attempt() -> str:
