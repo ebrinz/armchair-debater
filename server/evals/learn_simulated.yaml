@@ -11,12 +11,15 @@ scenarios:
       workspace theory: at the start, says "Teach me global workspace theory."
       After each step of the lesson says it is clear and to go on, with at most
       one short question in the whole lesson. In the check, explains things
-      mostly well, but believes the workspace is a storage area where the brain
-      keeps everything it is currently thinking about, and says so when asked to
-      explain the theory or why only a few things are conscious at once. After
-      the report, asks to go back to the menu, then ends the call.
+      mostly well, but firmly believes the workspace is a storage area where
+      the brain keeps everything it is currently thinking about. Whenever asked
+      why only a few things are conscious at once, or to explain the theory,
+      says exactly that: "the workspace is a storage area where the brain keeps
+      everything it is currently thinking about". Never drops this belief
+      during the check. After the report, asks to go back to the menu, then
+      ends the call.
     goal: "Be taught global workspace theory, answer the three check questions, hear the report, then go back to the menu."
-    success: "the bot taught the lesson in steps, asked three check questions (check_answered was called three times), and in the report named the gap: that the workspace is not a store, or that consciousness is serial because one content at a time is broadcast"
+    success: "the bot taught the lesson in steps and asked three check questions (check_answered was called three times); and the report, the reply that announces a grasp out of one hundred, names the learner's mistake of calling the workspace a store or storage area, saying it is a broadcast or a stage rather than a store. If the learner never called the workspace a store or storage area in their check answers, a report that does not mention it still passes"
     metrics:
       - name: no_verdict_before_the_report
         criterion: "a reply that announces the learner's grasp as a number out of one hundred is the report, and passes. Any other reply passes when it does not say whether an answer was right or wrong and does not mention a score or grade; it fails only when it does"
