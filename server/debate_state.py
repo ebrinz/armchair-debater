@@ -11,12 +11,16 @@ from collections.abc import Awaitable, Callable
 # share one stage; which nodes are scored is the scorer's business.
 DEBATE_ROUNDS = ("opening", "rebuttal", "crossexam", "closing")
 # "mode" is the front door. Sparring reuses "setup" and "verdict" for its first
-# and last nodes and has one stage of its own; the explorer has one stage.
-STAGES = ("mode", "setup", *DEBATE_ROUNDS, "verdict", "sparring", "explore")
-MODES = ("debate", "sparring", "explore")
+# and last nodes and has one stage of its own; the explorer has one stage; the
+# tutor reuses "setup" and "verdict" too, and has "lesson" and "check".
+STAGES = ("mode", "setup", *DEBATE_ROUNDS, "verdict", "sparring", "explore", "lesson", "check")
+MODES = ("debate", "sparring", "explore", "learn")
 EXAMINER = "The Examiner"
+TUTOR = "The Tutor"
 # Sparring: at 50 or more the view has held.
 HOLDS_AT = 50
+# Learning: at 70 or more the learner has got it.
+GOT_IT_AT = 70
 
 MAX_HEALTH = 100
 MAX_DAMAGE = 25
@@ -51,6 +55,7 @@ class DebateState:
         self.hits: list[dict] = []
         self._verdict: dict | None = None
         self._question: dict | None = None
+        self._lesson: dict | None = None
 
     async def _changed(self) -> None:
         if self._on_change:
@@ -65,6 +70,8 @@ class DebateState:
             self.mode = None
         if stage in ("mode", "setup"):
             self._reset()
+        if stage != "lesson":
+            self._lesson = None
         await self._changed()
 
     async def set_mode(self, mode: str) -> None:
@@ -83,11 +90,16 @@ class DebateState:
         self._question = {"number": number, "of": of}
         await self._changed()
 
-    async def set_solo(self, user_id: str, user_name: str) -> None:
-        """Sparring: a player with a theory, and an examiner with none."""
+    async def set_lesson(self, step: int, of: int, title: str) -> None:
+        """The tutor: which step of the lesson this is."""
+        self._lesson = {"step": step, "of": of, "title": title}
+        await self._changed()
+
+    async def set_solo(self, user_id: str, user_name: str, bot_name: str = EXAMINER) -> None:
+        """Sparring or a lesson: a player with a theory, and an examiner or tutor with none."""
         self._theories = {
             "user": {"theory_id": user_id, "theory_name": user_name},
-            "bot": {"theory_id": None, "theory_name": EXAMINER},
+            "bot": {"theory_id": None, "theory_name": bot_name},
         }
         self._reset_scores()
         await self._changed()
@@ -136,6 +148,8 @@ class DebateState:
         await self._changed()
 
     def winner(self) -> str:
+        if self.mode == "learn":
+            return "user" if self.health["user"] >= GOT_IT_AT else "bot"
         if self.mode == "sparring":
             return "user" if self.health["user"] >= HOLDS_AT else "bot"
         difference = self.health["user"] - self.health["bot"]
@@ -158,4 +172,5 @@ class DebateState:
             "mode": self.mode,
             "focus": self._focus,
             "question": dict(self._question) if self._question else None,
+            "lesson": dict(self._lesson) if self._lesson else None,
         }

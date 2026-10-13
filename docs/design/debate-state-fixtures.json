@@ -16,7 +16,8 @@
     "verdict": null,
     "mode": null,
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -35,7 +36,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -54,7 +56,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -73,7 +76,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -92,7 +96,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -116,7 +121,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -140,7 +146,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -164,7 +171,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -188,7 +196,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -212,7 +221,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -236,7 +246,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -260,7 +271,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -284,7 +296,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -308,7 +321,8 @@
     "verdict": null,
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -335,6 +349,7 @@
     },
     "mode": "debate",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   }
 ]

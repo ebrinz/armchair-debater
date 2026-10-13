@@ -327,3 +327,53 @@ async def test_the_sparring_finding_is_the_players_bar_not_a_comparison():
     assert state.health["user"] == 51 and state.winner() == "user"
     await state.apply_answer(2, 0, "r")
     assert state.health["user"] == 49 and state.winner() == "bot"
+
+
+async def test_a_fresh_state_has_no_lesson():
+    assert DebateState().snapshot()["lesson"] is None
+
+
+async def test_the_tutor_takes_the_examiners_seat_under_its_own_name():
+    state = DebateState()
+    await state.set_mode("learn")
+    await state.set_solo("gwt", "Global Workspace Theory", "The Tutor")
+    snapshot = state.snapshot()
+    assert snapshot["user"]["theory_id"] == "gwt"
+    assert snapshot["bot"] == {"theory_id": None, "theory_name": "The Tutor", "health": 100}
+    # The default is still the examiner, so sparring is untouched.
+    await state.set_solo("gwt", "Global Workspace Theory")
+    assert state.snapshot()["bot"]["theory_name"] == "The Examiner"
+
+
+async def test_the_lesson_step_is_emitted_and_cleared_when_the_stage_moves_on():
+    seen = []
+
+    async def on_change(snapshot):
+        seen.append(snapshot["lesson"])
+
+    state = DebateState(on_change=on_change)
+    await state.set_mode("learn")
+    await state.set_stage("lesson")
+    await state.set_lesson(2, 4, "The terms")
+    await state.set_stage("check")
+
+    assert seen[-2:] == [{"step": 2, "of": 4, "title": "The terms"}, None]
+
+
+async def test_got_it_at_seventy_in_learn_mode_only():
+    state = DebateState()
+    await state.set_mode("learn")
+    await state.set_solo("gwt", "Global Workspace Theory", "The Tutor")
+    await state.apply_answer(25, 0, "r")
+    await state.apply_answer(5, 0, "r")
+    assert state.health["user"] == 70 and state.winner() == "user"
+    await state.apply_answer(1, 0, "r")
+    assert state.health["user"] == 69 and state.winner() == "bot"
+
+    # Sparring still holds at fifty.
+    spar = DebateState()
+    await spar.set_mode("sparring")
+    await spar.set_solo("gwt", "Global Workspace Theory")
+    await spar.apply_answer(25, 0, "r")
+    await spar.apply_answer(25, 0, "r")
+    assert spar.health["user"] == 50 and spar.winner() == "user"

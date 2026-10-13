@@ -172,10 +172,60 @@ async def explore() -> list[dict]:
     return r.frames
 
 
+async def learn() -> list[dict]:
+    r = Recorder()
+    s = r.state
+    await s.set_stage("mode")
+    r.keep()
+    await s.set_mode("learn")
+    await s.set_stage("setup")
+    r.keep()
+    await s.set_solo(*GWT, "The Tutor")
+    r.keep()
+    await s.set_stage("lesson")
+    for step, title in enumerate(
+        ("The idea", "The terms", "The case for it", "What it's up against"), start=1
+    ):
+        await s.set_lesson(step, 4, title)
+        r.keep()
+    await s.set_stage("check")
+
+    # (raw damage, raw recovery, reason) for the answer to each of three questions.
+    answers = [
+        (
+            4,
+            0,
+            "Asked for the theory in their own words, gave broadcast and the small stage, "
+            "missed why it is serial.",
+        ),
+        (16, 0, "Asked what ignition is, described a local response rather than a brain-wide one."),
+        (
+            2,
+            10,
+            "Asked why only a few things at once, answered from the limited workspace "
+            "and repaired the ignition slip.",
+        ),
+    ]
+    for number, (damage, recovery, reason) in enumerate(answers, start=1):
+        await s.set_question(number, len(answers))
+        r.keep()
+        await s.apply_answer(damage, recovery, reason)
+        r.keep()
+
+    await s.set_stage("verdict")
+    await s.set_verdict(
+        "You have the broadcast and the limited stage, and you can say why consciousness "
+        "is serial. Go back over The terms: ignition is brain-wide, not a local response."
+    )
+    r.keep()
+    return r.frames
+
+
 FIXTURES = {
     "debate-state-fixtures.json": debate,
     "sparring-state-fixtures.json": sparring,
     "explore-state-fixtures.json": explore,
+    "learn-state-fixtures.json": learn,
 }
 
 

@@ -241,7 +241,7 @@ async def test_choose_mode_turns_down_anything_else_and_stays_put():
     result, _ = await handlers.choose_mode(fm, mode="karaoke")
 
     assert result["status"] == "unknown_mode"
-    assert result["valid_modes"] == ["debate", "sparring", "explore"]
+    assert result["valid_modes"] == ["debate", "sparring", "explore", "learn"]
     assert fm.state["debate"].snapshot()["mode"] is None
 
 

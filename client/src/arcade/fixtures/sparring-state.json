@@ -16,7 +16,8 @@
     "verdict": null,
     "mode": null,
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -35,7 +36,8 @@
     "verdict": null,
     "mode": "sparring",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -54,7 +56,8 @@
     "verdict": null,
     "mode": "sparring",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -76,7 +79,8 @@
     "question": {
       "number": 1,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -103,7 +107,8 @@
     "question": {
       "number": 1,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -130,7 +135,8 @@
     "question": {
       "number": 2,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -157,7 +163,8 @@
     "question": {
       "number": 2,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -184,7 +191,8 @@
     "question": {
       "number": 3,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -211,7 +219,8 @@
     "question": {
       "number": 3,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -238,7 +247,8 @@
     "question": {
       "number": 4,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -265,7 +275,8 @@
     "question": {
       "number": 4,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -292,7 +303,8 @@
     "question": {
       "number": 5,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -319,7 +331,8 @@
     "question": {
       "number": 5,
       "of": 5
-    }
+    },
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -349,6 +362,7 @@
     "question": {
       "number": 5,
       "of": 5
-    }
+    },
+    "lesson": null
   }
 ]

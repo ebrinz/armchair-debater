@@ -16,7 +16,8 @@
     "verdict": null,
     "mode": null,
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -35,7 +36,8 @@
     "verdict": null,
     "mode": "explore",
     "focus": null,
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -54,7 +56,8 @@
     "verdict": null,
     "mode": "explore",
     "focus": "iit",
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -73,7 +76,8 @@
     "verdict": null,
     "mode": "explore",
     "focus": "gwt",
-    "question": null
+    "question": null,
+    "lesson": null
   },
   {
     "type": "debate_state",
@@ -92,6 +96,7 @@
     "verdict": null,
     "mode": "explore",
     "focus": "illusionism",
-    "question": null
+    "question": null,
+    "lesson": null
   }
 ]

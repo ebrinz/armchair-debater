@@ -11,6 +11,7 @@ PAIRS = [
     ("docs/design/debate-state-fixtures.json", "client/src/arcade/fixtures/debate-state.json"),
     ("docs/design/sparring-state-fixtures.json", "client/src/arcade/fixtures/sparring-state.json"),
     ("docs/design/explore-state-fixtures.json", "client/src/arcade/fixtures/explore-state.json"),
+    ("docs/design/learn-state-fixtures.json", "client/src/arcade/fixtures/learn-state.json"),
     ("docs/design/theory-cards-fixture.json", "client/src/arcade/fixtures/theory-cards.json"),
 ]
 

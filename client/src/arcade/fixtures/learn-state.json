@@ -1,0 +1,352 @@
+[
+  {
+    "type": "debate_state",
+    "stage": "mode",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": null,
+    "focus": null,
+    "question": null,
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "setup",
+    "user": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": null,
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": null,
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "setup",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": null,
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "lesson",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": null,
+    "lesson": {
+      "step": 1,
+      "of": 4,
+      "title": "The idea"
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "lesson",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": null,
+    "lesson": {
+      "step": 2,
+      "of": 4,
+      "title": "The terms"
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "lesson",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": null,
+    "lesson": {
+      "step": 3,
+      "of": 4,
+      "title": "The case for it"
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "lesson",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": null,
+    "lesson": {
+      "step": 4,
+      "of": 4,
+      "title": "What it's up against"
+    }
+  },
+  {
+    "type": "debate_state",
+    "stage": "check",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 100
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": null,
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 1,
+      "of": 3
+    },
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "check",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 96
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 4,
+      "recovery": 0,
+      "reason": "Asked for the theory in their own words, gave broadcast and the small stage, missed why it is serial."
+    },
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 1,
+      "of": 3
+    },
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "check",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 96
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 4,
+      "recovery": 0,
+      "reason": "Asked for the theory in their own words, gave broadcast and the small stage, missed why it is serial."
+    },
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 2,
+      "of": 3
+    },
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "check",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 80
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 16,
+      "recovery": 0,
+      "reason": "Asked what ignition is, described a local response rather than a brain-wide one."
+    },
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 2,
+      "of": 3
+    },
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "check",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 80
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 16,
+      "recovery": 0,
+      "reason": "Asked what ignition is, described a local response rather than a brain-wide one."
+    },
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 3,
+      "of": 3
+    },
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "check",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 83
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 2,
+      "recovery": 5,
+      "reason": "Asked why only a few things at once, answered from the limited workspace and repaired the ignition slip."
+    },
+    "verdict": null,
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 3,
+      "of": 3
+    },
+    "lesson": null
+  },
+  {
+    "type": "debate_state",
+    "stage": "verdict",
+    "user": {
+      "theory_id": "gwt",
+      "theory_name": "Global Workspace Theory",
+      "health": 83
+    },
+    "bot": {
+      "theory_id": null,
+      "theory_name": "The Tutor",
+      "health": 100
+    },
+    "last_hit": {
+      "by": "bot",
+      "damage": 2,
+      "recovery": 5,
+      "reason": "Asked why only a few things at once, answered from the limited workspace and repaired the ignition slip."
+    },
+    "verdict": {
+      "winner": "user",
+      "rationale": "You have the broadcast and the limited stage, and you can say why consciousness is serial. Go back over The terms: ignition is brain-wide, not a local response."
+    },
+    "mode": "learn",
+    "focus": null,
+    "question": {
+      "number": 3,
+      "of": 3
+    },
+    "lesson": null
+  }
+]
