@@ -150,7 +150,7 @@ def test_there_is_no_judge_voice_unless_one_is_named(monkeypatch):
 def test_gradium_voices_for_the_house_and_the_judge(monkeypatch):
     monkeypatch.setenv("GRADIUM_JUDGE_VOICE_ID", "judge-voice")
 
-    assert providers.voices() == {"house": "_6Aslh2DxfmnRLmP", "judge": "judge-voice"}
+    assert providers.voices() == {"house": "kKmgHa8qUNt70kTT", "judge": "judge-voice"}
 
     monkeypatch.setenv("GRADIUM_VOICE_ID", "house-voice")
     assert providers.voices() == {"house": "house-voice", "judge": "judge-voice"}

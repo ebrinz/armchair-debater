@@ -83,7 +83,9 @@ def speech_provider() -> str:
     return _choice("SPEECH_PROVIDER", SPEECH_PROVIDERS)
 
 
-GRADIUM_HOUSE_VOICE = "_6Aslh2DxfmnRLmP"
+# Rupert: low, chest-weighted and resonant, an older British voice (chosen by ear
+# from the catalogue on 2026-10-13; the previous default was _6Aslh2DxfmnRLmP).
+GRADIUM_HOUSE_VOICE = "kKmgHa8qUNt70kTT"
 
 
 def voices() -> dict[str, str] | None:
