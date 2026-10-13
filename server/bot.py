@@ -29,6 +29,14 @@ from loguru import logger
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.evals.transport import EvalTransportParams
 from pipecat.flows import Flow, FlowConfig, FlowManager
+from pipecat.frames.frames import (
+    BotSpeakingFrame,
+    InterimTranscriptionFrame,
+    LLMFullResponseEndFrame,
+    TranscriptionFrame,
+    UserSpeakingFrame,
+    UserStartedSpeakingFrame,
+)
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.worker import PipelineParams, PipelineWorker
 from pipecat.processors.aggregators.llm_context import LLMContext
@@ -64,6 +72,20 @@ VOICE_RULES = (
     "any other emphasis or markup characters. Keep every turn under 70 words, about "
     "twenty seconds of speech. Your task instructions may describe a turn's structure "
     'as "first", "second", or "third" — that is guidance for you, not words to speak.'
+)
+
+
+# What counts as activity for the pipeline's idle timeout: Pipecat's defaults,
+# which are all speech, plus the LLM finishing a reply. Without the last one a
+# typed conversation — every text-mode eval — looks idle however busy it is,
+# and the pipeline cancels itself at the five-minute mark.
+IDLE_TIMEOUT_FRAMES = (
+    BotSpeakingFrame,
+    InterimTranscriptionFrame,
+    TranscriptionFrame,
+    UserSpeakingFrame,
+    UserStartedSpeakingFrame,
+    LLMFullResponseEndFrame,
 )
 
 
@@ -119,6 +141,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         params=PipelineParams(
             enable_metrics=True,
             enable_usage_metrics=True,
+            idle_timeout_frames=IDLE_TIMEOUT_FRAMES,
         ),
         observers=[],
     )
