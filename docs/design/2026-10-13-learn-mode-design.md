@@ -80,15 +80,21 @@ only from the card; `{{ voice_rules }}` shared as in the other modes.
   material from the card, so the LLM always knows where it is and what to
   teach. The same barge-in guard as sparring: `step_done` refuses (`teach_first`)
   and `check_answered` refuses (`ask_first`) until the tutor has finished a
-  turn in that visit to the node.
+  turn in that visit to the node. An `emit_check` pre-action on `check`
+  mirrors sparring's `emit_question`: it sets the snapshot's `question` for
+  the plate and puts the current question's rubric in flow state for the
+  scorer; for question one that rubric is `in_plain_words` plus the terms.
 - **Going back is free.** "Say that again" or "what was that term" stays in
   the node; the tutor re-explains. There is no backwards transition.
-- **The hand-offs carry the theory.** `spar_this` does what `take_position`
-  does with the lesson's theory and transitions straight to the `sparring`
+- **The hand-offs carry the theory and switch the mode.** `spar_this` sets
+  the mode to `sparring`, then does exactly what `take_position` does with the
+  lesson's theory (the same code, not a copy: it seats the player, resets
+  `spar_q` to 1 and the scorer), and transitions straight to the `sparring`
   node, skipping `spar_setup`'s question. `debate_this` sets the mode to
   `debate` and transitions to `setup` with a result telling the LLM the user
   holds this theory, so `setup`'s "unless they have already told you" rule
-  fires and it calls `set_positions` without asking.
+  fires and it calls `set_positions` without asking. Switching the mode first
+  matters: the client's labels and `winner()`'s threshold both read it.
 - **`choose_lesson`** mirrors `take_position`: unknown id → `unknown_theory`
   with the valid ids; otherwise sets `user_card`, `user_theory_name`,
   `bot_theory_name = "The Tutor"`, the lesson material, `lesson_step = 1`,
