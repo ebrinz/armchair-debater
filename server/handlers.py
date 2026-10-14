@@ -9,6 +9,7 @@ under "debate" and "scorer".
 """
 
 import asyncio
+import os
 
 from pipecat.flows import TRANSITION_IN_YAML, FlowManager
 from pipecat.frames.frames import TTSSpeakFrame, TTSUpdateSettingsFrame
@@ -255,11 +256,30 @@ def _lesson_theory(state: dict) -> knowledge.Theory:
     return knowledge.THEORIES[state["lesson_theory"]]
 
 
+# Each lesson step's instructions stay in the conversation, so the full card is
+# given once, on step one, and later steps point back to it: a copy per step grew
+# the prompt to ~25k characters and slowed every reply (playtest, 2026-10-14).
+# ARMCHAIR_LESSON_CARD_EVERY_STEP=1 puts the full card back on every step.
+LESSON_CARD_POINTER = (
+    "The theory's full card was given at step one, earlier in this conversation; "
+    "answer questions from it and from this step's material."
+)
+
+
+def _card_every_step() -> bool:
+    return os.getenv("ARMCHAIR_LESSON_CARD_EVERY_STEP") == "1"
+
+
 def _begin_step(state: dict) -> None:
-    """Put the current step's title and material where the lesson prompt reads them."""
+    """Put the current step's title, material, and card where the lesson prompt reads them."""
     step = state["lesson_step"]
     state["lesson_title"] = LESSON_STEPS[step - 1]
     state["lesson_material"] = knowledge.lesson_step(_lesson_theory(state), step)
+    state["lesson_card"] = (
+        f"The card, for questions:\n{state['user_card']}"
+        if step == 1 or _card_every_step()
+        else LESSON_CARD_POINTER
+    )
 
 
 def _begin_check(state: dict) -> None:

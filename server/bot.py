@@ -235,6 +235,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
             "lesson_step": 1,
             "lesson_title": "",
             "lesson_material": "",
+            "lesson_card": "",
             "check_q": 1,
             "check_question": "",
             "check_rubric": "",

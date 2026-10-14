@@ -162,3 +162,8 @@ def test_every_tutor_node_has_a_way_back_to_the_menu():
 def test_the_opening_speaks_as_the_debater_however_it_is_entered():
     # debate_this enters from a lesson and skips setup, so the opening carries the role itself.
     assert CONFIG.nodes["opening"].role_message == CONFIG.nodes["setup"].role_message
+
+
+def test_the_lesson_prompt_takes_its_card_from_lesson_card():
+    text = " ".join(m["content"] for m in CONFIG.nodes["lesson"].model_dump()["task_messages"])
+    assert "{{ lesson_card }}" in text and "{{ user_card }}" not in text

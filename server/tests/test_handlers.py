@@ -642,3 +642,27 @@ async def test_check_answered_names_the_question_it_completes():
     question = fm.state["check_question"]
     await handlers.check_answered(fm)
     assert named == [("check", question)]
+
+
+# --- the card in the lesson prompt ---------------------------------------------
+
+
+async def test_the_full_card_goes_into_the_lesson_once_then_a_pointer(monkeypatch):
+    # Every lesson step's instructions stay in the conversation, so a fresh copy of
+    # the card per step grew the prompt to ~25k characters (playtest finding).
+    monkeypatch.delenv("ARMCHAIR_LESSON_CARD_EVERY_STEP", raising=False)
+    fm = await lesson_at(1)
+    assert "Known objections" in fm.state["lesson_card"]  # step one: the whole card
+
+    await handlers.step_done(fm)  # on to step two
+    assert fm.state["lesson_step"] == 2
+    assert "Known objections" not in fm.state["lesson_card"]
+    assert "step one" in fm.state["lesson_card"]
+
+
+async def test_the_card_can_be_put_back_on_every_step(monkeypatch):
+    monkeypatch.setenv("ARMCHAIR_LESSON_CARD_EVERY_STEP", "1")
+    fm = await lesson_at(1)
+    await handlers.step_done(fm)
+    assert fm.state["lesson_step"] == 2
+    assert "Known objections" in fm.state["lesson_card"]

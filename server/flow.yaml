@@ -565,8 +565,7 @@ nodes:
           step: teach it now. If they ask for the menu, to stop, or to do
           something else (to debate, to spar, to explore), call main_menu.
 
-          The card, for questions:
-          {{ user_card }}
+          {{ lesson_card }}
     functions:
       - name: step_done
         transition_to:
