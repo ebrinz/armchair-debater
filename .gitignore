@@ -238,3 +238,7 @@ client/*.tsbuildinfo
 
 # Browser-automation scratch output (screenshots, page snapshots)
 .playwright-mcp/
+
+# Playwright output
+client/test-results/
+client/playwright-report/
