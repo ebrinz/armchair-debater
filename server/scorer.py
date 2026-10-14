@@ -55,6 +55,10 @@ class TurnScorer:
         self._rubric = rubric
         self._transcript: list[tuple[str, str]] = []
         self._heard: dict[tuple[str, str], int] = {}
+        # An answer in progress, per answer node: the history before it began,
+        # and its parts. A pause mid-answer splits it into several user turns;
+        # it is scored once, joined, when the bot's tool says it is complete.
+        self._pending: dict[str, tuple[list[tuple[str, str]], list[str]]] = {}
         self._tail: asyncio.Task | None = None
         self._closed = False
         self._generation = 0
@@ -69,6 +73,10 @@ class TurnScorer:
         self._transcript.append((by, text))
         self._heard[(node, by)] = self._heard.get((node, by), 0) + 1
         kind = ANSWER_NODES.get(node)
+        if kind and by == "user":
+            self._pending.setdefault(node, (history, []))[1].append(text)
+            logger.debug(f"scorer: holding part of an answer in {node} until it is complete")
+            return
         if node in UNSCORED_NODES or (kind and by == "bot"):
             # Kept for the judge to read — an answer means little without its
             # question — but a question is not an argument, so it is not scored.
@@ -142,6 +150,22 @@ class TurnScorer:
         except Exception:
             logger.exception(f"scorer: unexpected error applying a {by} hit")
 
+    def answer_complete(self, node: str) -> None:
+        """The bot's tool has heard a whole answer in ``node``: score it, once.
+
+        Call it before moving the question on, so a check answer is scored
+        against the rubric of the question it answered.
+        """
+        kind = ANSWER_NODES.get(node)
+        pending = self._pending.pop(node, None)
+        if self._closed or kind is None or pending is None:
+            return
+        history, parts = pending
+        rubric = self._rubric() if kind == "understanding" else ""
+        self._tail = asyncio.create_task(
+            self._run(self._tail, "user", " ".join(parts), history, self._generation, kind=kind, rubric=rubric)
+        )
+
     async def drain(self) -> None:
         # Nothing a scored turn does may stop the verdict that waits on this.
         if self._tail:
@@ -163,6 +187,7 @@ class TurnScorer:
     def reset(self) -> None:
         self._transcript = []
         self._heard = {}
+        self._pending = {}
         self._closed = False
         self._generation += 1
         self._tail = None

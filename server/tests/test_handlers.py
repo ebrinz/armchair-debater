@@ -21,6 +21,9 @@ class FakeScorer:
     def heard(self, node, by):
         return self.heard_turns.get((node, by), 0)
 
+    def answer_complete(self, node):
+        self.log.append(f"answer_complete:{node}")
+
     async def drain(self):
         self.log.append("drain")
         if self._on_drain:
@@ -318,7 +321,7 @@ async def test_the_fifth_answer_brings_the_finding(monkeypatch):
     again, _ = await handlers.answer_heard(fm)  # a repeat decides nothing new
 
     assert first == again == {"status": "done", "integrity": 80, "holds": True}
-    assert fm.state["scorer"].log == ["close", "drain"]
+    assert fm.state["scorer"].log == ["answer_complete:sparring", "close", "drain", "answer_complete:sparring"]
     assert len(fm.worker.frames) == 1 and isinstance(fm.worker.frames[0], TTSSpeakFrame)
     assert fm.state["debate"].snapshot()["verdict"] == {
         "winner": "user",
@@ -517,7 +520,7 @@ async def test_the_third_answer_brings_the_report(monkeypatch):
     again, _ = await handlers.check_answered(fm)
 
     assert first == again == {"status": "done", "grasp": 84, "got_it": True}
-    assert fm.state["scorer"].log == ["close", "drain"]
+    assert fm.state["scorer"].log == ["answer_complete:check", "close", "drain", "answer_complete:check"]
     assert len(fm.worker.frames) == 1 and isinstance(fm.worker.frames[0], TTSSpeakFrame)
     assert fm.state["debate"].snapshot()["verdict"] == {
         "winner": "user",
@@ -589,3 +592,27 @@ async def test_the_hand_offs_never_emit_the_lessons_verdict_under_the_new_mode()
         assert seen, hand_off.__name__
         for snapshot in seen:
             assert snapshot["verdict"] is None, (hand_off.__name__, snapshot["mode"])
+
+
+
+async def test_an_answer_is_completed_before_the_examiner_moves_on():
+    fm = await sparring_at(2, None)
+    await handlers.answer_heard(fm)
+    assert fm.state["scorer"].log == ["answer_complete:sparring"]
+
+
+async def test_a_barge_in_completes_no_answer():
+    fm = await sparring_at(3, None, heard_by_examiner=2)
+    await handlers.answer_heard(fm)
+    assert fm.state["scorer"].log == []
+
+
+async def test_a_check_answer_is_completed_while_its_rubric_is_still_current():
+    fm = await check_at(1)
+    rubric_when_completed = []
+    scorer = fm.state["scorer"]
+    scorer.answer_complete = lambda node: rubric_when_completed.append(fm.state["check_rubric"])
+    first_rubric = fm.state["check_rubric"]
+    await handlers.check_answered(fm)
+    assert rubric_when_completed == [first_rubric]
+    assert fm.state["check_rubric"] != first_rubric  # and only then did it move on

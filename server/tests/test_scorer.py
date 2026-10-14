@@ -225,6 +225,7 @@ async def test_in_sparring_the_question_is_heard_and_the_answer_is_scored_as_an_
 
     rig.scorer.submit("bot", "Would a broadcasting computer be conscious?")
     rig.scorer.submit("user", "Maybe.")
+    rig.scorer.answer_complete("sparring")  # answer_heard says the answer is whole
     await rig.scorer.drain()
 
     assert rig.calls == []  # the debate's judge is not asked
@@ -256,8 +257,9 @@ async def test_in_a_check_the_question_is_heard_and_the_answer_is_scored_against
 
     rig.scorer.submit("bot", "What is ignition?")
     rig.scorer.submit("user", "The visual area lights up.")
+    rig.scorer.answer_complete("check")  # check_answered, before it moves on
     # The handler moves on to the next question before the judge replies; the
-    # rubric that was current when the answer was heard is the one it is scored by.
+    # rubric that was current when the answer completed is the one it is scored by.
     rubric["text"] = "the rubric for question two"
     await rig.scorer.drain()
 
@@ -283,3 +285,77 @@ async def test_the_lesson_is_heard_but_nothing_in_it_is_scored():
     await rig.scorer.drain()
     assert rig.calls == [] and rig.state.hits == []
     assert rig.scorer.heard("lesson", "bot") == 1
+
+
+async def test_an_answer_split_by_a_pause_is_scored_once_when_it_is_complete():
+    # Found by the sparring_happy playtest: a pause mid-answer made two user turns,
+    # each scored as a dodge, and five sound answers took integrity to zero.
+    answers = []
+
+    async def score_answer(**kwargs):
+        answers.append(kwargs)
+        return TurnScore(5, 0, "Answered.")
+
+    rig = Rig()
+    rig.scorer._score_answer = score_answer
+    await rig.state.set_mode("sparring")
+    await rig.state.set_solo("gwt", "Global Workspace Theory")
+    rig.stage = "sparring"
+
+    rig.scorer.submit("bot", "Why should broadcast feel like anything?")
+    rig.scorer.submit("user", "Being globally available,")
+    rig.scorer.submit("user", "is what we mean by experience.")
+    await rig.scorer.drain()
+    assert answers == []  # nothing is scored until the answer is complete
+
+    rig.scorer.answer_complete("sparring")
+    await rig.scorer.drain()
+    assert len(answers) == 1
+    assert answers[0]["answer"] == "Being globally available, is what we mean by experience."
+    assert answers[0]["history"] == [("bot", "Why should broadcast feel like anything?")]
+    assert rig.state.health["user"] == 95
+
+    # The next question starts a fresh answer.
+    rig.scorer.submit("bot", "Would a broadcasting computer be conscious?")
+    rig.scorer.submit("user", "Maybe.")
+    rig.scorer.answer_complete("sparring")
+    await rig.scorer.drain()
+    assert [a["answer"] for a in answers] == [
+        "Being globally available, is what we mean by experience.",
+        "Maybe.",
+    ]
+
+
+async def test_a_check_answer_is_scored_once_against_the_rubric_current_when_it_completes():
+    checks = []
+
+    async def score_understanding(**kwargs):
+        checks.append(kwargs)
+        return TurnScore(0, 0, "Full answer.")
+
+    rig = Rig()
+    rig.scorer._score_understanding = score_understanding
+    rubric = {"text": "rubric one"}
+    rig.scorer._rubric = lambda: rubric["text"]
+    await rig.state.set_mode("learn")
+    rig.stage = "check"
+
+    rig.scorer.submit("bot", "What is ignition?")
+    rig.scorer.submit("user", "A sudden burst,")
+    rig.scorer.submit("user", "brain-wide.")
+    rig.scorer.answer_complete("check")
+    rubric["text"] = "rubric two"  # the handler moves on after completing the answer
+    await rig.scorer.drain()
+
+    assert len(checks) == 1
+    assert checks[0]["answer"] == "A sudden burst, brain-wide."
+    assert checks[0]["rubric"] == "rubric one" and checks[0]["question"] == "What is ignition?"
+
+
+async def test_completing_an_answer_nobody_gave_scores_nothing():
+    rig = Rig()
+    rig.stage = "sparring"
+    rig.scorer.submit("bot", "A question.")
+    rig.scorer.answer_complete("sparring")
+    await rig.scorer.drain()
+    assert rig.state.hits == []

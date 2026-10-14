@@ -170,6 +170,7 @@ async def answer_heard(flow_manager: FlowManager):
             "status": "ask_first",
             "instruction": "You have not asked this question yet. Ask it now.",
         }, TRANSITION_IN_YAML
+    state["scorer"].answer_complete("sparring")
     if state["spar_q"] < SPAR_QUESTIONS:
         state["spar_q"] += 1
         return {
@@ -360,6 +361,7 @@ async def check_answered(flow_manager: FlowManager):
             "status": "ask_first",
             "instruction": "You have not asked this question yet. Ask it now.",
         }, TRANSITION_IN_YAML
+    state["scorer"].answer_complete("check")
     if state["check_q"] < CHECK_QUESTIONS:
         state["check_q"] += 1
         _begin_check(state)
