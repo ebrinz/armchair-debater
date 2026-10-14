@@ -88,6 +88,8 @@ server/
   providers.py      LLM_PROVIDER / SPEECH_PROVIDER switches; the optional judge's voice
   quiet_llm.py      Drops whitespace-only LLM replies (they confuse anything counting turns)
   local_app.py      Local production mode: serves the built arcade, refuses foreign origins and hosts
+  recorder.py       The flight recorder: one JSON line per session event, on when ARMCHAIR_RECORD is set
+  playtest/         The rules checker, the scripted-voice driver, and its scenarios
   skip_tts_sync.py  Keeps text-mode evals from synthesizing speech nobody hears
   make_fixtures.py  Generates the JSON contract fixtures from DebateState
   cards/            The twelve theory cards
@@ -198,6 +200,29 @@ uv run pipecat eval suite evals/suite.yaml          # scripted + simulated debat
 cd client
 npm test && npm run lint && npm run build
 ```
+
+### Playtests
+
+Three layers, from free to real:
+
+```bash
+cd client && npm run e2e                                          # screen behaviour on the replay, no server
+./armchair --last                                                 # check your latest real session against the rules
+./armchair --playtest                                             # scripted voice sessions, all of them
+./armchair --playtest learn_happy                                 # or one, by name
+```
+
+`./armchair` records every session to `~/.armchair/sessions/` (the latest 50,
+readable only by you, never uploaded), so when something feels off,
+`./armchair --last` says which rule it broke and when. The scripted sessions play
+synthesized speech into a real bot as its microphone, over the same WebRTC path
+a browser uses, against exactly the loopback, guarded, recorded setup that
+`./armchair` runs: interruptions, long pauses, asking to skip ahead, the menu
+from anywhere, both hand-offs. They run on local speech (Moonshine and Kokoro on this
+machine), so they spend no Gradium credits, only the LLM's text tokens;
+`--real-speech` runs one against your configured provider and reports the
+credits it used. The rules and scenarios are described in
+[`docs/design/2026-10-14-playtest-harness-design.md`](docs/design/2026-10-14-playtest-harness-design.md).
 
 **What costs credits.** `?mock` costs nothing: it replays a fixture in the browser
 and never connects. The text-mode evals call the LLM but not the speech services —

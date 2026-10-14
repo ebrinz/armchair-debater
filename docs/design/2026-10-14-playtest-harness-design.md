@@ -1,6 +1,6 @@
 # Playtest Harness — Design
 
-**Date:** 2026-10-14 · **Status:** approved in conversation (three layers: voice
+**Date:** 2026-10-14 · **Status:** implemented 2026-10-14 ([plan](2026-10-14-playtest-harness-plan.md)); approved in conversation (three layers: voice
 playthroughs, a rules checker over a recorded timeline, screen behaviour tests)
 · **Builds on:** [`learn-mode-design`](2026-10-13-learn-mode-design.md),
 [`modes-design`](2026-09-20-modes-design.md)
@@ -39,7 +39,7 @@ object per line to a session file.
 {"t": 12.42, "kind": "snapshot",   "state": { /* the full debate_state */ }}
 {"t": 14.03, "kind": "user_started"}
 {"t": 15.60, "kind": "user_stopped"}
-{"t": 15.61, "kind": "user_text",  "text": "What do you mean by broadcast?", "typed": false}
+{"t": 15.61, "kind": "user_text",  "text": "What do you mean by broadcast?"}
 {"t": 16.90, "kind": "tool",       "name": "step_done", "args": {}, "status": "more"}
 {"t": 17.05, "kind": "bot_started"}
 {"t": 17.06, "kind": "bot_text",   "text": "The key terms are ..."}
@@ -72,11 +72,11 @@ timelines: each rule gets a clean case and a breaking one.
 | `legal-path` | Every node change follows an edge in `flow.yaml` (read from the config, not copied) | error |
 | `stage-follows-node` | Every node entry that emits a stage is followed by a snapshot with that stage within 1 s | error |
 | `steps-in-order` | `lesson.step` and `question.number` only move up by one, and reset only on a new lesson or examination | error |
-| `answered` | After a final user turn, the bot starts speaking within 12 s, unless the user spoke again first | error |
-| `no-double-reply` | The bot never starts a second reply while one is still being spoken | error |
+| `answered` | After a final user turn, the bot starts speaking within 12 s (17 s on local speech, for Kokoro's synthesis time), unless the user spoke again first | error |
+| `no-double-reply` | More than one bot reply between two user turns | warn |
 | `barge-in` | When the user starts speaking while the bot is speaking, the bot stops within 1.5 s | error |
 | `no-early-score` | No bot text mentions a score, a grasp or integrity number, health, or "out of one hundred" before the stage is `verdict` | error |
-| `earned-rung` | A snapshot with `verdict.winner == "user"` appears only at stage `verdict`, and only after that mode's last scored turn | error |
+| `earned-rung` | A snapshot with `verdict.winner == "user"` appears only at stage `verdict`, and never right after a snapshot in a different mode | error |
 | `guard-fired` | A tool returned `teach_first`, `ask_first`, or `answer_first` (a barge-in the guards caught) | warn |
 | `errors` | Any `error` line | warn |
 | `long-silence` | Nobody spoke for more than 30 s while connected | warn |
@@ -89,12 +89,13 @@ non-zero on any `error`. `./armchair --last` checks your most recent session.
 A package, `server/playtest/`, driven from the command line:
 
 ```bash
-uv run python -m playtest run playtest/scenarios/learn_happy.yaml
-uv run python -m playtest run playtest/scenarios/          # all of them
+./armchair --playtest                 # all of them, from the repo root
+./armchair --playtest learn_happy     # one, by name
 ```
 
-For each scenario it starts a bot in local mode on a free port with the
-recorder pointed at the run directory, connects the stand-in WebRTC client,
+For each scenario it starts a bot on a free port exactly as `./armchair` does
+(loopback only, the origin guard, the built arcade, which it builds first if
+stale) with the recorder pointed at the run directory, connects the stand-in WebRTC client,
 plays the script, closes, runs the checker over the bot's timeline, and checks
 the scenario's own expectations.
 
@@ -134,7 +135,7 @@ expect:
   rules_allow: [guard-fired]           # warnings this scenario expects
 ```
 
-Every `wait` has a timeout (default 45 s) and fails the run with the last ten
+Waits can also be `quiet: <seconds>`, meaning the bot has said nothing for that long; use it after a verdict, where a "let me weigh that" line comes before the result. Every `wait` has a timeout (default 45 s) and fails the run with the last ten
 timeline lines when it runs out.
 
 **The scenarios, first set:**

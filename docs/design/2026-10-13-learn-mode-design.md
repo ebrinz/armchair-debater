@@ -94,9 +94,11 @@ only from the card; `{{ voice_rules }}` shared as in the other modes.
   lesson's theory (the same code, not a copy: it seats the player, resets
   `spar_q` to 1 and the scorer), and transitions straight to the `sparring`
   node, skipping `spar_setup`'s question. `debate_this` sets the mode to
-  `debate` and transitions to `setup` with a result telling the LLM the user
-  holds this theory, so `setup`'s "unless they have already told you" rule
-  fires and it calls `set_positions` without asking. `set_mode` itself resets
+  `debate`, passes through `setup` with the positions already set (the
+  player's theory against its first listed rival, so the versus splash shows),
+  and transitions straight to `opening`, which carries the debater's role. (As
+  first designed it left `set_positions` to the setup node's LLM, which asked
+  the player's view again instead; the playtest harness caught it.) `set_mode` itself resets
   the scores and the verdict, so no snapshot ever carries the lesson's won
   verdict under the new mode: the client lights a ladder rung on exactly that
   shape, and a hand-off must not light SPAR or DEBATE unearned.
