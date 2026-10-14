@@ -150,3 +150,11 @@ def test_local_speech_gets_extra_time_to_answer():
     assert "answered" not in rules([{"t": 0, "kind": "header", "speech": "local"}, *late])
     too_late = [{"t": 0, "kind": "header", "speech": "local"}, ev(0, "user_text", text="Hi."), ev(18, "bot_started")]
     assert "answered" in rules(too_late)
+
+
+def test_a_long_bot_turn_is_not_silence():
+    # Found on minimax-m2.7: a 30 s spoken turn was flagged as nobody speaking.
+    speaking = [ev(0, "user_text", text="Go on."), ev(1, "bot_started"), ev(40, "bot_text", text="..."), ev(40, "bot_stopped")]
+    assert "long-silence" not in rules(speaking)
+    quiet = [ev(0, "bot_text", text="Hi."), ev(0.1, "bot_stopped"), ev(40, "user_started")]
+    assert "long-silence" in rules(quiet)

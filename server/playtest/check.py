@@ -202,9 +202,11 @@ def _warnings(events):
             out.append(Violation("guard-fired", "warn", e["t"], f"{e['name']} answered {e['status']}"))
         elif e["kind"] == "error":
             out.append(Violation("errors", "warn", e["t"], e.get("message", "")[:120]))
-    active = [e for e in events if e["kind"] in ACTIVITY]
+    # A bot turn is activity from its start to its end, so a gap that begins
+    # with bot_started is the bot talking, not silence.
+    active = [e for e in events if e["kind"] in ACTIVITY | {"bot_stopped", "user_stopped"}]
     for a, b in zip(active, active[1:]):
-        if b["t"] - a["t"] > SILENCE_WARN:
+        if a["kind"] != "bot_started" and b["t"] - a["t"] > SILENCE_WARN:
             out.append(Violation("long-silence", "warn", a["t"], f"nobody spoke for {b['t'] - a['t']:.0f} s"))
     return out
 

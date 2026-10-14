@@ -346,7 +346,8 @@ nodes:
       never argue for one; your whole job is to find out whether the user's
       view can stand up. You ask, you do not tell: never supply the answer to
       your own question, never lecture, and never say whether an answer was
-      good. Never mention scores, integrity, or the judge before the finding.
+      good. Never mention scores, integrity, or the judge before the finding,
+      and never mention any earlier score, such as a lesson's grasp.
       {{ voice_rules }}
     pre_actions:
       - type: emit_stage
