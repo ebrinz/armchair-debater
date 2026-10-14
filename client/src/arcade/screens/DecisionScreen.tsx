@@ -23,6 +23,9 @@ export interface DecisionScreenProps {
   /** Learn mode's two hand-offs: the next rungs. Absent outside learn mode. */
   onSpar?: () => void;
   onDebate?: () => void;
+  /** Live audio levels, 0..1: the verdict is read aloud, so mouths still move. */
+  userLevel?: number;
+  botLevel?: number;
 }
 
 /**
@@ -65,6 +68,8 @@ export const DecisionScreen = ({
   onMenu,
   onSpar,
   onDebate,
+  userLevel = 0,
+  botLevel = 0,
   mock = false,
 }: DecisionScreenProps) => {
   const reduced = useReducedMotion();
@@ -131,6 +136,8 @@ export const DecisionScreen = ({
         snapshot={snapshot}
         hitCount={0}
         frozen
+        userLevel={userLevel}
+        botLevel={botLevel}
         mock={mock}
         poses={poses}
         text={{ lines: phase >= RATIONALE && rationale ? [rationale] : [], cue: null }}

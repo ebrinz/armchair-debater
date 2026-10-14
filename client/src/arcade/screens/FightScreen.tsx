@@ -76,7 +76,9 @@ export const FightScreen = ({
   // is the decision screen's replay of this HUD, where nothing lands.
   useSfx(!frozen && hit && tier ? sfxForHit(tier) : null, hitCount);
   useSfx(!frozen && hit && hit.recovery > 0 ? 'heal' : null, hitCount, 420);
-  const level = { user: frozen ? 0 : userLevel, bot: frozen ? 0 : botLevel };
+  // The decision screen freezes the fight, but the verdict, finding and report
+  // are read aloud, so the speaker's mouth still follows the voice.
+  const level = { user: userLevel, bot: botLevel };
   const debater = { user: snapshot.user, bot: snapshot.bot };
 
   const rootStyle = { '--shake-px': `${fx.shakePx}px` } as CSSProperties;

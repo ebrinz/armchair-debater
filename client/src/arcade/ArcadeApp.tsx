@@ -192,7 +192,9 @@ const ArcadeView = ({
             }
           />
         )}
-        {screen === 'lesson' && snapshot && <LessonScreen snapshot={snapshot} cards={deck} />}
+        {screen === 'lesson' && snapshot && (
+          <LessonScreen snapshot={snapshot} cards={deck} botLevel={botLevel} />
+        )}
         {screen === 'explore' && (
           <DeckScreen
             cards={deck}
@@ -218,6 +220,8 @@ const ArcadeView = ({
             onMenu={() => say(MENU_LINE)}
             onSpar={() => say(SPAR_THIS_LINE)}
             onDebate={() => say(DEBATE_THIS_LINE)}
+            userLevel={userLevel}
+            botLevel={botLevel}
             mock={mock}
           />
         )}

@@ -9,6 +9,8 @@ import type { DebateSnapshot, TheoryCard } from '../types';
 export interface LessonScreenProps {
   snapshot: DebateSnapshot;
   cards: TheoryCard[];
+  /** The bot's live audio level, 0..1, so the tutor's mouth follows its voice. */
+  botLevel?: number;
 }
 
 const STEPS = ['The idea', 'The terms', 'The case for it', "What it's up against"];
@@ -18,7 +20,7 @@ const STEPS = ['The idea', 'The terms', 'The case for it', "What it's up against
  * saying which of the four steps this is. No bars — nothing is scored here.
  * Which step is showing comes from the server's `lesson` field alone.
  */
-export const LessonScreen = ({ snapshot, cards }: LessonScreenProps) => {
+export const LessonScreen = ({ snapshot, cards, botLevel = 0 }: LessonScreenProps) => {
   const card = cards.find((c) => c.id === snapshot.user.theory_id) ?? null;
   const step = snapshot.lesson?.step ?? 1;
 
@@ -39,7 +41,7 @@ export const LessonScreen = ({ snapshot, cards }: LessonScreenProps) => {
           <Armchair
             side="bot"
             variant="champion"
-            level={0}
+            level={botLevel}
             hurt={false}
             healed={false}
             health={100}
