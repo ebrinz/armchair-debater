@@ -516,12 +516,17 @@ nodes:
           there is, name three or four from different parts of the index in
           plain prose, one short clause each, and ask which. If choose_lesson
           reports unknown_theory, call it again with an id from the index.
+          If they ask for the menu or to do something else, call main_menu.
     functions:
       - name: choose_lesson
         transition_to:
           field: status
           cases:
             ok: lesson
+      - name: main_menu
+        transition_only: true
+        description: Call when the user asks for the menu, to stop, or to do something other than this lesson. Returns to the menu.
+        transition_to: mode_select
 
   # One node, entered once per step; step_done counts.
   lesson:
@@ -554,7 +559,8 @@ nodes:
           fourth step, and step_done is how you get there. Never say you
           cannot give a report, and never mention the judge. If step_done
           reports teach_first, you were interrupted before you taught this
-          step: teach it now.
+          step: teach it now. If they ask for the menu, to stop, or to do
+          something else (to debate, to spar, to explore), call main_menu.
 
           The card, for questions:
           {{ user_card }}
@@ -565,6 +571,10 @@ nodes:
           cases:
             more: lesson
             done: check
+      - name: main_menu
+        transition_only: true
+        description: Call when the user asks for the menu, to stop, or to do something other than this lesson. Returns to the menu.
+        transition_to: mode_select
 
   # One node, entered once per question; check_answered counts.
   check:
@@ -590,7 +600,8 @@ nodes:
           immediately, without replying to the answer. If check_answered
           reports ask_first, you were interrupted before you asked: ask it
           now. If instead they ask what you meant, rephrase the question in
-          one sentence and wait.
+          one sentence and wait. If they ask for the menu or to stop, call
+          main_menu.
     functions:
       - name: check_answered
         transition_to:
@@ -598,6 +609,10 @@ nodes:
           cases:
             more: check
             done: lesson_report
+      - name: main_menu
+        transition_only: true
+        description: Call when the user asks for the menu, to stop, or to do something other than this lesson. Returns to the menu.
+        transition_to: mode_select
 
   lesson_report:
     pre_actions:

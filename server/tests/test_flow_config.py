@@ -119,8 +119,8 @@ def transitions(node) -> dict[str, object]:
 
 def test_a_lesson_is_a_pick_four_steps_three_checks_and_a_report():
     assert walk("tutor_setup")[:4] == ["tutor_setup", "lesson", "check", "lesson_report"]
-    assert targets(CONFIG.nodes["lesson"]) == {"more": "lesson", "done": "check"}
-    assert targets(CONFIG.nodes["check"]) == {"more": "check", "done": "lesson_report"}
+    assert targets(CONFIG.nodes["lesson"]) == {"more": "lesson", "done": "check", "main_menu": "mode_select"}
+    assert targets(CONFIG.nodes["check"]) == {"more": "check", "done": "lesson_report", "main_menu": "mode_select"}
 
 
 def test_the_report_hands_off_to_sparring_and_the_debate_with_the_theory_in_hand():
@@ -150,3 +150,10 @@ def test_the_lesson_and_check_nodes_emit_their_stages():
     assert stages["lesson"] == ["lesson"]
     assert stages["check"] == ["check"]
     assert stages["lesson_report"] == ["verdict"]
+
+
+def test_every_tutor_node_has_a_way_back_to_the_menu():
+    # Found by the menu_from_anywhere playtest: "take me back to the menu" in the
+    # middle of a lesson had nowhere to go, and the tutor kept teaching.
+    for name in ("tutor_setup", "lesson", "check", "lesson_report"):
+        assert transitions(CONFIG.nodes[name]).get("main_menu") == "mode_select", name
