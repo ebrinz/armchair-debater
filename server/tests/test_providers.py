@@ -195,3 +195,25 @@ def test_a_playtest_override_wins_over_a_provider_named_in_dotenv(monkeypatch):
     assert providers.speech_provider() == "local"
     monkeypatch.delenv("ARMCHAIR_SPEECH_PROVIDER")
     assert providers.speech_provider() == "gradium"
+
+
+def test_the_developer_role_is_kept_unless_the_model_needs_it_converted(monkeypatch):
+    # Benchmark, 2026-10-14: minimax-m2.7 and gpt-oss-120b on General Compute ignore
+    # "developer" messages and never call the flow's tools, but follow the same
+    # instructions sent as "user", about five times faster than deepseek-v3.2.
+    monkeypatch.delenv("LLM_DEVELOPER_ROLE", raising=False)
+    assert providers.llm_config().developer_role is True
+    monkeypatch.setenv("LLM_DEVELOPER_ROLE", "false")
+    assert providers.llm_config().developer_role is False
+    monkeypatch.setenv("LLM_DEVELOPER_ROLE", "0")
+    assert providers.llm_config().developer_role is False
+
+
+def test_the_bot_tells_the_llm_service_whether_to_convert_developer_messages(monkeypatch):
+    import bot
+
+    monkeypatch.setenv("GENERAL_COMPUTE_API_KEY", "test-key")  # constructing the service calls nothing
+    monkeypatch.setenv("LLM_DEVELOPER_ROLE", "false")
+    assert bot.make_llm(providers.llm_config()).supports_developer_role is False
+    monkeypatch.delenv("LLM_DEVELOPER_ROLE")
+    assert bot.make_llm(providers.llm_config()).supports_developer_role is True

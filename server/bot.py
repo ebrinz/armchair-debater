@@ -127,6 +127,18 @@ def _open_recorder(runner_args: RunnerArguments):
     )
 
 
+def make_llm(llm_config: providers.LLMConfig) -> QuietOpenAILLMService:
+    llm = QuietOpenAILLMService(
+        api_key=llm_config.require_key(),
+        base_url=llm_config.base_url,
+        settings=QuietOpenAILLMService.Settings(model=llm_config.model),
+    )
+    # Pipecat converts "developer" messages to "user" for a service that says it
+    # does not support the role; some models need that to follow the flow.
+    llm.supports_developer_role = llm_config.developer_role
+    return llm
+
+
 async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> None:
     """Run the voice bot for this session.
 
@@ -149,11 +161,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     logger.info(
         f"LLM: {llm_config.provider} ({llm_config.model}); speech: {providers.speech_provider()}"
     )
-    llm = QuietOpenAILLMService(
-        api_key=llm_config.require_key(),
-        base_url=llm_config.base_url,
-        settings=QuietOpenAILLMService.Settings(model=llm_config.model),
-    )
+    llm = make_llm(llm_config)
 
     context = LLMContext()
     context_aggregator = LLMContextAggregatorPair(

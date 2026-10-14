@@ -45,6 +45,11 @@ class LLMConfig:
     base_url: str | None  # None is the OpenAI client's own default
     model: str
     key_variable: str
+    # Whether to send flow instructions in the "developer" role. Some models on
+    # General Compute (minimax-m2.7, gpt-oss-120b) ignore that role and never call
+    # the flow's tools; LLM_DEVELOPER_ROLE=false sends them as "user" instead,
+    # through Pipecat's own conversion.
+    developer_role: bool = True
 
     def require_key(self) -> str:
         return _require(self.key_variable, f"LLM_PROVIDER={self.provider}")
@@ -61,10 +66,15 @@ class LLMConfig:
         return limits
 
 
+def _developer_role() -> bool:
+    return os.getenv("LLM_DEVELOPER_ROLE", "true").strip().lower() not in ("0", "false", "no", "off")
+
+
 def llm_config() -> LLMConfig:
     provider = _choice("LLM_PROVIDER", LLM_PROVIDERS)
     if provider == "openai":
         return LLMConfig(
+            developer_role=_developer_role(),
             provider=provider,
             base_url=None,
             # Pipecat's own OpenAILLMService default.
@@ -72,6 +82,7 @@ def llm_config() -> LLMConfig:
             key_variable="OPENAI_API_KEY",
         )
     return LLMConfig(
+            developer_role=_developer_role(),
         provider=provider,
         base_url="https://api.generalcompute.com/v1",
         model=os.getenv("GENERAL_COMPUTE_MODEL", "deepseek-v3.2"),
