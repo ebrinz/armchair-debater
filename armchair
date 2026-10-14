@@ -4,6 +4,8 @@
 #   ./armchair            build the client if it changed, start the bot, open the arcade
 #   ./armchair --rebuild  force a client rebuild first
 #   ./armchair --last     check your most recent session against the playtest rules
+#   ./armchair --playtest [names]   scripted voice sessions against this same setup
+#                                   (local speech: no Gradium credits; all scenarios if none named)
 #
 # The bot binds to 127.0.0.1 only and serves the built client itself (no Vite,
 # no second port), and refuses requests from any other origin or host name.
@@ -40,6 +42,11 @@ if needs_build "${1:-}"; then
   ( cd "$CLIENT" && { [[ -d node_modules ]] || npm ci --silent; } \
       && VITE_SAME_ORIGIN=1 npx vite build --base=/arcade/ --logLevel warn )
   touch "$STAMP"
+fi
+
+if [[ "${1:-}" == "--playtest" ]]; then
+  shift
+  cd "$SERVER" && exec uv run python -m playtest run "$@"
 fi
 
 # Open the browser once the bot answers.

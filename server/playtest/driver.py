@@ -1,8 +1,11 @@
 """Play scenarios against a real local bot over WebRTC, then check the timeline.
 
-    uv run python -m playtest run playtest/scenarios/learn_happy.yaml
-    uv run python -m playtest run playtest/scenarios/
-    uv run python -m playtest run --real-speech playtest/scenarios/learn_happy.yaml
+    ./armchair --playtest                       # every scenario, from the repo root
+    ./armchair --playtest learn_happy           # one, by name
+    uv run python -m playtest run [names or paths] [--real-speech]
+
+The bot is started exactly as ./armchair starts it (loopback only, the origin
+guard, the built arcade, the recorder), so a playtest tests what a player runs.
 
 By default the bot hears with Moonshine and speaks with Kokoro, on this Mac, so a
 run spends no Gradium credits; only the LLM's text tokens. --real-speech uses
@@ -28,6 +31,8 @@ from playtest.mic import ScriptedMic
 
 SERVER = Path(__file__).parents[1]
 RUNS = Path(__file__).parent / "runs"
+SCENARIOS = Path(__file__).parent / "scenarios"
+CLIENT_DIST = SERVER.parent / "client" / "dist"
 
 
 def _free_port() -> int:
@@ -167,19 +172,61 @@ def gradium_credits() -> int | None:
         return None
 
 
-def _start_bot(port: int, record_dir: Path, real_speech: bool) -> subprocess.Popen:
-    env = {**os.environ, "ARMCHAIR_RECORD": str(record_dir), "ARMCHAIR_RECORD_KEEP": "0"}
+def bot_command(port: int) -> list[str]:
+    """The bot, started exactly as ./armchair starts it: loopback only, with the
+    origin guard, serving the built arcade."""
+    origin = f"http://127.0.0.1:{port}"
+    return [
+        "uv", "run", "bot.py", "--host", "127.0.0.1", "--port", str(port),
+        "--allowed-origins", origin, f"http://localhost:{port}",
+    ]
+
+
+def bot_env(port: int, record_dir: Path, *, real_speech: bool, base: dict | None = None) -> dict:
+    env = {
+        **(os.environ if base is None else base),
+        "ARMCHAIR_LOCAL": "1",
+        "ARMCHAIR_ORIGIN": f"http://127.0.0.1:{port}",
+        "ARMCHAIR_RECORD": str(record_dir),
+        "ARMCHAIR_RECORD_KEEP": "0",
+    }
     if not real_speech:
         env["SPEECH_PROVIDER"] = "local"  # no Gradium credits: Moonshine and Kokoro on this Mac
+    return env
+
+
+def require_build() -> None:
+    """Local mode serves the built arcade, so a run needs one."""
+    if not (CLIENT_DIST / "index.html").is_file():
+        sys.exit("no built arcade in client/dist: run ./armchair --playtest, which builds it, or npm run build")
+
+
+def resolve(names: list[str]) -> list[Path]:
+    """Scenario paths from names or paths; none given means every scenario."""
+    if not names:
+        return sorted(SCENARIOS.glob("*.yaml"))
+    paths = []
+    for name in names:
+        p = Path(name)
+        if p.is_dir():
+            paths += sorted(p.glob("*.yaml"))
+        elif p.suffix == ".yaml":
+            paths.append(p)
+        else:
+            paths.append(SCENARIOS / f"{name}.yaml")
+    return paths
+
+
+def _start_bot(port: int, record_dir: Path, real_speech: bool) -> subprocess.Popen:
     log = (record_dir / "bot.log").open("w")
     process = subprocess.Popen(
-        ["uv", "run", "bot.py", "--host", "127.0.0.1", "--port", str(port)],
-        cwd=SERVER, env=env, stdout=log, stderr=subprocess.STDOUT,
+        bot_command(port), cwd=SERVER, env=bot_env(port, record_dir, real_speech=real_speech),
+        stdout=log, stderr=subprocess.STDOUT,
     )
     deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
         try:
-            if httpx.get(f"http://127.0.0.1:{port}/status", timeout=1).status_code == 200:
+            if httpx.get(f"http://127.0.0.1:{port}/arcade/", timeout=1).status_code == 200:
                 return process
         except httpx.HTTPError:
             pass
@@ -231,13 +278,8 @@ def run_one(path: Path, real_speech: bool = False) -> bool:
 def main(argv: list[str]) -> int:
     real_speech = "--real-speech" in argv
     argv = [a for a in argv if a != "--real-speech"]
-    if not argv:
-        print(__doc__)
-        return 2
-    paths: list[Path] = []
-    for arg in argv:
-        p = Path(arg)
-        paths += sorted(p.glob("*.yaml")) if p.is_dir() else [p]
+    require_build()
+    paths = resolve(argv)
     before = gradium_credits() if real_speech else None
     results = [run_one(p, real_speech) for p in paths]
     print(f"\n{sum(results)}/{len(results)} passed")

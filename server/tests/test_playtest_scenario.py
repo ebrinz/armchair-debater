@@ -38,3 +38,38 @@ def test_expectations_are_checked_against_the_timeline():
     assert any("barge-in" in f for f in failures)
     assert not any("guard-fired" in f for f in failures)
     assert not any("final_stage" in f for f in failures)
+
+
+def test_the_bot_is_started_the_way_armchair_starts_it(tmp_path):
+    from playtest import driver
+
+    command = driver.bot_command(7861)
+    assert command[:3] == ["uv", "run", "bot.py"]
+    assert command[command.index("--host") + 1] == "127.0.0.1"
+    origins = command[command.index("--allowed-origins") + 1:]
+    assert origins == ["http://127.0.0.1:7861", "http://localhost:7861"]
+
+    env = driver.bot_env(7861, tmp_path, real_speech=False, base={})
+    assert env["ARMCHAIR_LOCAL"] == "1" and env["ARMCHAIR_ORIGIN"] == "http://127.0.0.1:7861"
+    assert env["ARMCHAIR_RECORD"] == str(tmp_path) and env["SPEECH_PROVIDER"] == "local"
+    assert "SPEECH_PROVIDER" not in driver.bot_env(7861, tmp_path, real_speech=True, base={})
+
+
+def test_a_missing_arcade_build_is_reported_before_any_bot_starts(tmp_path, monkeypatch):
+    from playtest import driver
+
+    monkeypatch.setattr(driver, "CLIENT_DIST", tmp_path / "nope")
+    try:
+        driver.require_build()
+    except SystemExit as e:
+        assert "./armchair --playtest" in str(e) or "npm run build" in str(e)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_scenarios_can_be_named_without_their_path():
+    from playtest import driver
+
+    paths = driver.resolve(["learn_happy", "playtest/scenarios/sparring_happy.yaml"])
+    assert [p.name for p in paths] == ["learn_happy.yaml", "sparring_happy.yaml"]
+    assert [p.name for p in driver.resolve([])][:1] == ["debate_from_lesson.yaml"]  # none named: all of them
