@@ -101,3 +101,11 @@ def test_the_bot_records_nothing_unless_asked(monkeypatch, tmp_path):
     rec.close()
     header = lines(rec.path)[0]
     assert header["session"] == "s1" and "commit" in header and "llm" in header
+
+
+def test_recordings_are_readable_by_their_owner_only(tmp_path):
+    # They hold transcripts of what the player said.
+    rec = Recorder(tmp_path / "sessions", header={})
+    rec.close()
+    assert (rec.path.parent.stat().st_mode & 0o777) == 0o700
+    assert (rec.path.stat().st_mode & 0o777) == 0o600

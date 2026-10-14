@@ -5,6 +5,7 @@ transcripts of what the player said, so they stay on this machine.
 """
 
 import json
+import os
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -37,11 +38,13 @@ class Recorder:
     def __init__(self, directory: Path, *, header: dict, keep: int = 50, clock=time.monotonic):
         directory = Path(directory).expanduser()
         directory.mkdir(parents=True, exist_ok=True)
+        # Transcripts of what the player said: the owner's alone.
+        directory.chmod(0o700)
         if keep > 0:
             _prune(directory, keep - 1)
         session = str(header.get("session") or "session")[:8]
         self.path = directory / f"{time.strftime('%Y%m%d-%H%M%S')}-{session}.jsonl"
-        self._file = self.path.open("a", encoding="utf-8")
+        self._file = os.fdopen(os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600), "a", encoding="utf-8")
         self._clock = clock
         self._t0 = clock()
         self._write({"t": 0, "kind": "header", "started": time.strftime("%Y-%m-%dT%H:%M:%S"), **header})
