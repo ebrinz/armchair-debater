@@ -49,6 +49,8 @@ from pipecat.processors.aggregators.llm_response_universal import (
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
 from pipecat.transports.base_transport import BaseTransport, TransportParams
+from pipecat.turns.user_start import MinWordsUserTurnStartStrategy
+from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
 import handlers
@@ -127,6 +129,17 @@ def _open_recorder(runner_args: RunnerArguments):
     )
 
 
+# While the bot is speaking, it takes this many words to interrupt it; when it is
+# quiet, one word starts the player's turn. In recorded sessions, room chatter
+# ("what the hell", "straight up. what?") cut off six of seven replies.
+INTERRUPT_MIN_WORDS = 3
+
+
+def user_turn_strategies() -> UserTurnStrategies:
+    """How a user turn starts: the min-words rule; how it stops: Pipecat's defaults."""
+    return UserTurnStrategies(start=[MinWordsUserTurnStartStrategy(min_words=INTERRUPT_MIN_WORDS)])
+
+
 def make_llm(llm_config: providers.LLMConfig) -> QuietOpenAILLMService:
     llm = QuietOpenAILLMService(
         api_key=llm_config.require_key(),
@@ -166,7 +179,10 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     context = LLMContext()
     context_aggregator = LLMContextAggregatorPair(
         context,
-        user_params=LLMUserAggregatorParams(vad_analyzer=SileroVADAnalyzer()),
+        user_params=LLMUserAggregatorParams(
+            vad_analyzer=SileroVADAnalyzer(),
+            user_turn_strategies=user_turn_strategies(),
+        ),
     )
 
     # Pipeline - assembled from reusable components
