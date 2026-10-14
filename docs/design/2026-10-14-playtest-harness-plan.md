@@ -16,7 +16,8 @@
 - `server/playtest/check.py` imports nothing from Pipecat.
 - Recorder files hold transcripts: they stay on the machine. `./armchair` writes to `~/.armchair/sessions/` and keeps the latest 50.
 - Speech cache: `server/playtest/.cache/`, git-ignored. Playthrough runs: `server/playtest/runs/`, git-ignored.
-- Playthroughs cost real credits and minutes; nothing runs them automatically.
+- **Credit budget (the user's instruction: "be careful not to burn too many voice pipeline tokens").** Playthroughs run with `SPEECH_PROVIDER=local` (Moonshine transcribes, Kokoro speaks, both on this Mac) and the player's lines are synthesized locally with Kokoro: zero Gradium credits. Only General Compute text tokens are spent (the bot's replies and the judge). `--real-speech` uses `server/.env`'s speech provider and prints Gradium's `remaining_credits` before and after; it is run at most once, for `learn_happy`, and only if the user asks. Re-run only the scenario that failed, never the whole directory, after a fix. No `silence` step longer than 15 s. At the start of Part 3, the Gradium balance was 58,525 of 145,000 credits.
+- Nothing runs playthroughs automatically.
 - `uv run` for Python from `server/`; `npm` from `client/`.
 - Commit messages end with the attribution line the session's system reminder gives. Push `debate-mode` and fast-forward `master` at each Part's end.
 
@@ -25,7 +26,7 @@
 1. **A recording directory that does not exist, or a home path with `~`.** The recorder must create it and expand `~`. Task 5 pins this.
 2. **A session that ends mid-turn** (the user closes the tab right after speaking). `answered` must not fire for a user turn within 12 s of the timeline's end. Task 4 pins this.
 3. **A node re-entered under the same name** (`lesson` → `lesson`). The recorder notes only changes of name, so `legal-path` must not demand a node event per step. Task 4 pins this.
-4. **Gradium's streaming WAV header**, which claims a twelve-hour length. The speech cache must read the PCM after the `data` tag, not trust the header. Task 7 pins this.
+4. **A sample-rate mismatch between Kokoro (24 kHz float) and the microphone track (48 kHz s16).** Played unconverted, the player's lines arrive at double speed and garbled, and every scenario fails for a reason that is not the bot's. Task 7 pins the conversion.
 5. **`?frame=` past the end of a fixture, or not a number.** The replay must fall back to the normal loop, not show a blank screen. Task 1 pins this.
 
 ---
@@ -1221,59 +1222,62 @@ git merge-base --is-ancestor origin/master debate-mode && git branch -f master d
 
 # Part 3 — Voice playthroughs
 
-### Task 7: Cached speech and a scripted microphone
+### Task 7: Local speech for the bot, the player's lines, and a scripted microphone
 
 **Files:**
+- Modify: `server/providers.py` (a `local` speech provider)
 - Create: `server/playtest/speech.py`, `server/playtest/mic.py`
 - Modify: `.gitignore` (add `server/playtest/.cache/` and `server/playtest/runs/`)
-- Test: `server/tests/test_playtest_speech.py`
+- Test: `server/tests/test_providers.py`, `server/tests/test_playtest_speech.py`
 
 **Interfaces:**
-- Produces: `speech.pcm_from_wav(data: bytes) -> bytes`; `speech.cache_key(text, voice) -> str`; `speech.say(text, *, voice=DEFAULT_VOICE, cache_dir=CACHE, fetch=None) -> bytes` (48 kHz mono s16 PCM); `mic.ScriptedMic()` (an `aiortc` audio track) with `.queue(pcm: bytes)`, `.speaking -> bool`, `.idle() -> awaitable`.
+- Produces: `SPEECH_PROVIDER=local` → `make_stt()` returns `MoonshineSTTService()`, `make_tts()` returns `KokoroTTSService` with voice `LOCAL_HOUSE_VOICE = "bm_george"`, `voices()` returns `None`; `speech.to_pcm48(samples, rate) -> bytes` (48 kHz mono s16); `speech.cache_key(text, voice) -> str`; `speech.say(text, *, voice=PLAYER_VOICE, cache_dir=CACHE, synth=None) -> bytes`; `mic.ScriptedMic()` with `.queue(pcm)`, `.speaking`, `.idle()`.
 
 - [ ] **Step 1: Write the failing tests**
+
+Append to `server/tests/test_providers.py`:
+
+```python
+def test_local_speech_runs_on_this_machine(monkeypatch):
+    monkeypatch.setenv("SPEECH_PROVIDER", "local")
+    monkeypatch.delenv("GRADIUM_API_KEY", raising=False)  # no key needed, so none is spent
+    from pipecat.services.kokoro.tts import KokoroTTSService
+    from pipecat.services.moonshine.stt import MoonshineSTTService
+
+    assert isinstance(providers.make_stt(), MoonshineSTTService)
+    tts = providers.make_tts()
+    assert isinstance(tts, KokoroTTSService)
+    assert tts._settings.voice == providers.LOCAL_HOUSE_VOICE == "bm_george"
+    assert providers.voices() is None
+```
 
 Create `server/tests/test_playtest_speech.py`:
 
 ```python
-import struct
-
-import pytest
+import numpy as np
 
 from playtest import mic, speech
 
 
-def streaming_wav(pcm: bytes) -> bytes:
-    """A WAV whose header claims a huge length, as Gradium's streaming one does."""
-    fmt = struct.pack("<HHIIHH", 1, 1, 48000, 96000, 2, 16)
-    return b"RIFF" + struct.pack("<I", 0xFFFFFFFF) + b"WAVEfmt " + struct.pack("<I", 16) + fmt + b"data" + struct.pack("<I", 0xFFFFFFFF) + pcm
+def test_kokoro_float_audio_becomes_48k_s16_pcm():
+    one_second_24k = np.linspace(-1.0, 1.0, 24000, dtype=np.float32)
+    pcm = speech.to_pcm48(one_second_24k, 24000)
+    samples = np.frombuffer(pcm, dtype=np.int16)
+    assert len(samples) == 48000
+    assert samples[0] == -32767 and samples[-1] == 32767
 
 
-def test_the_pcm_is_read_after_the_data_tag_whatever_the_header_claims():
-    pcm = bytes(range(10)) * 10
-    assert speech.pcm_from_wav(streaming_wav(pcm)) == pcm
-
-
-def test_an_odd_trailing_byte_is_dropped():
-    assert speech.pcm_from_wav(streaming_wav(b"\x01\x02\x03")) == b"\x01\x02"
-
-
-def test_not_a_wav_is_an_error():
-    with pytest.raises(ValueError):
-        speech.pcm_from_wav(b"nope")
-
-
-def test_speech_is_fetched_once_and_then_read_from_the_cache(tmp_path):
+def test_a_line_is_synthesized_once_and_then_read_from_the_cache(tmp_path):
     calls = []
 
-    def fetch(text, voice):
+    def synth(text, voice):
         calls.append((text, voice))
-        return streaming_wav(b"\x00\x01" * 4800)
+        return np.zeros(2400, dtype=np.float32), 24000
 
-    first = speech.say("Hello.", cache_dir=tmp_path, fetch=fetch)
-    second = speech.say("Hello.", cache_dir=tmp_path, fetch=fetch)
-    assert first == second and len(first) == 9600 and len(calls) == 1
-    assert speech.cache_key("Hello.", "v1") != speech.cache_key("Hello.", "v2")
+    first = speech.say("Hello.", cache_dir=tmp_path, synth=synth)
+    second = speech.say("Hello.", cache_dir=tmp_path, synth=synth)
+    assert first == second and len(first) == 4800 * 2 and len(calls) == 1
+    assert speech.cache_key("Hello.", "a") != speech.cache_key("Hello.", "b")
 
 
 async def test_the_mic_plays_silence_then_a_queued_line_then_silence_again():
@@ -1282,7 +1286,7 @@ async def test_the_mic_plays_silence_then_a_queued_line_then_silence_again():
     assert silent.samples == 960 and silent.sample_rate == 48000
     assert bytes(silent.planes[0])[: 960 * 2] == b"\x00" * 1920 and not track.speaking
 
-    track.queue(b"\x01\x00" * 1500)  # 1500 samples: one full frame and part of another
+    track.queue(b"\x01\x00" * 1500)  # one full 20 ms frame and part of another
     assert track.speaking
     first = await track.recv()
     assert bytes(first.planes[0])[:4] == b"\x01\x00\x01\x00"
@@ -1296,69 +1300,100 @@ async def test_the_mic_plays_silence_then_a_queued_line_then_silence_again():
 
 - [ ] **Step 2: Run them to see them fail**
 
-Run: `cd server && uv run pytest tests/test_playtest_speech.py -q`
-Expected: collection error (`cannot import name 'mic'`).
+Run: `cd server && uv run pytest tests/test_providers.py tests/test_playtest_speech.py -q`
+Expected: the provider test fails (`SPEECH_PROVIDER='local': expected one of gradium, openai`); the speech tests fail to import `mic`.
 
-- [ ] **Step 3: Implement**
+- [ ] **Step 3: The `local` provider**
+
+In `server/providers.py`: change `SPEECH_PROVIDERS = ("gradium", "openai")` to `("gradium", "openai", "local")`, add near `GRADIUM_HOUSE_VOICE`:
+
+```python
+# SPEECH_PROVIDER=local: Moonshine and Kokoro, on this machine, no key and no
+# credits. For playtests, not for people: a stock voice, and Moonshine waits for
+# the end of a phrase rather than streaming.
+LOCAL_HOUSE_VOICE = "bm_george"
+```
+
+In `make_stt()`, before the Gradium fallback:
+
+```python
+    if provider == "local":
+        from pipecat.services.moonshine.stt import MoonshineSTTService
+
+        return MoonshineSTTService()
+```
+
+In `make_tts()`, before the Gradium fallback:
+
+```python
+    if provider == "local":
+        from pipecat.services.kokoro.tts import KokoroTTSService
+
+        return KokoroTTSService(settings=KokoroTTSService.Settings(voice=LOCAL_HOUSE_VOICE))
+```
+
+In `voices()`, first line of the body: `if speech_provider() == "local": return None`.
+
+Also list `local` in the README's "Swapping providers" block (`SPEECH_PROVIDER=gradium | openai | local`, with "local: Moonshine and Kokoro on this machine, for playtests").
+
+- [ ] **Step 4: The player's lines, and the microphone**
 
 Create `server/playtest/speech.py`:
 
 ```python
-"""The player's lines as 48 kHz mono PCM, synthesized once with Gradium and cached."""
+"""The player's lines as 48 kHz mono PCM, synthesized locally with Kokoro and cached.
+
+Free: the model is the one Pipecat's Kokoro service downloads, in
+~/.cache/pipecat/kokoro-onnx.
+"""
 
 import hashlib
-import os
+from functools import cache
 from pathlib import Path
 
-import httpx
-from dotenv import dotenv_values
+import numpy as np
 
 CACHE = Path(__file__).parent / ".cache"
-DEFAULT_VOICE = "YTpq7expH9539ERJ"  # a Gradium catalogue voice, unlike the bot's own
-TTS_URL = "https://api.gradium.ai/api/post/speech/tts"
+PLAYER_VOICE = "af_heart"  # not the bot's voice, so the two are easy to tell apart
+KOKORO_DIR = Path("~/.cache/pipecat/kokoro-onnx").expanduser()
 
 
-def pcm_from_wav(data: bytes) -> bytes:
-    """The samples after the ``data`` tag. Gradium's streaming WAV header claims
-    a length it never has, so the header's sizes are not trusted."""
-    if data[:4] != b"RIFF":
-        raise ValueError("not a WAV")
-    at = data.find(b"data")
-    if at < 0:
-        raise ValueError("WAV has no data chunk")
-    pcm = data[at + 8:]
-    return pcm[: len(pcm) - len(pcm) % 2]
+def to_pcm48(samples: np.ndarray, rate: int) -> bytes:
+    """Float audio at any rate as 48 kHz mono signed 16-bit PCM."""
+    samples = np.asarray(samples, dtype=np.float32)
+    length = int(round(len(samples) * 48000 / rate))
+    resampled = np.interp(np.linspace(0, len(samples) - 1, length), np.arange(len(samples)), samples)
+    return (np.clip(resampled, -1.0, 1.0) * 32767).astype(np.int16).tobytes()
 
 
 def cache_key(text: str, voice: str) -> str:
     return hashlib.sha256(f"{voice}\n{text}".encode()).hexdigest()[:24]
 
 
-def _gradium_key() -> str:
-    key = os.environ.get("GRADIUM_API_KEY") or dotenv_values(Path(__file__).parents[1] / ".env").get("GRADIUM_API_KEY")
-    if not key:
-        raise RuntimeError("GRADIUM_API_KEY is not set (server/.env)")
-    return key
+@cache
+def _kokoro():
+    from kokoro_onnx import Kokoro
+
+    model, voices = KOKORO_DIR / "kokoro-v1.0.onnx", KOKORO_DIR / "voices-v1.0.bin"
+    if not model.exists():
+        # Pipecat's service downloads it on first use; instantiate it once to fetch.
+        from pipecat.services.kokoro.tts import KokoroTTSService
+
+        KokoroTTSService()
+    return Kokoro(str(model), str(voices))
 
 
-def _fetch(text: str, voice: str) -> bytes:
-    response = httpx.post(
-        TTS_URL,
-        headers={"x-api-key": _gradium_key()},
-        json={"text": text, "voice_id": voice, "output_format": "wav", "only_audio": True},
-        timeout=60,
-        follow_redirects=True,
-    )
-    response.raise_for_status()
-    return response.content
+def _synth(text: str, voice: str):
+    return _kokoro().create(text, voice=voice, speed=1.0, lang="en-us")
 
 
-def say(text: str, *, voice: str = DEFAULT_VOICE, cache_dir: Path = CACHE, fetch=None) -> bytes:
+def say(text: str, *, voice: str = PLAYER_VOICE, cache_dir: Path = CACHE, synth=None) -> bytes:
     cache_dir.mkdir(parents=True, exist_ok=True)
     path = cache_dir / f"{cache_key(text, voice)}.pcm"
     if path.exists():
         return path.read_bytes()
-    pcm = pcm_from_wav((fetch or _fetch)(text, voice))
+    samples, rate = (synth or _synth)(text, voice)
+    pcm = to_pcm48(samples, rate)
     path.write_bytes(pcm)
     return pcm
 ```
@@ -1433,16 +1468,19 @@ server/playtest/.cache/
 server/playtest/runs/
 ```
 
-- [ ] **Step 4: Run the tests**
+- [ ] **Step 5: Run the tests, then hear one line**
 
-Run: `cd server && uv run pytest tests/test_playtest_speech.py -q`
-Expected: PASS.
+Run: `cd server && uv run pytest -q`
+Expected: all pass.
 
-- [ ] **Step 5: Commit**
+Then: `cd server && uv run python -c "from playtest import speech; print(len(speech.say('Teach me global workspace theory.')) // 96000, 's')"`
+Expected: about 2 s, and a `.pcm` file in `playtest/.cache/`. No network call.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add server/playtest/speech.py server/playtest/mic.py server/tests/test_playtest_speech.py .gitignore
-git commit -m "feat(playtest): the player's lines synthesized once and cached, and a scripted microphone"
+git add server/providers.py server/tests/test_providers.py server/playtest/speech.py server/playtest/mic.py server/tests/test_playtest_speech.py .gitignore README.md
+git commit -m "feat(playtest): local speech for the bot (Moonshine, Kokoro), the player's lines from Kokoro, and a scripted microphone"
 ```
 
 ---
@@ -1587,6 +1625,11 @@ Create `server/playtest/driver.py`:
 
     uv run python -m playtest run playtest/scenarios/learn_happy.yaml
     uv run python -m playtest run playtest/scenarios/
+    uv run python -m playtest run --real-speech playtest/scenarios/learn_happy.yaml
+
+By default the bot hears with Moonshine and speaks with Kokoro, on this Mac, so a
+run spends no Gradium credits; only the LLM's text tokens. --real-speech uses
+server/.env's provider and prints the Gradium credits it cost.
 """
 
 import asyncio
@@ -1600,6 +1643,8 @@ from pathlib import Path
 
 import httpx
 from aiortc import RTCPeerConnection, RTCSessionDescription
+
+from dotenv import dotenv_values
 
 from playtest import check, scenario, speech
 from playtest.mic import ScriptedMic
@@ -1733,8 +1778,22 @@ async def play(s: scenario.Scenario, base: str) -> None:
         await session.close()
 
 
-def _start_bot(port: int, record_dir: Path) -> subprocess.Popen:
+def gradium_credits() -> int | None:
+    """Gradium's remaining credits, or None when there is no key or no answer."""
+    key = os.environ.get("GRADIUM_API_KEY") or dotenv_values(SERVER / ".env").get("GRADIUM_API_KEY")
+    if not key:
+        return None
+    try:
+        r = httpx.get("https://api.gradium.ai/api/usages/credits", headers={"x-api-key": key}, timeout=10)
+        return int(r.json()["remaining_credits"])
+    except Exception:
+        return None
+
+
+def _start_bot(port: int, record_dir: Path, real_speech: bool) -> subprocess.Popen:
     env = {**os.environ, "ARMCHAIR_RECORD": str(record_dir), "ARMCHAIR_RECORD_KEEP": "0"}
+    if not real_speech:
+        env["SPEECH_PROVIDER"] = "local"  # no Gradium credits: Moonshine and Kokoro on this Mac
     log = (record_dir / "bot.log").open("w")
     process = subprocess.Popen(
         ["uv", "run", "bot.py", "--host", "127.0.0.1", "--port", str(port)],
@@ -1752,14 +1811,14 @@ def _start_bot(port: int, record_dir: Path) -> subprocess.Popen:
     raise RuntimeError("the bot did not start; see bot.log")
 
 
-def run_one(path: Path) -> bool:
+def run_one(path: Path, real_speech: bool = False) -> bool:
     s = scenario.load(path)
     run_dir = RUNS / time.strftime("%Y%m%d-%H%M%S") / s.name
     run_dir.mkdir(parents=True, exist_ok=True)
     port = _free_port()
     started = time.monotonic()
     print(f"▶ {s.name}  (port {port}, {run_dir})", flush=True)
-    bot = _start_bot(port, run_dir)
+    bot = _start_bot(port, run_dir, real_speech)
     failures: list[str] = []
     try:
         asyncio.run(play(s, f"http://127.0.0.1:{port}"))
@@ -1793,6 +1852,8 @@ def run_one(path: Path) -> bool:
 
 
 def main(argv: list[str]) -> int:
+    real_speech = "--real-speech" in argv
+    argv = [a for a in argv if a != "--real-speech"]
     if not argv:
         print(__doc__)
         return 2
@@ -1800,8 +1861,13 @@ def main(argv: list[str]) -> int:
     for arg in argv:
         p = Path(arg)
         paths += sorted(p.glob("*.yaml")) if p.is_dir() else [p]
-    results = [run_one(p) for p in paths]
+    before = gradium_credits() if real_speech else None
+    results = [run_one(p, real_speech) for p in paths]
     print(f"\n{sum(results)}/{len(results)} passed")
+    if real_speech:
+        after = gradium_credits()
+        if before is not None and after is not None:
+            print(f"Gradium credits used: {before - after:,} ({after:,} left)")
     return 0 if all(results) else 1
 ```
 
@@ -1853,7 +1919,7 @@ expect:
 Run: `cd server && uv run pytest -q`
 Expected: all pass.
 
-Then (real credits, a few minutes):
+Then (local speech, so no Gradium credits; a few minutes and some LLM text tokens):
 
 Run: `cd server && uv run python -m playtest run playtest/scenarios/learn_happy.yaml`
 Expected: `✓ learn_happy` and `1/1 passed`. If it fails, read the printed violations and timeline tail, and the run's `bot.log`. A wait that times out on a step that did advance means the driver's state reading is wrong (fix the driver); a rule that fires on a session that sounds right means the rule is wrong (fix the rule and add its case to Task 4's tests); a real misbehaviour is a finding for Task 9.
@@ -1890,7 +1956,7 @@ steps:
   - wait: {bot_stopped: 1, timeout: 60}
   - say: "What do you mean by integration?"                  # a question mid-step
   - wait: {bot_stopped: 1, timeout: 60}
-  - silence: 25                                              # a long pause
+  - silence: 15                                              # a long pause
   - say: "Okay, go on."
   - wait: {step: 2, timeout: 60}
   - wait: {bot_started: 1, timeout: 60}
@@ -1899,7 +1965,7 @@ steps:
 expect:
   final_mode: learn
   tools_include: [choose_lesson, step_done]
-  rules_allow: [guard-fired, no-double-reply, long-silence]
+  rules_allow: [guard-fired, no-double-reply]
 ```
 
 `learn_ask_to_skip.yaml`:
@@ -2086,10 +2152,10 @@ expect:
   rules_allow: [guard-fired, no-double-reply]
 ```
 
-- [ ] **Step 2: Run them all**
+- [ ] **Step 2: Run them, once each**
 
 Run: `cd server && uv run python -m playtest run playtest/scenarios/`
-Expected: a pass/fail line per scenario. Keep the output in the ledger.
+Expected: a pass/fail line per scenario. Keep the output in the ledger. Local speech, so no Gradium credits.
 
 - [ ] **Step 3: Fix what they find, one at a time, test first**
 
@@ -2098,7 +2164,7 @@ For each failing scenario, decide which it is, in this order:
 - **A flow or prompt bug** (the bot misbehaved): write the smallest test that pins it (a `test_flow_config.py` assertion for a missing edge such as `lesson → main_menu`; a `test_handlers.py` case for a handler), fix `flow.yaml` or the handler, re-run that scenario.
 - **Expected behaviour the scenario got wrong**: fix the scenario, and say why in the commit.
 
-Each fix is its own commit. Stop after two full passes of the scenario directory; list anything still failing in the final report with what it showed.
+Each fix is its own commit. After a fix, re-run only that scenario. Stop after two attempts per scenario; list anything still failing in the final report with what it showed. Do not run `--real-speech` unless the user asks.
 
 - [ ] **Step 4: Commit the scenarios**
 

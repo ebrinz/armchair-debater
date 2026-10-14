@@ -102,10 +102,14 @@ the scenario's own expectations.
 track and reads the RTVI data channel. The track plays silence until the
 script queues an utterance, so timing is under the script's control.
 
-**Speech** is synthesized once per distinct line with Gradium's REST
-text-to-speech and cached by a hash of the text and voice under
-`server/playtest/.cache/` (git-ignored). A re-run costs nothing for speech
-already synthesized.
+**Speech, and the credit budget.** By default a playthrough spends no Gradium
+credits: the bot runs with `SPEECH_PROVIDER=local` (Moonshine transcribes,
+Kokoro speaks, both on this Mac), and the player's lines are synthesized
+locally with Kokoro and cached by a hash of the text and voice under
+`server/playtest/.cache/` (git-ignored). Only the LLM's text tokens are spent.
+The cost of that choice: playthroughs test the game's flow and turn-taking, not
+Gradium's transcription or timing. `--real-speech` runs against `server/.env`'s
+provider and prints the Gradium credits used, for a final check on request.
 
 **A scenario** is a list of steps:
 
@@ -146,8 +150,8 @@ timeline lines when it runs out.
 | `menu_from_anywhere` | "Take me back to the menu" from inside each mode |
 | `debate_from_lesson` | The DEBATE hand-off picks a rival without re-asking the player's view |
 
-**Cost and time:** each run is a real session: a few minutes, and some Gradium
-and General Compute credit. These are for before a release or after a change
+**Cost and time:** each run is a real session of a few minutes, spending
+General Compute text tokens and, with `--real-speech` only, Gradium credits. These are for before a release or after a change
 to the flow, not every edit. The driver prints the run's duration and the
 characters of speech it synthesized.
 
