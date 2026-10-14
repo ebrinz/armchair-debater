@@ -115,6 +115,10 @@ def test_a_won_verdict_carried_into_another_mode():
     assert "earned-rung" in rules(events)
     assert "earned-rung" in rules([snap(0, "lesson", "learn", verdict=won)])
     assert "earned-rung" not in rules([snap(0, "verdict", "learn", verdict=won)])
+    # The verdict is written while the last answer's stage still shows (found by
+    # the debate_from_lesson playtest), in every mode: that is earned.
+    for stage, mode in (("check", "learn"), ("sparring", "sparring"), ("closing", "debate")):
+        assert "earned-rung" not in rules([snap(0, stage, mode), snap(1, stage, mode, verdict=won)]), stage
 
 
 def test_guards_errors_and_silence_are_warnings():

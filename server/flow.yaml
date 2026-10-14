@@ -54,7 +54,7 @@ nodes:
 
   # -------------------------------------------------------------------- the debate
   setup:
-    role_message: >-
+    role_message: &debater_role >-
       You are the Armchair Debater, a sharp, good-humored debating opponent on
       theories of consciousness. Your responses will be spoken aloud, so avoid
       emojis, bullet points, or other formatting that can't be spoken.
@@ -132,6 +132,9 @@ nodes:
             ok: opening
 
   opening:
+    # The debater's voice, carried here too: debate_this enters from a lesson and
+    # skips setup.
+    role_message: *debater_role
     pre_actions:
       - type: emit_stage
         handler: emit_stage
@@ -650,7 +653,7 @@ nodes:
         transition_to:
           field: status
           cases:
-            ok: setup
+            ok: opening
       - name: learn_again
         transition_only: true
         description: Call only when the user asks to go through the lesson again. Returns to the choice of theory.

@@ -564,13 +564,29 @@ async def test_spar_this_switches_the_mode_and_seats_the_player_for_sparring():
     assert snapshot["bot"]["theory_name"] == "The Examiner"
 
 
-async def test_debate_this_switches_the_mode_and_tells_the_llm_what_the_user_holds():
+async def test_debate_this_sets_up_the_debate_itself_with_the_lesson_theory():
+    # Found by the debate_from_lesson playtest: told only to call set_positions,
+    # the bot obeyed setup's own prompt instead and asked the player's view again.
     fm = await check_at(3)
+    seen = []
+
+    async def on_change(snapshot):
+        seen.append(snapshot)
+
+    fm.state["debate"]._on_change = on_change
     result, nxt = await handlers.debate_this(fm)
+
     assert nxt is TRANSITION_IN_YAML
-    assert result["status"] == "ok" and result["user_theory"] == "gwt"
-    assert "set_positions" in result["instruction"] and "gwt" in result["instruction"]
-    assert fm.state["debate"].snapshot()["mode"] == "debate"
+    assert result["status"] == "ok"
+    assert result["user_theory"] == "Global Workspace Theory"
+    assert result["bot_theory"] == "Integrated Information Theory"  # gwt's first listed rival
+    assert fm.state["user_theory_name"] == "Global Workspace Theory"
+    assert "Tononi 2004" in fm.state["bot_card"]
+    final = seen[-1]
+    # The same lock-in a normal debate has, so the versus splash shows.
+    assert final["mode"] == "debate" and final["stage"] == "setup"
+    assert final["user"]["theory_id"] == "gwt" and final["bot"]["theory_id"] == "iit"
+    assert all(snap["verdict"] is None for snap in seen)
 
 
 async def test_the_hand_offs_never_emit_the_lessons_verdict_under_the_new_mode():

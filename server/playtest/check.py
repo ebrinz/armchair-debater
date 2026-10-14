@@ -176,12 +176,17 @@ def _no_early_score(events):
     return out
 
 
+# A verdict is written while the last answer's stage still shows; the stage
+# moves to "verdict" a moment later.
+VERDICT_STAGES = {"verdict", "check", "sparring", "closing"}
+
+
 def _earned_rung(events):
     out, previous = [], None
     for s in _of(events, "snapshot"):
         state = s["state"]
         if (state.get("verdict") or {}).get("winner") == "user":
-            if state.get("stage") != "verdict":
+            if state.get("stage") not in VERDICT_STAGES:
                 out.append(Violation("earned-rung", "error", s["t"], f"a won verdict at stage {state.get('stage')!r}"))
             elif previous is not None and previous.get("mode") != state.get("mode"):
                 out.append(Violation("earned-rung", "error", s["t"],

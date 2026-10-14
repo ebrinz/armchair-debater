@@ -126,7 +126,7 @@ def test_a_lesson_is_a_pick_four_steps_three_checks_and_a_report():
 def test_the_report_hands_off_to_sparring_and_the_debate_with_the_theory_in_hand():
     assert transitions(CONFIG.nodes["lesson_report"]) == {
         "spar_this": {"ok": "sparring"},
-        "debate_this": {"ok": "setup"},
+        "debate_this": {"ok": "opening"},
         "learn_again": "tutor_setup",
         "main_menu": "mode_select",
     }
@@ -157,3 +157,8 @@ def test_every_tutor_node_has_a_way_back_to_the_menu():
     # middle of a lesson had nowhere to go, and the tutor kept teaching.
     for name in ("tutor_setup", "lesson", "check", "lesson_report"):
         assert transitions(CONFIG.nodes[name]).get("main_menu") == "mode_select", name
+
+
+def test_the_opening_speaks_as_the_debater_however_it_is_entered():
+    # debate_this enters from a lesson and skips setup, so the opening carries the role itself.
+    assert CONFIG.nodes["opening"].role_message == CONFIG.nodes["setup"].role_message

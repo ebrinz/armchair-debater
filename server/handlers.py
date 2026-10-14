@@ -437,16 +437,14 @@ async def debate_this(flow_manager: FlowManager):
     """
     state = flow_manager.state
     theory = _lesson_theory(state)
-    await state["debate"].set_mode("debate")
-    return {
-        "status": "ok",
-        "user_theory": theory.id,
-        "instruction": (
-            f"The user holds {theory.name} ({theory.id}). Do not ask what they think "
-            f"consciousness is: call set_positions with user_theory '{theory.id}' and "
-            "one of its rivals from the index."
-        ),
-    }, TRANSITION_IN_YAML
+    debate = state["debate"]
+    await debate.set_mode("debate")
+    # The same moment a normal debate has, setup then the lock-in, so the client
+    # shows the versus splash. The positions are set here rather than left to the
+    # setup node's LLM, which asked the player's view again instead (playtest).
+    await debate.set_stage("setup")
+    result, _ = await set_positions(flow_manager, user_theory=theory.id, bot_theory=theory.rivals[0])
+    return result, TRANSITION_IN_YAML
 
 
 def fallback_rationale(hits: list[dict]) -> str:
