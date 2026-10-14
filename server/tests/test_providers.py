@@ -172,3 +172,16 @@ def test_a_judge_voice_the_same_as_the_houses_is_no_judge_voice(monkeypatch):
     monkeypatch.setenv("GRADIUM_JUDGE_VOICE_ID", "same")
 
     assert providers.voices() is None
+
+
+def test_local_speech_runs_on_this_machine(monkeypatch):
+    monkeypatch.setenv("SPEECH_PROVIDER", "local")
+    monkeypatch.delenv("GRADIUM_API_KEY", raising=False)  # no key needed, so none is spent
+    from pipecat.services.kokoro.tts import KokoroTTSService
+    from pipecat.services.moonshine.stt import MoonshineSTTService
+
+    assert isinstance(providers.make_stt(), MoonshineSTTService)
+    tts = providers.make_tts()
+    assert isinstance(tts, KokoroTTSService)
+    assert tts._settings.voice == providers.LOCAL_HOUSE_VOICE == "bm_george"
+    assert providers.voices() is None

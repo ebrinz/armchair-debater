@@ -242,3 +242,7 @@ client/*.tsbuildinfo
 # Playwright output
 client/test-results/
 client/playwright-report/
+
+# Playtests: cached player lines and run output
+server/playtest/.cache/
+server/playtest/runs/

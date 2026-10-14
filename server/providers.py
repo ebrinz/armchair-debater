@@ -15,7 +15,7 @@ import os
 from dataclasses import dataclass
 
 LLM_PROVIDERS = ("general_compute", "openai")
-SPEECH_PROVIDERS = ("gradium", "openai")
+SPEECH_PROVIDERS = ("gradium", "openai", "local")
 
 
 def _choice(variable: str, valid: tuple[str, ...]) -> str:
@@ -87,6 +87,11 @@ def speech_provider() -> str:
 # from the catalogue on 2026-10-13; the previous default was _6Aslh2DxfmnRLmP).
 GRADIUM_HOUSE_VOICE = "kKmgHa8qUNt70kTT"
 
+# SPEECH_PROVIDER=local: Moonshine and Kokoro, on this machine, no key and no
+# credits. For playtests, not for people: a stock voice, and Moonshine waits for
+# the end of a phrase rather than streaming.
+LOCAL_HOUSE_VOICE = "bm_george"
+
 
 def voices() -> dict[str, str] | None:
     """The house's voice and the judge's, or ``None`` when the verdict is simply
@@ -94,6 +99,8 @@ def voices() -> dict[str, str] | None:
     user's to choose. Switching needs both named: going back to the house
     afterwards takes a voice to go back TO.
     """
+    if speech_provider() == "local":
+        return None
     if speech_provider() == "openai":
         house, judge = os.getenv("OPENAI_TTS_VOICE"), os.getenv("OPENAI_JUDGE_VOICE")
     else:
@@ -122,6 +129,10 @@ def make_stt():
             api_key=_require("OPENAI_API_KEY", "SPEECH_PROVIDER=openai"),
             settings=OpenAIRealtimeSTTService.Settings(**_set(model=os.getenv("OPENAI_STT_MODEL"))),
         )
+    if provider == "local":
+        from pipecat.services.moonshine.stt import MoonshineSTTService
+
+        return MoonshineSTTService()
     from pipecat.services.gradium.stt import GradiumSTTService
 
     return GradiumSTTService(api_key=_require("GRADIUM_API_KEY", "SPEECH_PROVIDER=gradium"))
@@ -139,6 +150,10 @@ def make_tts():
                 **_set(model=os.getenv("OPENAI_TTS_MODEL"), voice=os.getenv("OPENAI_TTS_VOICE"))
             ),
         )
+    if provider == "local":
+        from pipecat.services.kokoro.tts import KokoroTTSService
+
+        return KokoroTTSService(settings=KokoroTTSService.Settings(voice=LOCAL_HOUSE_VOICE))
     from pipecat.services.gradium.tts import GradiumTTSService
 
     return GradiumTTSService(

@@ -242,7 +242,7 @@ half to OpenAI:
 ```bash
 # server/.env — both default to the first value, and they can be mixed
 LLM_PROVIDER=general_compute | openai     # the debater, the judge, and the warm-up
-SPEECH_PROVIDER=gradium | openai          # speech-to-text and text-to-speech
+SPEECH_PROVIDER=gradium | openai | local  # speech-to-text and text-to-speech; local = Moonshine + Kokoro on this machine, for playtests
 OPENAI_API_KEY=...                        # needed once either one says openai
 OPENAI_MODEL=gpt-4.1                      # optional; also OPENAI_STT_MODEL, OPENAI_TTS_MODEL, OPENAI_TTS_VOICE
 ```
