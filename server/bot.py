@@ -22,6 +22,8 @@ Run the bot using::
     uv run bot.py
 """
 
+import os
+import subprocess
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -87,6 +89,42 @@ IDLE_TIMEOUT_FRAMES = (
     UserStartedSpeakingFrame,
     LLMFullResponseEndFrame,
 )
+
+
+def _git_commit() -> str:
+    try:
+        return (
+            subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=Path(__file__).parent,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout.strip()
+            or "unknown"
+        )
+    except Exception:
+        return "unknown"
+
+
+def _open_recorder(runner_args: RunnerArguments):
+    """The flight recorder, when ARMCHAIR_RECORD names a directory; else None."""
+    directory = os.environ.get("ARMCHAIR_RECORD")
+    if not directory:
+        return None
+    from recorder import Recorder
+
+    llm = providers.llm_config()
+    return Recorder(
+        Path(directory),
+        header={
+            "session": str(getattr(runner_args, "session_id", "") or ""),
+            "commit": _git_commit(),
+            "llm": f"{llm.provider}/{llm.model}",
+            "speech": providers.speech_provider(),
+        },
+        keep=int(os.environ.get("ARMCHAIR_RECORD_KEEP", "50")),
+    )
 
 
 async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> None:
@@ -162,7 +200,14 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     )
 
     # Every change to the debate state goes to the client as a full snapshot.
-    debate = DebateState(on_change=worker.rtvi.send_server_message)
+    recorder = _open_recorder(runner_args)
+
+    async def on_change(snapshot: dict) -> None:
+        if recorder:
+            recorder.snapshot(snapshot)
+        await worker.rtvi.send_server_message(snapshot)
+
+    debate = DebateState(on_change=on_change)
     scorer = TurnScorer(
         debate,
         current_stage=lambda: flow_manager.current_node,
@@ -205,7 +250,16 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     # spoken or typed; the bot's from the LLM's own output, which is upstream
     # of TTS and the transport and so immune to the aggregator-event race
     # that used to drop bot turns under an interruption.
-    worker.add_observer(TurnObserver(llm, scorer.submit))
+    def on_turn(by: str, text: str) -> None:
+        if recorder:
+            recorder.turn(by, text)
+        scorer.submit(by, text)
+
+    worker.add_observer(TurnObserver(llm, on_turn))
+    if recorder:
+        from recorder import RecorderObserver
+
+        worker.add_observer(RecorderObserver(recorder, lambda: flow_manager.current_node))
     # Text-mode evals ask for no speech; see skip_tts_sync.py for why they got it anyway.
     worker.add_observer(SkipTTSSync(worker.rtvi, worker.queue_frame))
 
@@ -232,6 +286,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         # A turn still with the judge would otherwise be applied, and sent, to
         # a session that no longer exists.
         scorer.abandon()
+        if recorder:
+            recorder.close()
         await runner.cancel()
 
     await runner.run()
@@ -258,8 +314,6 @@ async def bot(runner_args: RunnerArguments):
 
 
 if __name__ == "__main__":
-    import os
-
     from pipecat.runner.run import main
 
     # Local production mode, set by the `armchair` launcher: serve the built
