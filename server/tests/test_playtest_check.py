@@ -137,3 +137,12 @@ def test_load_skips_blank_lines_and_keeps_the_header(tmp_path):
     path.write_text('{"t": 0, "kind": "header", "session": "abc"}\n\n{"t": 1, "kind": "bot_started"}\n')
     events = check.load(path)
     assert [e["kind"] for e in events] == ["header", "bot_started"]
+
+
+def test_local_speech_gets_extra_time_to_answer():
+    # Kokoro on this Mac takes about 4 s to voice a first sentence; Gradium does not.
+    late = [ev(0, "user_text", text="Hi."), ev(15, "bot_started"), ev(30, "user_started")]
+    assert "answered" in rules(late)
+    assert "answered" not in rules([{"t": 0, "kind": "header", "speech": "local"}, *late])
+    too_late = [{"t": 0, "kind": "header", "speech": "local"}, ev(0, "user_text", text="Hi."), ev(18, "bot_started")]
+    assert "answered" in rules(too_late)

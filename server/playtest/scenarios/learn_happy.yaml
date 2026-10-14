@@ -1,0 +1,36 @@
+name: learn_happy
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}     # the greeting
+  - say: "Teach me global workspace theory."
+  - wait: {stage: lesson, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}     # step one taught
+  - say: "Clear, go on."
+  - wait: {step: 2}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Clear, go on."
+  - wait: {step: 3}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Got it, next."
+  - wait: {step: 4}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Clear."
+  - wait: {stage: check, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "A thought becomes conscious when it wins a competition for a small shared stage and is broadcast to the whole brain at once."
+  - wait: {question: 2, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "There is a sudden brain-wide burst of activity called ignition. Unconscious processing stays local."
+  - wait: {question: 3, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Because the workspace is small. Contents compete and one wins at a time, so experience is serial."
+  - wait: {stage: verdict, timeout: 120}
+  - wait: {bot_stopped: 1, timeout: 90}
+  - wait: {quiet: 3, timeout: 90}           # the report, after the "let me see" line
+  - say: "Let me spar with it."
+  - wait: {stage: sparring, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}     # the examiner's first question
+expect:
+  final_stage: sparring
+  final_mode: sparring
+  tools_include: [choose_mode, choose_lesson, step_done, check_answered, spar_this]
+  rules_allow: [guard-fired, no-double-reply]

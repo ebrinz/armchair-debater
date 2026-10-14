@@ -19,6 +19,7 @@ from pipecat.frames.frames import (
     UserStoppedSpeakingFrame,
 )
 from pipecat.observers.base_observer import BaseObserver, FramePushed
+from pipecat.processors.frame_processor import FrameDirection
 
 _SPEECH = {
     UserStartedSpeakingFrame: "user_started",
@@ -80,7 +81,9 @@ class RecorderObserver(BaseObserver):
 
     async def on_push_frame(self, data: FramePushed):
         frame = data.frame
-        if frame.id in self._seen:
+        # Some frames are broadcast as two copies, upstream and downstream, with
+        # different ids; the downstream copy is the one to record.
+        if frame.id in self._seen or data.direction != FrameDirection.DOWNSTREAM:
             return
         self._seen.add(frame.id)
 

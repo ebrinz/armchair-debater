@@ -15,6 +15,9 @@ import yaml
 FLOW_PATH = Path(__file__).parents[1] / "flow.yaml"
 
 ANSWER_WITHIN = 12.0
+# Kokoro, the local voice, takes about 4 s to voice a first sentence on a laptop
+# CPU where Gradium takes a fraction of one; a local-speech session gets that back.
+LOCAL_SPEECH_ALLOWANCE = 5.0
 BARGE_IN_WITHIN = 1.5
 STAGE_WITHIN = 1.0
 SILENCE_WARN = 30.0
@@ -121,15 +124,15 @@ def _steps_in_order(events):
     return out
 
 
-def _answered(events):
+def _answered(events, within=ANSWER_WITHIN):
     out = []
     end = events[-1]["t"] if events else 0.0
     for i, e in enumerate(events):
-        if e["kind"] != "user_text" or end - e["t"] < ANSWER_WITHIN:
+        if e["kind"] != "user_text" or end - e["t"] < within:
             continue
         for later in events[i + 1:]:
             if later["kind"] in ("bot_started", "bot_text", "user_started", "user_text"):
-                if later["kind"] in ("bot_started", "bot_text") and later["t"] - e["t"] > ANSWER_WITHIN:
+                if later["kind"] in ("bot_started", "bot_text") and later["t"] - e["t"] > within:
                     out.append(Violation("answered", "error", e["t"], f"no reply to {e['text']!r} for {later['t'] - e['t']:.0f} s"))
                 break
         else:
@@ -203,12 +206,14 @@ def _warnings(events):
 
 def check(events: list[dict], graph: Graph | None = None) -> list[Violation]:
     graph = graph or flow_graph()
+    header = next((e for e in events if e.get("kind") == "header"), {})
+    within = ANSWER_WITHIN + (LOCAL_SPEECH_ALLOWANCE if header.get("speech") == "local" else 0.0)
     events = [e for e in events if e.get("kind") != "header"]
     found = [
         *_legal_path(events, graph),
         *_stage_follows_node(events, graph),
         *_steps_in_order(events),
-        *_answered(events),
+        *_answered(events, within),
         *_no_double_reply(events),
         *_barge_in(events),
         *_no_early_score(events),

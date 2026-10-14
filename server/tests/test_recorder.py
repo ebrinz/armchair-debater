@@ -56,8 +56,10 @@ def test_the_recorder_keeps_only_the_latest_sessions(tmp_path):
     assert len(list(tmp_path.glob("*.jsonl"))) == 3
 
 
-async def push(observer, frame):
-    await observer.on_push_frame(SimpleNamespace(frame=frame))
+async def push(observer, frame, direction=None):
+    from pipecat.processors.frame_processor import FrameDirection
+
+    await observer.on_push_frame(SimpleNamespace(frame=frame, direction=direction or FrameDirection.DOWNSTREAM))
 
 
 async def test_the_observer_records_speech_tools_errors_and_node_changes(tmp_path):
@@ -109,3 +111,16 @@ def test_recordings_are_readable_by_their_owner_only(tmp_path):
     rec.close()
     assert (rec.path.parent.stat().st_mode & 0o777) == 0o700
     assert (rec.path.stat().st_mode & 0o777) == 0o600
+
+
+async def test_a_frame_broadcast_both_ways_is_recorded_once(tmp_path):
+    # Pipecat broadcasts some frames as two copies, one upstream and one
+    # downstream, with different ids: only the downstream copy is recorded.
+    from pipecat.processors.frame_processor import FrameDirection
+
+    rec = Recorder(tmp_path, header={})
+    observer = RecorderObserver(rec, current_node=lambda: None)
+    await push(observer, BotStartedSpeakingFrame(), FrameDirection.UPSTREAM)
+    await push(observer, BotStartedSpeakingFrame(), FrameDirection.DOWNSTREAM)
+    rec.close()
+    assert [e["kind"] for e in lines(rec.path)[1:]] == ["bot_started"]
