@@ -191,8 +191,31 @@ def bot_env(port: int, record_dir: Path, *, real_speech: bool, base: dict | None
         "ARMCHAIR_RECORD_KEEP": "0",
     }
     if not real_speech:
-        env["SPEECH_PROVIDER"] = "local"  # no Gradium credits: Moonshine and Kokoro on this Mac
+        # No credits: Moonshine and Kokoro on this Mac. ARMCHAIR_SPEECH_PROVIDER
+        # is the one .env cannot override (bot.py loads .env with override=True).
+        env["SPEECH_PROVIDER"] = "local"
+        env["ARMCHAIR_SPEECH_PROVIDER"] = "local"
     return env
+
+
+def speech_mismatch(header: dict, *, real_speech: bool) -> str | None:
+    """A backstop: a session that did not run on local speech, unasked."""
+    if real_speech or header.get("speech") == "local":
+        return None
+    return f"the bot ran on {header.get('speech')!r} speech, not local: credits may have been spent"
+
+
+def stop_bot(process) -> None:
+    """Stop a bot, and kill it if it ignores the request."""
+    process.terminate()
+    try:
+        process.wait(timeout=20)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+    log = getattr(process, "armchair_log", None)
+    if log:
+        log.close()
 
 
 def require_build() -> None:
@@ -223,6 +246,7 @@ def _start_bot(port: int, record_dir: Path, real_speech: bool) -> subprocess.Pop
         bot_command(port), cwd=SERVER, env=bot_env(port, record_dir, real_speech=real_speech),
         stdout=log, stderr=subprocess.STDOUT,
     )
+    process.armchair_log = log
     deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
         try:
@@ -231,7 +255,7 @@ def _start_bot(port: int, record_dir: Path, real_speech: bool) -> subprocess.Pop
         except httpx.HTTPError:
             pass
         time.sleep(0.5)
-    process.terminate()
+    stop_bot(process)
     raise RuntimeError("the bot did not start; see bot.log")
 
 
@@ -242,15 +266,16 @@ def run_one(path: Path, real_speech: bool = False) -> bool:
     port = _free_port()
     started = time.monotonic()
     print(f"▶ {s.name}  (port {port}, {run_dir})", flush=True)
-    bot = _start_bot(port, run_dir, real_speech)
     failures: list[str] = []
+    bot = None
     try:
+        bot = _start_bot(port, run_dir, real_speech)
         asyncio.run(play(s, f"http://127.0.0.1:{port}"))
-    except Exception as e:  # a wait that timed out, or a connection that failed
+    except Exception as e:  # a bot that did not start, a wait that timed out, a failed connection
         failures.append(f"play: {e}")
     finally:
-        bot.terminate()
-        bot.wait(timeout=20)
+        if bot is not None:
+            stop_bot(bot)
 
     timelines = sorted(run_dir.glob("*.jsonl"))
     if not timelines:
@@ -258,6 +283,10 @@ def run_one(path: Path, real_speech: bool = False) -> bool:
         events, violations = [], []
     else:
         events = check.load(timelines[-1])
+        header = next((e for e in events if e.get("kind") == "header"), {})
+        mismatch = speech_mismatch(header, real_speech=real_speech)
+        if mismatch:
+            failures.append(mismatch)
         violations = check.check(events)
         failures += scenario.expectation_failures(s.expect, events, violations)
         for v in violations:

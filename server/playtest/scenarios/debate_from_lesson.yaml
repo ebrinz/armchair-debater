@@ -32,5 +32,5 @@ steps:
 expect:
   final_stage: opening
   final_mode: debate
-  tools_include: [debate_this, set_positions]
+  tools_include: [debate_this]   # set_positions is called by debate_this itself, not as a tool
   rules_allow: [guard-fired, no-double-reply]

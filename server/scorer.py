@@ -55,10 +55,10 @@ class TurnScorer:
         self._rubric = rubric
         self._transcript: list[tuple[str, str]] = []
         self._heard: dict[tuple[str, str], int] = {}
-        # An answer in progress, per answer node: the history before it began,
-        # and its parts. A pause mid-answer splits it into several user turns;
-        # it is scored once, joined, when the bot's tool says it is complete.
-        self._pending: dict[str, tuple[list[tuple[str, str]], list[str]]] = {}
+        # An answer in progress, per answer node: where its parts sit in the
+        # transcript. A pause mid-answer splits it into several user turns; it is
+        # scored once, joined, when the bot's tool says it is complete.
+        self._pending: dict[str, list[int]] = {}
         self._tail: asyncio.Task | None = None
         self._closed = False
         self._generation = 0
@@ -74,7 +74,7 @@ class TurnScorer:
         self._heard[(node, by)] = self._heard.get((node, by), 0) + 1
         kind = ANSWER_NODES.get(node)
         if kind and by == "user":
-            self._pending.setdefault(node, (history, []))[1].append(text)
+            self._pending.setdefault(node, []).append(len(self._transcript) - 1)
             logger.debug(f"scorer: holding part of an answer in {node} until it is complete")
             return
         if node in UNSCORED_NODES or (kind and by == "bot"):
@@ -102,6 +102,7 @@ class TurnScorer:
         generation: int,
         kind: str | None = None,
         rubric: str = "",
+        question: str | None = None,
     ) -> None:
         if previous:
             with contextlib.suppress(Exception):
@@ -113,7 +114,7 @@ class TurnScorer:
             if kind == "answer":
                 score = await self._score_answer(theory=user_theory, history=history, answer=text)
             elif kind == "understanding":
-                question = next((t for who, t in reversed(history) if who == "bot"), "")
+                question = question or next((t for who, t in reversed(history) if who == "bot"), "")
                 score = await self._score_understanding(
                     theory=user_theory,
                     question=question,
@@ -150,20 +151,27 @@ class TurnScorer:
         except Exception:
             logger.exception(f"scorer: unexpected error applying a {by} hit")
 
-    def answer_complete(self, node: str) -> None:
+    def answer_complete(self, node: str, question: str | None = None) -> None:
         """The bot's tool has heard a whole answer in ``node``: score it, once.
 
         Call it before moving the question on, so a check answer is scored
-        against the rubric of the question it answered.
+        against the rubric (and ``question``) of the question it answered. The
+        judge's history is the transcript as it stands now, without the
+        answer's own parts, so a part spoken over the next question is judged
+        against that question, not the one before it.
         """
         kind = ANSWER_NODES.get(node)
-        pending = self._pending.pop(node, None)
-        if self._closed or kind is None or pending is None:
+        held = self._pending.pop(node, None)
+        if self._closed or kind is None or not held:
             return
-        history, parts = pending
+        parts = [self._transcript[i][1] for i in held]
+        history = [turn for i, turn in enumerate(self._transcript) if i not in set(held)]
         rubric = self._rubric() if kind == "understanding" else ""
         self._tail = asyncio.create_task(
-            self._run(self._tail, "user", " ".join(parts), history, self._generation, kind=kind, rubric=rubric)
+            self._run(
+                self._tail, "user", " ".join(parts), history, self._generation,
+                kind=kind, rubric=rubric, question=question,
+            )
         )
 
     async def drain(self) -> None:

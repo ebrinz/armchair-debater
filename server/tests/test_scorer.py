@@ -359,3 +359,49 @@ async def test_completing_an_answer_nobody_gave_scores_nothing():
     rig.scorer.answer_complete("sparring")
     await rig.scorer.drain()
     assert rig.state.hits == []
+
+
+
+async def test_a_held_part_is_judged_against_the_question_current_when_the_answer_completes():
+    # Review finding: a part said over the next question was judged against the
+    # previous one, while the rubric was the current one.
+    checks = []
+
+    async def score_understanding(**kwargs):
+        checks.append(kwargs)
+        return TurnScore(0, 0, "Full answer.")
+
+    rig = Rig()
+    rig.scorer._score_understanding = score_understanding
+    rig.scorer._rubric = lambda: "rubric two"
+    rig.stage = "check"
+
+    rig.scorer.submit("bot", "Question one?")
+    rig.scorer.submit("user", "Wait, also,")               # spoken over the next question
+    rig.scorer.submit("bot", "Question two?")
+    rig.scorer.submit("user", "the answer to two.")
+    rig.scorer.answer_complete("check", question="Question two?")
+    await rig.scorer.drain()
+
+    assert checks[0]["question"] == "Question two?"
+    assert checks[0]["answer"] == "Wait, also, the answer to two."
+    assert checks[0]["history"] == [("bot", "Question one?"), ("bot", "Question two?")]
+
+
+async def test_without_a_named_question_the_last_bot_turn_is_the_question():
+    answers = []
+
+    async def score_answer(**kwargs):
+        answers.append(kwargs)
+        return TurnScore(0, 0, "ok")
+
+    rig = Rig()
+    rig.scorer._score_answer = score_answer
+    rig.stage = "sparring"
+    rig.scorer.submit("bot", "Q1?")
+    rig.scorer.submit("user", "part,")
+    rig.scorer.submit("bot", "Q2?")
+    rig.scorer.submit("user", "rest.")
+    rig.scorer.answer_complete("sparring")
+    await rig.scorer.drain()
+    assert answers[0]["history"][-1] == ("bot", "Q2?")

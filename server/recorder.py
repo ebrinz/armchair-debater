@@ -81,9 +81,16 @@ class RecorderObserver(BaseObserver):
 
     async def on_push_frame(self, data: FramePushed):
         frame = data.frame
-        # Some frames are broadcast as two copies, upstream and downstream, with
-        # different ids; the downstream copy is the one to record.
-        if frame.id in self._seen or data.direction != FrameDirection.DOWNSTREAM:
+        if frame.id in self._seen:
+            return
+        # Errors travel upstream only. Other frames that matter are sometimes
+        # broadcast as two copies, one each way, with different ids; the
+        # downstream copy is the one to record.
+        if isinstance(frame, ErrorFrame):
+            self._seen.add(frame.id)
+            self._recorder.event("error", message=str(frame.error))
+            return
+        if data.direction != FrameDirection.DOWNSTREAM:
             return
         self._seen.add(frame.id)
 
@@ -98,5 +105,3 @@ class RecorderObserver(BaseObserver):
         elif isinstance(frame, FunctionCallResultFrame):
             result = frame.result if isinstance(frame.result, dict) else {}
             self._recorder.event("tool", name=frame.function_name, args=frame.arguments, status=result.get("status"))
-        elif isinstance(frame, ErrorFrame):
-            self._recorder.event("error", message=str(frame.error))

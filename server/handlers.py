@@ -361,7 +361,7 @@ async def check_answered(flow_manager: FlowManager):
             "status": "ask_first",
             "instruction": "You have not asked this question yet. Ask it now.",
         }, TRANSITION_IN_YAML
-    state["scorer"].answer_complete("check")
+    state["scorer"].answer_complete("check", question=state["check_question"])
     if state["check_q"] < CHECK_QUESTIONS:
         state["check_q"] += 1
         _begin_check(state)

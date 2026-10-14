@@ -80,6 +80,11 @@ def llm_config() -> LLMConfig:
 
 
 def speech_provider() -> str:
+    # The playtest driver asks for local speech through ARMCHAIR_SPEECH_PROVIDER:
+    # bot.py loads .env with override=True, which would replace SPEECH_PROVIDER,
+    # but .env never names this one, so the request survives and no credits go.
+    if os.getenv("ARMCHAIR_SPEECH_PROVIDER"):
+        return _choice("ARMCHAIR_SPEECH_PROVIDER", SPEECH_PROVIDERS)
     return _choice("SPEECH_PROVIDER", SPEECH_PROVIDERS)
 
 

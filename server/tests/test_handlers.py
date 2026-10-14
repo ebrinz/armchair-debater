@@ -21,7 +21,7 @@ class FakeScorer:
     def heard(self, node, by):
         return self.heard_turns.get((node, by), 0)
 
-    def answer_complete(self, node):
+    def answer_complete(self, node, question=None):
         self.log.append(f"answer_complete:{node}")
 
     async def drain(self):
@@ -627,8 +627,18 @@ async def test_a_check_answer_is_completed_while_its_rubric_is_still_current():
     fm = await check_at(1)
     rubric_when_completed = []
     scorer = fm.state["scorer"]
-    scorer.answer_complete = lambda node: rubric_when_completed.append(fm.state["check_rubric"])
+    scorer.answer_complete = lambda node, question=None: rubric_when_completed.append(fm.state["check_rubric"])
     first_rubric = fm.state["check_rubric"]
     await handlers.check_answered(fm)
     assert rubric_when_completed == [first_rubric]
     assert fm.state["check_rubric"] != first_rubric  # and only then did it move on
+
+
+
+async def test_check_answered_names_the_question_it_completes():
+    fm = await check_at(1)
+    named = []
+    fm.state["scorer"].answer_complete = lambda node, question=None: named.append((node, question))
+    question = fm.state["check_question"]
+    await handlers.check_answered(fm)
+    assert named == [("check", question)]

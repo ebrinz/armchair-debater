@@ -185,3 +185,13 @@ def test_local_speech_runs_on_this_machine(monkeypatch):
     assert isinstance(tts, KokoroTTSService)
     assert tts._settings.voice == providers.LOCAL_HOUSE_VOICE == "bm_george"
     assert providers.voices() is None
+
+
+def test_a_playtest_override_wins_over_a_provider_named_in_dotenv(monkeypatch):
+    # bot.py loads .env with override=True, which would replace a SPEECH_PROVIDER
+    # the playtest driver set; ARMCHAIR_SPEECH_PROVIDER is never written by .env.
+    monkeypatch.setenv("SPEECH_PROVIDER", "gradium")
+    monkeypatch.setenv("ARMCHAIR_SPEECH_PROVIDER", "local")
+    assert providers.speech_provider() == "local"
+    monkeypatch.delenv("ARMCHAIR_SPEECH_PROVIDER")
+    assert providers.speech_provider() == "gradium"

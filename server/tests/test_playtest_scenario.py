@@ -73,3 +73,60 @@ def test_scenarios_can_be_named_without_their_path():
     paths = driver.resolve(["learn_happy", "playtest/scenarios/sparring_happy.yaml"])
     assert [p.name for p in paths] == ["learn_happy.yaml", "sparring_happy.yaml"]
     assert [p.name for p in driver.resolve([])][:1] == ["debate_from_lesson.yaml"]  # none named: all of them
+
+
+def test_the_playtest_asks_for_local_speech_in_a_way_dotenv_cannot_undo(tmp_path):
+    from playtest import driver
+
+    env = driver.bot_env(7861, tmp_path, real_speech=False, base={})
+    assert env["ARMCHAIR_SPEECH_PROVIDER"] == "local"
+    assert "ARMCHAIR_SPEECH_PROVIDER" not in driver.bot_env(7861, tmp_path, real_speech=True, base={})
+
+
+def test_a_session_that_was_not_local_is_a_failure_unless_real_speech_was_asked_for():
+    from playtest import driver
+
+    assert driver.speech_mismatch({"speech": "gradium"}, real_speech=False)
+    assert driver.speech_mismatch({"speech": "local"}, real_speech=False) is None
+    assert driver.speech_mismatch({"speech": "gradium"}, real_speech=True) is None
+
+
+def test_a_bot_that_never_starts_fails_its_scenario_and_the_batch_goes_on(tmp_path, monkeypatch):
+    from playtest import driver
+
+    calls = []
+    monkeypatch.setattr(driver, "RUNS", tmp_path)
+    monkeypatch.setattr(driver, "require_build", lambda: None)
+
+    def broken_start(port, record_dir, real_speech):
+        calls.append(port)
+        raise RuntimeError("the bot did not start; see bot.log")
+
+    monkeypatch.setattr(driver, "_start_bot", broken_start)
+    scenarios = driver.resolve(["menu_from_anywhere", "learn_ask_to_skip"])
+    assert driver.main([str(p) for p in scenarios]) == 1
+    assert len(calls) == 2  # the second scenario still ran
+
+
+def test_a_bot_that_ignores_terminate_is_killed(monkeypatch):
+    import subprocess
+
+    from playtest import driver
+
+    class Stubborn:
+        def __init__(self):
+            self.killed = False
+
+        def terminate(self):
+            pass
+
+        def wait(self, timeout=None):
+            if not self.killed and timeout is not None:
+                raise subprocess.TimeoutExpired("bot", timeout)
+
+        def kill(self):
+            self.killed = True
+
+    bot = Stubborn()
+    driver.stop_bot(bot)
+    assert bot.killed

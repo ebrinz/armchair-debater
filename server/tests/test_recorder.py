@@ -63,6 +63,8 @@ async def push(observer, frame, direction=None):
 
 
 async def test_the_observer_records_speech_tools_errors_and_node_changes(tmp_path):
+    from pipecat.processors.frame_processor import FrameDirection
+
     rec = Recorder(tmp_path, header={})
     node = {"name": "mode_select"}
     observer = RecorderObserver(rec, current_node=lambda: node["name"])
@@ -76,7 +78,7 @@ async def test_the_observer_records_speech_tools_errors_and_node_changes(tmp_pat
     await push(observer, BotStoppedSpeakingFrame())
     await push(observer, FunctionCallResultFrame(
         function_name="step_done", tool_call_id="1", arguments={}, result={"status": "more"}))
-    await push(observer, ErrorFrame(error="boom"))
+    await push(observer, ErrorFrame(error="boom"), FrameDirection.UPSTREAM)  # how Pipecat sends errors
     rec.close()
 
     kinds = [(e["kind"], e.get("name") or e.get("status") or e.get("message")) for e in lines(rec.path)[1:]]
