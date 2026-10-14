@@ -1,0 +1,30 @@
+name: sparring_happy
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Test my view with questions."
+  - wait: {stage: setup, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Consciousness is information broadcast across the brain."
+  - wait: {question: 1, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Being globally available for report and action is what we mean by experience."
+  - wait: {question: 2, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "A computer that broadcast information that way might be conscious, yes."
+  - wait: {question: 3, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "It would be refuted if conscious perception happened with no late brain-wide ignition."
+  - wait: {question: 4, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "One missing prefrontal signal does not sink thirty years of evidence."
+  - wait: {question: 5, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "The workspace is long-range neurons linking prefrontal and parietal cortex."
+  - wait: {stage: verdict, timeout: 120}
+  - wait: {bot_stopped: 1, timeout: 90}
+  - wait: {quiet: 3, timeout: 90}
+expect:
+  final_stage: verdict
+  final_mode: sparring
+  tools_include: [take_position, answer_heard]
+  rules_allow: [guard-fired, no-double-reply]

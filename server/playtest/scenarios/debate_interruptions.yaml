@@ -1,0 +1,22 @@
+name: debate_interruptions
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Let's debate. I think consciousness is information being broadcast across the brain."
+  - wait: {stage: opening, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Broadcast is what experience is."
+  - wait: {stage: rebuttal, timeout: 60}
+  - wait: {bot_started: 1, timeout: 60}
+  - say_after: {seconds: 2, text: "No, that's wrong, phi can't be measured."}   # barge in on the rebuttal
+  - wait: {stage: crossexam, timeout: 60}
+  - wait: {bot_started: 1, timeout: 60}
+  - say_after: {seconds: 1, text: "How would you measure phi?"}   # ask before the invitation is finished
+  - wait: {stage: crossexam, timeout: 60}
+  - wait: {bot_started: 1, timeout: 90}                           # the answer and the counter-question: one turn
+  - say_after: {seconds: 2, text: "Ignition is measurable."}      # answer before its question is finished
+  - wait: {stage: closing, timeout: 90}
+  - wait: {bot_stopped: 1, timeout: 60}
+expect:
+  final_stage: closing
+  final_mode: debate
+  rules_allow: [guard-fired, no-double-reply]

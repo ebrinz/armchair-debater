@@ -1,0 +1,17 @@
+name: learn_ask_to_skip
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Teach me illusionism."
+  - wait: {stage: lesson, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Just test me."
+  - wait: {step: 2, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Skip ahead, give me the report."
+  - wait: {step: 3, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+expect:
+  final_stage: lesson
+  final_mode: learn
+  tools_include: [step_done]
+  rules_allow: [no-double-reply]

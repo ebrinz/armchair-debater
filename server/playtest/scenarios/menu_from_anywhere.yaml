@@ -1,0 +1,18 @@
+name: menu_from_anywhere
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Teach me panpsychism."
+  - wait: {stage: lesson, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Actually, take me back to the menu."
+  - wait: {stage: mode, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "I'd like to look around the theories."
+  - wait: {stage: explore, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Take me back to the menu."
+  - wait: {stage: mode, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+expect:
+  final_stage: mode
+  rules_allow: [no-double-reply]

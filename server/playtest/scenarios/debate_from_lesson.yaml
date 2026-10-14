@@ -1,0 +1,36 @@
+name: debate_from_lesson
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Teach me global workspace theory."
+  - wait: {stage: lesson, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Clear, go on."
+  - wait: {step: 2, timeout: 90}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Clear, go on."
+  - wait: {step: 3, timeout: 90}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Got it, next."
+  - wait: {step: 4, timeout: 90}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Clear."
+  - wait: {stage: check, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "A thought becomes conscious when it wins a competition for a small shared stage and is broadcast to the whole brain at once."
+  - wait: {question: 2, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "There is a sudden brain-wide burst of activity called ignition. Unconscious processing stays local."
+  - wait: {question: 3, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Because the workspace is small. Contents compete and one wins at a time, so experience is serial."
+  - wait: {stage: verdict, timeout: 120}
+  - wait: {bot_stopped: 1, timeout: 90}
+  - wait: {quiet: 3, timeout: 90}
+  - say: "Let me debate with it."
+  - wait: {stage: opening, timeout: 90}      # straight through setup, without asking the player's view
+  - wait: {bot_stopped: 1, timeout: 60}
+expect:
+  final_stage: opening
+  final_mode: debate
+  tools_include: [debate_this, set_positions]
+  rules_allow: [guard-fired, no-double-reply]

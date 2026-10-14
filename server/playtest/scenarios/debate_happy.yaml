@@ -1,0 +1,29 @@
+name: debate_happy
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Let's debate."
+  - wait: {stage: setup, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "I think consciousness is information being broadcast across the brain so every system can use it."
+  - wait: {stage: opening, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Global availability is what experience is. When a content is broadcast, memory, speech and action can all use it, and that is all there is to being conscious of it."
+  - wait: {stage: rebuttal, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Phi cannot even be computed for a real brain, so your theory makes no testable predictions about one."
+  - wait: {stage: crossexam, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "How would anyone ever measure phi in a living human brain?"
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Late prefrontal ignition is measurable, and masking experiments test it directly."
+  - wait: {stage: closing, timeout: 60}
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Workspace theory makes predictions that can fail, and that is what a scientific theory of consciousness owes us."
+  - wait: {stage: verdict, timeout: 120}
+  - wait: {bot_stopped: 1, timeout: 90}
+  - wait: {quiet: 3, timeout: 90}
+expect:
+  final_stage: verdict
+  final_mode: debate
+  tools_include: [choose_mode, set_positions, opening_done, rebuttal_done, question_asked, answer_given, judge_debate]
+  rules_allow: [guard-fired, no-double-reply]

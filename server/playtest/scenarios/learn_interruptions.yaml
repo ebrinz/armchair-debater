@@ -1,0 +1,22 @@
+name: learn_interruptions
+steps:
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Teach me integrated information theory."
+  - wait: {stage: lesson, timeout: 60}
+  - wait: {bot_started: 1, timeout: 60}
+  - say_after: {seconds: 2, text: "Sorry, what was that?"}   # talk over step one
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "Can you say that again?"
+  - wait: {bot_stopped: 1, timeout: 60}
+  - say: "What do you mean by integration?"                  # a question mid-step
+  - wait: {bot_stopped: 1, timeout: 60}
+  - silence: 15                                              # a long pause
+  - say: "Okay, go on."
+  - wait: {step: 2, timeout: 60}
+  - wait: {bot_started: 1, timeout: 60}
+  - say_after: {seconds: 1, text: "Go on."}                  # skip ahead while it is still teaching
+  - wait: {bot_stopped: 1, timeout: 60}
+expect:
+  final_mode: learn
+  tools_include: [choose_lesson, step_done]
+  rules_allow: [guard-fired, no-double-reply]

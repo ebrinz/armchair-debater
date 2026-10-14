@@ -5,13 +5,13 @@ steps:
   - wait: {stage: lesson, timeout: 60}
   - wait: {bot_stopped: 1, timeout: 60}     # step one taught
   - say: "Clear, go on."
-  - wait: {step: 2}
+  - wait: {step: 2, timeout: 90}
   - wait: {bot_stopped: 1, timeout: 60}
   - say: "Clear, go on."
-  - wait: {step: 3}
+  - wait: {step: 3, timeout: 90}
   - wait: {bot_stopped: 1, timeout: 60}
   - say: "Got it, next."
-  - wait: {step: 4}
+  - wait: {step: 4, timeout: 90}
   - wait: {bot_stopped: 1, timeout: 60}
   - say: "Clear."
   - wait: {stage: check, timeout: 60}
