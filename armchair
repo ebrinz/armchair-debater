@@ -3,12 +3,16 @@
 #
 #   ./armchair            build the client if it changed, start the bot, open the arcade
 #   ./armchair --rebuild  force a client rebuild first
+#   ./armchair --last     check your most recent session against the playtest rules
 #
 # The bot binds to 127.0.0.1 only and serves the built client itself (no Vite,
 # no second port), and refuses requests from any other origin or host name.
 # Keys come from server/.env as in development. WebRTC audio still uses
 # short-lived UDP ports on your LAN address for the length of a session; with
 # the macOS firewall on, nothing else on your network can reach them.
+#
+# Every session is recorded to ~/.armchair/sessions/ (the latest 50; transcripts
+# of what you said, so they never leave this machine) for `--last` to check.
 set -euo pipefail
 
 PORT="${ARMCHAIR_PORT:-7860}"
@@ -17,6 +21,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLIENT="$ROOT/client"
 SERVER="$ROOT/server"
 STAMP="$CLIENT/dist/.armchair-build"
+
+SESSIONS="${ARMCHAIR_SESSIONS:-$HOME/.armchair/sessions}"
+
+if [[ "${1:-}" == "--last" ]]; then
+  cd "$SERVER" && exec uv run python -m playtest check "$SESSIONS"
+fi
 
 [[ -f "$SERVER/.env" ]] || { echo "server/.env is missing: copy server/.env.example and add your keys." >&2; exit 1; }
 
@@ -39,5 +49,5 @@ fi
   done ) &
 
 cd "$SERVER"
-ARMCHAIR_LOCAL=1 ARMCHAIR_ORIGIN="$ORIGIN" exec uv run bot.py \
+ARMCHAIR_LOCAL=1 ARMCHAIR_ORIGIN="$ORIGIN" ARMCHAIR_RECORD="$SESSIONS" ARMCHAIR_RECORD_KEEP=50 exec uv run bot.py \
   --host 127.0.0.1 --port "$PORT" --allowed-origins "$ORIGIN" "http://localhost:${PORT}"
