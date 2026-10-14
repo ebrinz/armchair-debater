@@ -29,6 +29,26 @@ export const mockKind = (search: string): Mode => {
   return value === 'sparring' || value === 'explore' || value === 'learn' ? value : 'debate';
 };
 
+/** `?frame=n` pins fixture frame n, for tests that must land on one exact screen. */
+export const mockFrame = (search: string, length: number): number | null => {
+  const raw = new URLSearchParams(search).get('frame');
+  if (raw === null || !/^\d+$/.test(raw)) return null;
+  const frame = Number(raw);
+  return frame < length ? frame : null;
+};
+
+/** `?talk=bot` or `?talk=user` feeds that side a fake voice, so its mouth moves. */
+export const mockTalk = (search: string): 'bot' | 'user' | null => {
+  const value = new URLSearchParams(search).get('talk');
+  return value === 'bot' || value === 'user' ? value : null;
+};
+
+/** The fake voice's level at a moment: a slow wobble that never reaches silence. */
+export const mockLevel = (ms: number): number => 0.55 + 0.35 * Math.sin(ms / 180);
+
+/** How many frames a mode's replay has, for validating `?frame=`. */
+export const mockLength = (kind: Mode): number => FIXTURES[kind].length;
+
 /**
  * Replays one mode's contract fixture into the store, looping. Every frame is
  * what the server really sends — including the lock-in, pushed the moment it
@@ -36,9 +56,15 @@ export const mockKind = (search: string): Mode => {
  * loop only decides how long to sit on the screens a person would linger on.
  * Returns a stop function.
  */
-export const startMockReplay = (kind: Mode = 'debate'): (() => void) => {
+export const startMockReplay = (kind: Mode = 'debate', frame: number | null = null): (() => void) => {
   const { receive, clear } = useArcadeStore.getState();
   const snapshots = FIXTURES[kind];
+  if (frame !== null) {
+    clear();
+    receive(cards);
+    receive(snapshots[frame]);
+    return () => {};
+  }
   const frames = snapshots.flatMap((frame, i) => {
     const choosing = frame.stage === 'setup' && !frame.user.theory_id;
     const last = i === snapshots.length - 1;

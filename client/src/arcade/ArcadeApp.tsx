@@ -24,7 +24,7 @@ import { Stage } from './components/Stage';
 import bundledDeck from './fixtures/theory-cards.json';
 import { useAudioLevel } from './hooks/useAudioLevel';
 import { useSuperFlare } from './hooks/useHitEffects';
-import { mockKind, startMockReplay } from './mock';
+import { mockFrame, mockKind, mockLength, mockLevel, mockTalk, startMockReplay } from './mock';
 import {
   DEBATE_THIS_LINE,
   MENU_LINE,
@@ -309,6 +309,16 @@ export const ArcadeApp = () => {
   );
   // `?mock` replays the debate; `?mock=sparring` and `?mock=explore` the others.
   const kind = useMemo(() => mockKind(window.location.search), []);
+  // `?frame=n` pins one fixture frame; `?talk=bot|user` gives that side a fake voice.
+  const frame = useMemo(() => mockFrame(window.location.search, mockLength(kind)), [kind]);
+  const talk = useMemo(() => mockTalk(window.location.search), []);
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    if (!mock || !talk) return;
+    const timer = window.setInterval(() => setNow(performance.now()), 50);
+    return () => window.clearInterval(timer);
+  }, [mock, talk]);
+  const fakeLevel = mock && talk ? mockLevel(now) : 0;
 
   const app = usePipecatApp({
     transportType: DEFAULT_TRANSPORT,
@@ -327,8 +337,8 @@ export const ArcadeApp = () => {
   const [replay, setReplay] = useState(0);
   useEffect(() => {
     if (!mock) return;
-    return startMockReplay(kind);
-  }, [mock, kind, replay]);
+    return startMockReplay(kind, frame);
+  }, [mock, kind, frame, replay]);
 
   // ?mock replays the fixtures with no server and no client of any kind.
   if (mock) {
@@ -345,6 +355,8 @@ export const ArcadeApp = () => {
           console.info(line);
           if (line === MENU_LINE || line === againLine(kind)) setReplay((n) => n + 1);
         }}
+        userLevel={talk === 'user' ? fakeLevel : 0}
+        botLevel={talk === 'bot' ? fakeLevel : 0}
         mock
       />
     );
