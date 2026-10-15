@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { CardGrid } from '../components/CardGrid';
 import { PixelButton } from '../components/PixelButton';
@@ -8,6 +8,9 @@ import '../select.css';
 import { playSfx } from '../sfxPlayer';
 import { useArcadeStore } from '../store';
 import type { TheoryCard } from '../types';
+
+/** How long one ask keeps the next from being sent, if the guide has not turned to a card by then. */
+const ASK_PATIENCE_MS = 12000;
 
 export interface DeckScreenProps {
   cards: TheoryCard[];
@@ -34,11 +37,20 @@ export const DeckScreen = ({ cards, onBack, follow = null, onAsk }: DeckScreenPr
   // cursor goes with it, once, and the player can still wander off afterwards.
   // Applied during render, like the other derived state in this UI.
   const [followed, setFollowed] = useState<string | null>(null);
+  // One ask at a time: a held Enter key once sent the same line 25 times in
+  // eleven seconds. The guide turning to a card is the answer, and clears it.
+  const [asking, setAsking] = useState(false);
   if (follow !== followed) {
     setFollowed(follow);
+    setAsking(false);
     const index = cards.findIndex((c) => c.id === follow);
     if (index >= 0) setFocused(index);
   }
+  useEffect(() => {
+    if (!asking) return;
+    const timer = window.setTimeout(() => setAsking(false), ASK_PATIENCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [asking]);
   const exploring = onAsk !== undefined;
   const shown = cards[focused];
 
@@ -76,7 +88,9 @@ export const DeckScreen = ({ cards, onBack, follow = null, onAsk }: DeckScreenPr
             onFocusChange={setFocused}
             onPick={(card) => {
               goTo(card.id);
-              onAsk?.(card);
+              if (!onAsk || asking) return;
+              setAsking(true);
+              onAsk(card);
             }}
             lockedId={null}
             disabled={false}
@@ -101,7 +115,11 @@ export const DeckScreen = ({ cards, onBack, follow = null, onAsk }: DeckScreenPr
         </p>
         <p className="select__status pixel-text">
           <span className="select__prompt">
-            {exploring ? 'Arrow keys move · Enter asks · Esc for the menu' : 'Arrow keys move · Esc goes back'}
+            {!exploring
+              ? 'Arrow keys move · Esc goes back'
+              : asking
+                ? 'Asking the guide…'
+                : 'Arrow keys move · Enter asks · Esc for the menu'}
           </span>
         </p>
       </footer>

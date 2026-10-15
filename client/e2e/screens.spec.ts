@@ -33,3 +33,20 @@ test('the learn report offers the next rungs, and a click only asks', async ({ p
   await page.getByRole('button', { name: 'DEBATE WITH IT' }).click();
   expect(said).toContain('Let me debate with it.');
 });
+
+test('the explorer asks the guide once, however many times Enter is pressed', async ({ page }) => {
+  // A venue session on 2026-10-14 sent "Tell me about Orchestrated Objective
+  // Reduction" 25 times in 11 seconds: a held key, or clicks while the bot was slow.
+  const said: string[] = [];
+  page.on('console', (m) => m.type() === 'info' && said.push(m.text()));
+  await page.goto('/?mock=explore&frame=2'); // the guide is on a card, and stays there
+
+  await page.locator('.slot--focused').focus();
+  for (let i = 0; i < 10; i += 1) await page.keyboard.press('Enter');
+  // A change of mind while the guide is still answering is a cursor move, not another ask.
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+
+  expect(said.filter((line) => line.startsWith('Tell me about'))).toHaveLength(1);
+  await expect(page.locator('.select__prompt')).toHaveText('Asking the guide…');
+});
