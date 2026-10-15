@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+from loguru import logger
 from pipecat.frames.frames import (
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
@@ -53,8 +54,14 @@ class Recorder:
     def _write(self, record: dict) -> None:
         if self._file.closed:
             return
-        self._file.write(json.dumps(record, default=str) + "\n")
-        self._file.flush()
+        # Written inside the same call that sends the screen its state, so a
+        # disk error ends the recording, never the game.
+        try:
+            self._file.write(json.dumps(record, default=str) + "\n")
+            self._file.flush()
+        except OSError as e:
+            logger.warning(f"Recording stopped, the session goes on: {e}")
+            self.close()
 
     def event(self, kind: str, **fields) -> None:
         self._write({"t": round(self._clock() - self._t0, 3), "kind": kind, **fields})
@@ -66,7 +73,10 @@ class Recorder:
         self.event("user_text" if by == "user" else "bot_text", text=text)
 
     def close(self) -> None:
-        self._file.close()
+        try:
+            self._file.close()
+        except OSError:
+            pass
 
 
 class RecorderObserver(BaseObserver):

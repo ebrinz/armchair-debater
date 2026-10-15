@@ -126,3 +126,25 @@ async def test_a_frame_broadcast_both_ways_is_recorded_once(tmp_path):
     await push(observer, BotStartedSpeakingFrame(), FrameDirection.DOWNSTREAM)
     rec.close()
     assert [e["kind"] for e in lines(rec.path)[1:]] == ["bot_started"]
+
+
+def test_a_disk_error_stops_the_recording_and_nothing_else(tmp_path):
+    # The recorder writes inside the same call that sends the screen its state,
+    # so a full disk must end the recording, not the game.
+    class Broken:
+        closed = False
+
+        def write(self, _):
+            raise OSError(28, "No space left on device")
+
+        def flush(self):
+            pass
+
+        def close(self):
+            self.closed = True
+
+    rec = Recorder(tmp_path, header={})
+    rec._file = Broken()
+    rec.snapshot({"stage": "mode"})  # must not raise
+    assert rec._file.closed
+    rec.turn("user", "still playing")  # a no-op now, and still no exception
