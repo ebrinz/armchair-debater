@@ -63,3 +63,24 @@ describe('useArcadeStore.receive', () => {
     expect(store().cards).toHaveLength(12);
   });
 });
+
+describe('a lost session', () => {
+  beforeEach(() => {
+    store().clear();
+    store().dismissLost();
+  });
+
+  it('is remembered through the disconnect that follows it, until dismissed', () => {
+    store().receive({ type: 'session_lost', reason: 'the speech service gave up' });
+    expect(store().lost).toBe('the speech service gave up');
+    store().clear(); // the disconnect
+    expect(store().lost).toBe('the speech service gave up');
+    store().dismissLost();
+    expect(store().lost).toBeNull();
+  });
+
+  it('needs a reason, like every message the store takes', () => {
+    store().receive({ type: 'session_lost' });
+    expect(store().lost).toBeNull();
+  });
+});

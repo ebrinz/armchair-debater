@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { advance, loadBrowserLadder, saveBrowserLadder } from './ladder';
 import type { Ladder } from './ladder';
-import { isDebateSnapshot, isTheoryCardsMessage } from './types';
+import { isDebateSnapshot, isSessionLostMessage, isTheoryCardsMessage } from './types';
 import type { DebateSnapshot, TheoryCard } from './types';
 
 interface ArcadeStore {
@@ -12,10 +12,14 @@ interface ArcadeStore {
   hitCount: number;
   /** The rungs cleared per theory; persisted, and kept across clear(). */
   ladder: Ladder;
+  /** Why the bot ended the session, if it did; shown on the title screen after
+   *  the disconnect that follows, so it survives clear(). */
+  lost: string | null;
   /** Feed every RTVI server message here; unknown messages are ignored. */
   receive: (data: unknown) => void;
-  /** Forget the debate (on disconnect). The cards are kept. */
+  /** Forget the debate (on disconnect). The cards, and the reason it ended, are kept. */
   clear: () => void;
+  dismissLost: () => void;
 }
 
 const sameHit = (a: DebateSnapshot['last_hit'], b: DebateSnapshot['last_hit']) =>
@@ -26,9 +30,14 @@ export const useArcadeStore = create<ArcadeStore>((set) => ({
   cards: [],
   hitCount: 0,
   ladder: loadBrowserLadder(),
+  lost: null,
   receive: (data) => {
     if (isTheoryCardsMessage(data)) {
       set({ cards: data.cards });
+      return;
+    }
+    if (isSessionLostMessage(data)) {
+      set({ lost: data.reason });
       return;
     }
     if (!isDebateSnapshot(data)) return;
@@ -48,4 +57,5 @@ export const useArcadeStore = create<ArcadeStore>((set) => ({
     });
   },
   clear: () => set({ snapshot: null, hitCount: 0 }),
+  dismissLost: () => set({ lost: null }),
 }));

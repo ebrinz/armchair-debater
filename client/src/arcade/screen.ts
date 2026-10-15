@@ -131,3 +131,7 @@ export const ANNOUNCER_SEQUENCE: Partial<Record<Stage, Array<[text: string, ms: 
 /** The same words the banners show, for the one shared live region. */
 export const announcerText = (stage: Stage): string =>
   (ANNOUNCER_SEQUENCE[stage] ?? []).map(([text]) => text).join('. ');
+
+/** The title screen's line after the bot ended the session: the reason, in the bot's words. */
+export const lostMessage = (reason: string): string =>
+  `Connection lost: ${reason}. Press START to play again.`;

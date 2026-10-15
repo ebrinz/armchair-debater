@@ -34,7 +34,7 @@ import {
   askLine,
   teachLine,
 } from './modes';
-import { ROUND_LABELS, VERSUS_MS, nextSplash, screenFor, splashKey } from './screen';
+import { ROUND_LABELS, VERSUS_MS, lostMessage, nextSplash, screenFor, splashKey } from './screen';
 import type { SplashState } from './screen';
 import { pickLine } from './selection';
 import { DeckScreen } from './screens/DeckScreen';
@@ -252,6 +252,8 @@ const ArcadeSession = ({
 }) => {
   const receive = useArcadeStore((s) => s.receive);
   const clear = useArcadeStore((s) => s.clear);
+  const lost = useArcadeStore((s) => s.lost);
+  const dismissLost = useArcadeStore((s) => s.dismissLost);
 
   // The scaffold's console hands this callback the message body unwrapped
   // (console.tsx:380-385), so it is passed straight to the store, which
@@ -288,14 +290,17 @@ const ArcadeSession = ({
 
   useEffect(() => {
     if (!connected) clear();
-  }, [connected, clear]);
+    // The reason the last session ended stays on the title screen until the
+    // next one is live: a failed start keeps it, and adds its own error.
+    else dismissLost();
+  }, [connected, clear, dismissLost]);
 
   return (
     <>
       <ArcadeView
         connected={connected}
         busy={busy}
-        error={error}
+        error={error ?? (lost ? lostMessage(lost) : null)}
         onStart={onStart}
         say={say}
         userLevel={userLevel}

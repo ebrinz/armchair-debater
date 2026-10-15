@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import fixtures from '../fixtures/debate-state.json';
-import { ROUNDS, ROUND_LABELS, nextSplash, roundNumber, screenFor, splashKey } from '../screen';
+import { ROUNDS, ROUND_LABELS, lostMessage, nextSplash, roundNumber, screenFor, splashKey } from '../screen';
 import type { DebateSnapshot } from '../types';
 
 const snapshots = fixtures as DebateSnapshot[];
@@ -78,5 +78,13 @@ describe('the versus splash', () => {
     expect(nextSplash(ended, 'gwt|iit')).toBe(ended);
     const afterRematch = nextSplash(nextSplash(ended, null), 'gwt|iit');
     expect(afterRematch.holding).toBe('gwt|iit');
+  });
+});
+
+describe('the lost-session line', () => {
+  it('says what went wrong and what to do', () => {
+    expect(lostMessage('GradiumSTTService#0 failed to reconnect after 3 attempts')).toBe(
+      'Connection lost: GradiumSTTService#0 failed to reconnect after 3 attempts. Press START to play again.'
+    );
   });
 });

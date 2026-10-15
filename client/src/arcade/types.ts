@@ -135,3 +135,12 @@ export const isDebateSnapshot = (data: unknown): data is DebateSnapshot => {
 
 export const isTheoryCardsMessage = (data: unknown): data is TheoryCardsMessage =>
   hasType(data, 'theory_cards') && Array.isArray((data as { cards?: unknown }).cards);
+
+/** The bot is ending the session because a service of its gave up; the reason, in its words. */
+export interface SessionLostMessage {
+  type: 'session_lost';
+  reason: string;
+}
+
+export const isSessionLostMessage = (data: unknown): data is SessionLostMessage =>
+  hasType(data, 'session_lost') && typeof (data as { reason?: unknown }).reason === 'string';

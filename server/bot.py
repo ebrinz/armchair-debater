@@ -140,6 +140,40 @@ def user_turn_strategies() -> UserTurnStrategies:
     return UserTurnStrategies(start=[MinWordsUserTurnStartStrategy(min_words=INTERRUPT_MIN_WORDS)])
 
 
+def session_lost(frame) -> dict | None:
+    """The message the arcade shows when a service has given up, or None for an
+    error the pipeline rides out (a failed turn, a reconnect still being tried).
+
+    A service that gives up (a speech websocket that could not reconnect) marks
+    itself unusable before its error reaches the worker, and the bot would
+    otherwise play on deaf, or mute, until the idle timeout.
+    """
+    processor = frame.processor
+    if processor is None or processor.is_usable:
+        return None
+    return {"type": "session_lost", "reason": str(frame.error)}
+
+
+def end_lost_session(worker):
+    """The worker's on_pipeline_error handler: tell the arcade why, then end the
+    session gracefully, once, however many services give up after the first."""
+    ended = False
+
+    async def on_pipeline_error(worker, frame):
+        nonlocal ended
+        lost = session_lost(frame)
+        if lost is None or ended:
+            return
+        ended = True
+        logger.error(f"Session lost, ending it: {lost['reason']}")
+        # Told first, in order: the message travels the pipeline ahead of the
+        # EndFrame, so it reaches the client before the connection closes.
+        await worker.rtvi.send_server_message(lost)
+        await worker.stop_when_done()
+
+    return on_pipeline_error
+
+
 def make_llm(llm_config: providers.LLMConfig) -> QuietOpenAILLMService:
     llm = QuietOpenAILLMService(
         api_key=llm_config.require_key(),
@@ -207,6 +241,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
         idle_timeout_frames=IDLE_TIMEOUT_FRAMES,
         observers=[],
     )
+
+    worker.add_event_handler("on_pipeline_error", end_lost_session(worker))
 
     runner = WorkerRunner(handle_sigint=runner_args.handle_sigint)
 
