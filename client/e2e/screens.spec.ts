@@ -50,3 +50,11 @@ test('the explorer asks the guide once, however many times Enter is pressed', as
   expect(said.filter((line) => line.startsWith('Tell me about'))).toHaveLength(1);
   await expect(page.locator('.select__prompt')).toHaveText('Asking the guide…');
 });
+
+test('the mic toggle shuts the bot’s ears and says so', async ({ page }) => {
+  await page.goto(`/?mock=debate&frame=${frameIndex('debate', (f) => f.stage === 'rebuttal')}`);
+  const mic = page.getByRole('button', { name: 'MIC ON' });
+  await expect(mic).toHaveAttribute('aria-pressed', 'true');
+  await mic.click();
+  await expect(page.getByRole('button', { name: 'MIC OFF' })).toHaveAttribute('aria-pressed', 'false');
+});

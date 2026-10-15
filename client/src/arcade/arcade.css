@@ -242,6 +242,10 @@
   right: 92px;
 }
 
+.mic-toggle {
+  right: 174px;
+}
+
 .crt-toggle:hover {
   border-color: var(--accent);
   color: var(--bar-fill);

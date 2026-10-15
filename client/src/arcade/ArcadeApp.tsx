@@ -19,6 +19,7 @@ import { decisionBanners, nextSpoken } from './battleText';
 import type { Spoken } from './battleText';
 import { CrtOverlay } from './components/CrtOverlay';
 import { LiveRegion } from './components/LiveRegion';
+import { MicToggle } from './components/MicToggle';
 import { SfxToggle } from './components/SfxToggle';
 import { Stage } from './components/Stage';
 import bundledDeck from './fixtures/theory-cards.json';
@@ -100,7 +101,12 @@ interface ViewProps {
   /** Says a line to the bot, as if the player had typed it. Every button in the
    *  UI comes down to this: a pick, a mode, a rematch, the way back to the menu. */
   say: (line: string) => void;
+  /** Opens or shuts the microphone. Given, the MIC toggle is shown; the view
+   *  owns the state and applies it whenever a session is live. */
+  onMic?: (on: boolean) => void;
 }
+
+const noMic = () => {};
 
 /**
  * The arcade root: the stage, whichever screen the server's state calls for,
@@ -115,8 +121,16 @@ const ArcadeView = ({
   userLevel = 0,
   botLevel = 0,
   mock = false,
+  onMic,
 }: ViewProps) => {
   const snapshot = useArcadeStore((s) => s.snapshot);
+  // The mute outlives a session: set on the title screen it holds for the game,
+  // and the label says so. Applied once a session is live, since the client's
+  // transport only has a microphone then.
+  const [micOn, setMicOn] = useState(true);
+  useEffect(() => {
+    if (connected) onMic?.(micOn);
+  }, [connected, micOn, onMic]);
   const cards = useArcadeStore((s) => s.cards);
   const hitCount = useArcadeStore((s) => s.hitCount);
 
@@ -235,6 +249,7 @@ const ArcadeView = ({
       />
       <CrtOverlay />
       <SfxToggle />
+      {onMic && <MicToggle on={micOn} onToggle={() => setMicOn(!micOn)} />}
     </div>
   );
 };
@@ -275,6 +290,9 @@ const ArcadeSession = ({
     },
     [client]
   );
+  // PipecatClient.enableMic(enable: boolean): void
+  // (node_modules/@pipecat-ai/client-js/dist/index.d.ts:1214).
+  const onMic = useCallback((on: boolean) => client?.enableMic(on), [client]);
 
   const transportState = usePipecatClientTransportState();
   const connected = LIVE_STATES.includes(transportState);
@@ -305,6 +323,7 @@ const ArcadeSession = ({
         say={say}
         userLevel={userLevel}
         botLevel={botLevel}
+        onMic={onMic}
       />
       <BotAudioOutput />
     </>
@@ -367,6 +386,7 @@ export const ArcadeApp = () => {
         userLevel={talk === 'user' ? fakeLevel : 0}
         botLevel={talk === 'bot' ? fakeLevel : 0}
         mock
+        onMic={noMic}
       />
     );
   }
