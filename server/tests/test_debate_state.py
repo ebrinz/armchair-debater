@@ -377,3 +377,14 @@ async def test_got_it_at_seventy_in_learn_mode_only():
     await spar.apply_answer(25, 0, "r")
     await spar.apply_answer(25, 0, "r")
     assert spar.health["user"] == 50 and spar.winner() == "user"
+
+
+async def test_the_floor_says_whose_turn_it_is_and_the_front_door_clears_it():
+    state = await started()
+    assert state.snapshot()["floor"] is None
+    await state.set_floor("user")
+    assert state.snapshot()["floor"] == "user"
+    with pytest.raises(ValueError):
+        await state.set_floor("referee")
+    await state.set_stage("mode")
+    assert state.snapshot()["floor"] is None

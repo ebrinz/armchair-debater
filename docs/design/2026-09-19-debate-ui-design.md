@@ -24,10 +24,11 @@ No multi-frame sprite animation beyond the states below. See [TODOs](#todos).
 
 Measured in end-to-end runs; the design is built around these:
 
-- A hit arrives as its own event, about 1.5 s after the turn that earned it ends.
-  The house's hit lands just after it stops speaking; the player's hit lands while
-  the house is already replying. Hits are therefore shown as discrete events with
-  their own animation, never implied to be in sync with speech.
+- A hit arrives as its own event. A round's two hits land once the round is over:
+  the house's as the player stops talking, the player's a judge call (one to three
+  seconds) later, while the house is already replying. Hits are therefore shown
+  as discrete events with their own animation, never implied to be in sync with
+  speech.
 - `last_hit.reason` is a 10–15 word declarative sentence, e.g. "Argues GWT conflates
   reportability with experience itself."
 - The sequence is fixed: four rounds, eight scored turns, a spoken "judge is
@@ -151,14 +152,17 @@ Reduced motion: no slide and no slam, the finished picture simply appears.
   no line, 1–10 "It's not very effective…", 0 "But it missed!". If `recovery > 0` a second line follows: "{SPEAKER} shook off
   the last hit!  +{recovery}". A button on the box opens a transcript drawer, closed
   by default. Before the first hit the box shows a prompt for whose turn it is.
-- **Whose move.** The cue under the battle text follows `last_hit.by`: each hit
-  hands the floor to the other side. Cross-examination opens with two unscored
-  turns, so there the cue names what the round wants instead: `ASK THE HOUSE ONE
-  QUESTION` while the last hit is still the player's rebuttal, then `ANSWER THE
-  HOUSE` once the house's answer has been scored. (A user's hit usually lands a
-  stage late — the round advances about a second after they stop talking and the
-  judge takes a few — which is why the fixture shows the cross-examination answer
-  scored under `closing`.)
+- **Whose move.** The cue under the battle text follows the snapshot's `floor`,
+  which the server sets as each side's turn ends: `THE HOUSE steps up…` or
+  `YOUR MOVE`. In cross-examination the player's turn is a question in part one
+  and an answer in part two, so there the cue names what the round wants: `ASK
+  THE HOUSE ONE QUESTION` until the house's answer has been scored, then `ANSWER
+  THE HOUSE`. (The house's cross-examination answer lands as soon as it is
+  judged — the player's question came first in that round — while every other
+  round's hits land after the player has spoken. A user's hit usually lands a
+  stage late, which is why the fixture shows the cross-examination answer scored
+  under `closing`.) Without a `floor` (an older server) the cue flips on
+  `last_hit.by` alone.
 - **Announcer.** A banner that slams in and out on each stage change: `ROUND 1`
   then `FIGHT!`; `ROUND 2`; `ROUND 3` then `CROSS-EXAMINE!`; `FINAL ROUND`.
 

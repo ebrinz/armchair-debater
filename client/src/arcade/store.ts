@@ -42,7 +42,7 @@ export const useArcadeStore = create<ArcadeStore>((set) => ({
     }
     if (!isDebateSnapshot(data)) return;
     // A server from before the modes sends none of their fields.
-    const snapshot = { ...data, mode: data.mode ?? null, focus: data.focus ?? null, question: data.question ?? null, lesson: data.lesson ?? null };
+    const snapshot = { ...data, mode: data.mode ?? null, focus: data.focus ?? null, question: data.question ?? null, lesson: data.lesson ?? null, floor: data.floor ?? null };
     set((state) => {
       const ladder = advance(state.ladder, snapshot);
       if (ladder !== state.ladder) saveBrowserLadder(ladder);

@@ -311,10 +311,12 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments) -> Non
     # spoken or typed; the bot's from the LLM's own output, which is upstream
     # of TTS and the transport and so immune to the aggregator-event race
     # that used to drop bot turns under an interruption.
-    def on_turn(by: str, text: str) -> None:
+    async def on_turn(by: str, text: str) -> None:
         if recorder:
             recorder.turn(by, text)
         scorer.submit(by, text)
+        # A turn has ended, so the floor is the other side's: the client's cue.
+        await debate.set_floor("user" if by == "bot" else "bot")
 
     worker.add_observer(TurnObserver(llm, on_turn))
     if recorder:

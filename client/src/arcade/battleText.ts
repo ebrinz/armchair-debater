@@ -77,21 +77,28 @@ export const battleLines = (hit: Hit, mode: Mode | null = null): string[] => {
 };
 
 /**
- * Whose turn it is, derived only from the snapshot: the house opens, and after
- * that each hit hands the floor to the other side. Nothing here guesses at
- * state the server does not send — there is no "thinking…", because the
- * contract cannot tell us that.
+ * Whose turn it is, derived only from the snapshot. The server sends `floor`,
+ * set as each side's turn ends; a round's hits land after the player has
+ * spoken, so the last hit alone no longer says whose move it is. Nothing here
+ * guesses at state the server does not send — there is no "thinking…",
+ * because the contract cannot tell us that.
  *
- * Flips on `last_hit.by` alone, so it relies on the server strictly alternating
- * scored turns (bot, user, bot, …). Cross-examination opens with two turns that
- * are not scored — the house's invitation and the player's question — so there
- * the last hit is still the player's rebuttal, and the cue says what the round
- * wants from them rather than naming the house.
+ * In cross-examination the player's turn is a question in part one and an
+ * answer in part two; the two parts share a stage, and what tells them apart
+ * is the house's scored answer, which lands as soon as it is judged.
+ *
+ * Without a floor (a server from before it), the cue flips on `last_hit.by`
+ * alone: the house opens, and each hit hands the floor to the other side.
  */
-export const turnCue = (hit: Hit | null, stage: Stage): string => {
+export const turnCue = (hit: Hit | null, stage: Stage, floor: Side | null = null): string => {
   // The examiner only asks, so once a question is out the floor is the player's.
   if (stage === 'sparring') return 'ANSWER THE EXAMINER';
   if (stage === 'check') return 'ANSWER THE TUTOR';
+  if (floor === 'bot') return 'THE HOUSE steps up…';
+  if (floor === 'user') {
+    if (stage !== 'crossexam') return 'YOUR MOVE';
+    return hit?.by === 'bot' ? 'ANSWER THE HOUSE' : 'ASK THE HOUSE ONE QUESTION';
+  }
   if (!hit) return stage === 'opening' ? 'THE HOUSE steps up…' : 'YOUR MOVE';
   if (stage === 'crossexam') {
     return hit.by === 'user' ? 'ASK THE HOUSE ONE QUESTION' : 'ANSWER THE HOUSE';

@@ -48,6 +48,10 @@ class DebateState:
             side: {"theory_id": None, "theory_name": None} for side in _SIDES
         }
         self._focus: str | None = None
+        # Whose turn it is, as the client's cue needs it: set as each side's turn
+        # ends. A round's hits land after the user has spoken, so the cue can no
+        # longer follow the last hit alone.
+        self._floor: str | None = None
         self._reset_scores()
 
     def _reset_scores(self) -> None:
@@ -82,6 +86,13 @@ class DebateState:
             raise ValueError(f"unknown mode '{mode}'")
         self.mode = mode
         self._reset_scores()
+        await self._changed()
+
+    async def set_floor(self, side: str) -> None:
+        """A turn has ended: the floor is the other side's."""
+        if side not in _SIDES:
+            raise ValueError(f"unknown side '{side}'")
+        self._floor = side
         await self._changed()
 
     async def set_focus(self, theory_id: str | None) -> None:
@@ -177,4 +188,5 @@ class DebateState:
             "focus": self._focus,
             "question": dict(self._question) if self._question else None,
             "lesson": dict(self._lesson) if self._lesson else None,
+            "floor": self._floor,
         }

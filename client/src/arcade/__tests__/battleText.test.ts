@@ -27,6 +27,7 @@ const snapshot = (stage: DebateSnapshot['stage'], last_hit: Hit | null): DebateS
   focus: null,
   question: null,
   lesson: null,
+  floor: null,
 });
 
 describe('hitTier', () => {
@@ -230,6 +231,7 @@ describe('decisionBanners', () => {
     focus: null,
     question: null,
     lesson: null,
+    floor: null,
   });
 
   // The Style guide's rule table, one case per row, checked in its order.
@@ -283,6 +285,16 @@ describe('turnCue', () => {
     expect(turnCue(by('bot'), 'opening')).toBe('YOUR MOVE');
     expect(turnCue(by('user'), 'rebuttal')).toBe('THE HOUSE steps up…');
     expect(turnCue(by('bot'), 'closing')).toBe('YOUR MOVE');
+  });
+
+  it('follows the floor when the server sends it: a round\'s hits land after the player spoke', () => {
+    expect(turnCue(null, 'opening', 'bot')).toBe('THE HOUSE steps up…');
+    expect(turnCue(null, 'opening', 'user')).toBe('YOUR MOVE');
+    expect(turnCue(by('user'), 'rebuttal', 'user')).toBe('YOUR MOVE');
+    expect(turnCue(by('bot'), 'closing', 'bot')).toBe('THE HOUSE steps up…');
+    expect(turnCue(by('user'), 'crossexam', 'user')).toBe('ASK THE HOUSE ONE QUESTION');
+    expect(turnCue(by('bot'), 'crossexam', 'user')).toBe('ANSWER THE HOUSE');
+    expect(turnCue(by('user'), 'crossexam', 'bot')).toBe('THE HOUSE steps up…');
   });
 
   it('names what cross-examination wants from the player', () => {

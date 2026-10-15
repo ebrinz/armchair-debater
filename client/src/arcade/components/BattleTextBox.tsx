@@ -4,7 +4,7 @@ import { Conversation } from '@/components/pipecat/conversation';
 
 import { battleLines, feltDamage, hitTier, turnCue } from '../battleText';
 import { useTypewriter } from '../hooks/useTypewriter';
-import type { Hit, Mode, Stage } from '../types';
+import type { Hit, Mode, Side, Stage } from '../types';
 
 import { PixelButton } from './PixelButton';
 
@@ -13,6 +13,8 @@ export interface BattleTextBoxProps {
   /** Re-types the lines when it changes. */
   hitCount: number;
   stage: Stage;
+  /** Whose turn it is, from the snapshot; drives the turn cue. */
+  floor?: Side | null;
   /** Sparring words a hit differently: it is an answer, scored. */
   mode?: Mode | null;
   /** No Pipecat client behind the UI, so no transcript to open. */
@@ -41,6 +43,7 @@ export const BattleTextBox = ({
   hit,
   hitCount,
   stage,
+  floor = null,
   mode = null,
   mock = false,
   lines: fixed,
@@ -50,7 +53,7 @@ export const BattleTextBox = ({
   const tier = hit ? hitTier(feltDamage(hit, mode)) : null;
   const lines = fixed ?? (hit ? battleLines(hit, mode) : []);
   const typed = useTypewriter(lines, hitCount, fixed ? false : tier === 'super');
-  const turn = cue === undefined ? turnCue(hit, stage) : cue;
+  const turn = cue === undefined ? turnCue(hit, stage, floor) : cue;
 
   return (
     <div className="battle-box">

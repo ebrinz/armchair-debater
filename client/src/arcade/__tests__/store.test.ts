@@ -36,10 +36,18 @@ describe('useArcadeStore.receive', () => {
       { ...fixtures[3], bot: { ...fixtures[3].bot, health: '70' } },
       { ...fixtures[3], last_hit: { by: 'user' } },
       { ...fixtures[3], verdict: 'user' },
+      { ...fixtures[3], floor: 'referee' },
     ]) {
       store().receive(broken);
       expect(store().snapshot).toBe(good);
     }
+  });
+
+  it('fills in the floor as null from a server that sends none', () => {
+    const older: Record<string, unknown> = { ...fixtures[5] };
+    delete older.floor;
+    store().receive(older);
+    expect(store().snapshot?.floor).toBeNull();
   });
 
   it('clear() empties the snapshot and hit count but keeps the cards', () => {

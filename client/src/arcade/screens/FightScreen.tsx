@@ -164,6 +164,7 @@ export const FightScreen = ({
         hit={hit}
         hitCount={hitCount}
         stage={snapshot.stage}
+        floor={snapshot.floor}
         mode={snapshot.mode}
         mock={mock}
         lines={text?.lines}

@@ -17,7 +17,8 @@
     "mode": null,
     "focus": null,
     "question": null,
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -37,7 +38,8 @@
     "mode": "learn",
     "focus": null,
     "question": null,
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -57,7 +59,8 @@
     "mode": "learn",
     "focus": null,
     "question": null,
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -81,7 +84,8 @@
       "step": 1,
       "of": 4,
       "title": "The idea"
-    }
+    },
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -105,7 +109,8 @@
       "step": 2,
       "of": 4,
       "title": "The terms"
-    }
+    },
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -129,7 +134,8 @@
       "step": 3,
       "of": 4,
       "title": "The case for it"
-    }
+    },
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -153,7 +159,8 @@
       "step": 4,
       "of": 4,
       "title": "What it's up against"
-    }
+    },
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -176,7 +183,8 @@
       "number": 1,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -204,7 +212,8 @@
       "number": 1,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -232,7 +241,8 @@
       "number": 2,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -260,7 +270,8 @@
       "number": 2,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -288,7 +299,8 @@
       "number": 3,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -316,7 +328,8 @@
       "number": 3,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -347,6 +360,7 @@
       "number": 3,
       "of": 3
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   }
 ]

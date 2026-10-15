@@ -33,6 +33,16 @@ ANSWER_NODES = {"sparring": "answer", "check": "understanding"}
 # the user's question in cross-examination, and the whole lesson (heard, so the
 # tutor's turns can be counted; the check resets the transcript before it starts).
 UNSCORED_NODES = ("crossexam_question", "lesson")
+# The debate's argument rounds. A pause mid-statement made each of the user's
+# fragments a turn of its own, judged as no argument; now the user's parts are
+# joined and judged once, when the round's tool says it is over (round_complete).
+ROUND_NODES = ("opening", "rebuttal", "crossexam_answer", "closing")
+# ...and the rounds the house opens. Its hit used to land a breath after it
+# stopped speaking, before the user had said a word. Now it is judged as soon as
+# it is heard, so the judge's latency is paid while the user speaks, but lands
+# with the round. In cross-examination the user's question came first, so the
+# house's answer is no free hit and lands at once.
+HOUSE_OPENS = ("opening", "rebuttal", "closing")
 
 
 class TurnScorer:
@@ -55,10 +65,14 @@ class TurnScorer:
         self._rubric = rubric
         self._transcript: list[tuple[str, str]] = []
         self._heard: dict[tuple[str, str], int] = {}
-        # An answer in progress, per answer node: where its parts sit in the
-        # transcript. A pause mid-answer splits it into several user turns; it is
-        # scored once, joined, when the bot's tool says it is complete.
+        # An answer in progress, per answer node (and the user's turn in progress,
+        # per round node): where its parts sit in the transcript. A pause mid-answer
+        # splits it into several user turns; it is scored once, joined, when the
+        # bot's tool says it is complete.
         self._pending: dict[str, list[int]] = {}
+        # The house's turns in a round node, already with the judge, waiting for
+        # the round to end before they land.
+        self._judged: dict[str, list[tuple[asyncio.Task, str]]] = {}
         self._tail: asyncio.Task | None = None
         self._closed = False
         self._generation = 0
@@ -73,9 +87,16 @@ class TurnScorer:
         self._transcript.append((by, text))
         self._heard[(node, by)] = self._heard.get((node, by), 0) + 1
         kind = ANSWER_NODES.get(node)
-        if kind and by == "user":
+        if (kind or node in ROUND_NODES) and by == "user":
             self._pending.setdefault(node, []).append(len(self._transcript) - 1)
             logger.debug(f"scorer: holding part of an answer in {node} until it is complete")
+            return
+        if node in HOUSE_OPENS:
+            logger.debug(f"scorer: judging a {by} turn in {node}, to land when the round ends")
+            judged = asyncio.create_task(
+                self._judge(self._tail, by, text, history, self._generation)
+            )
+            self._judged.setdefault(node, []).append((judged, by))
             return
         if node in UNSCORED_NODES or (kind and by == "bot"):
             # Kept for the judge to read — an answer means little without its
@@ -104,11 +125,37 @@ class TurnScorer:
         rubric: str = "",
         question: str | None = None,
     ) -> None:
+        score = await self._judge(previous, by, text, history, generation, kind, rubric, question)
+        if score is not None:
+            await self._apply(by, score, generation, kind)
+
+    async def _land(
+        self, previous: asyncio.Task | None, judged: asyncio.Task, by: str, generation: int
+    ) -> None:
+        """Apply a house turn judged earlier, in its place in the chain."""
+        if previous:
+            with contextlib.suppress(Exception):
+                await previous
+        score = await judged
+        if score is not None:
+            await self._apply(by, score, generation)
+
+    async def _judge(
+        self,
+        previous: asyncio.Task | None,
+        by: str,
+        text: str,
+        history: list[tuple[str, str]],
+        generation: int,
+        kind: str | None = None,
+        rubric: str = "",
+        question: str | None = None,
+    ) -> judge.TurnScore | None:
         if previous:
             with contextlib.suppress(Exception):
                 await previous
         if generation != self._generation:
-            return
+            return None
         try:
             user_theory, bot_theory = self._theories()
             if kind == "answer":
@@ -133,10 +180,15 @@ class TurnScorer:
                 )
         except judge.JudgeError:
             logger.warning(f"scorer: skipping an unscored {by} turn")
-            return
+            return None
         except Exception:
             logger.exception(f"scorer: unexpected error scoring a {by} turn")
-            return
+            return None
+        return score
+
+    async def _apply(
+        self, by: str, score: judge.TurnScore, generation: int, kind: str | None = None
+    ) -> None:
         if generation != self._generation:
             return
         try:
@@ -174,6 +226,22 @@ class TurnScorer:
             )
         )
 
+    def round_complete(self, node: str) -> None:
+        """The round in ``node`` is over: land the house's judged turns, then the
+        user's parts, joined and judged once against the transcript before them."""
+        if self._closed or node not in ROUND_NODES:
+            return
+        for judged, by in self._judged.pop(node, []):
+            self._tail = asyncio.create_task(self._land(self._tail, judged, by, self._generation))
+        held = self._pending.pop(node, None)
+        if not held:
+            return
+        parts = [self._transcript[i][1] for i in held]
+        history = [turn for i, turn in enumerate(self._transcript) if i not in set(held)]
+        self._tail = asyncio.create_task(
+            self._run(self._tail, "user", " ".join(parts), history, self._generation)
+        )
+
     async def drain(self) -> None:
         # Nothing a scored turn does may stop the verdict that waits on this.
         if self._tail:
@@ -196,6 +264,7 @@ class TurnScorer:
         self._transcript = []
         self._heard = {}
         self._pending = {}
+        self._judged = {}
         self._closed = False
         self._generation += 1
         self._tail = None

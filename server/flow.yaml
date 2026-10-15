@@ -164,12 +164,12 @@ nodes:
 
           When the user has given their opening statement, call opening_done
           immediately, without replying to it; your rebuttal comes next round.
+          If their statement trails off unfinished, ending on a word like "and",
+          "so", or "um", say only "Go on" and wait for the rest.
           If instead they ask a question or object to the theory you matched
           them with, answer briefly and invite their opening statement again.
     functions:
       - name: opening_done
-        transition_only: true
-        description: The user has finished their opening statement. Moves the debate to the rebuttal round.
         transition_to: rebuttal
 
   rebuttal:
@@ -199,12 +199,12 @@ nodes:
 
           When the user has given their rebuttal, call rebuttal_done
           immediately, without replying to it; cross-examination comes next.
+          If their rebuttal trails off unfinished, ending on a word like "and",
+          "so", or "um", say only "Go on" and wait for the rest.
           If instead they ask a question or object to the theory you matched
           them with, answer briefly and invite their rebuttal again.
     functions:
       - name: rebuttal_done
-        transition_only: true
-        description: The user has finished their rebuttal. Moves the debate to cross-examination.
         transition_to: crossexam_question
 
   crossexam_question:
@@ -257,6 +257,8 @@ nodes:
 
           When the user has answered your question, call answer_given
           immediately, without replying to it; your closing comes next round.
+          If their answer trails off unfinished, ending on a word like "and",
+          "so", or "um", say only "Go on" and wait for the rest.
           If answer_given reports answer_first, you were interrupted before
           you had your turn: give it now, answer and question both.
           If instead they ask what you meant, rephrase your question in one
@@ -290,11 +292,17 @@ nodes:
 
           When the user has given their closing statement, call judge_debate
           immediately, without replying to it.
+          If their statement trails off unfinished, ending on a word like "and",
+          "so", or "um", say only "Go on" and wait for the rest.
+          If judge_debate reports closing_first, do what its instruction says.
           If instead they ask a question or object to the theory you matched
           them with, answer briefly and invite their closing statement again.
     functions:
       - name: judge_debate
-        transition_to: verdict
+        transition_to:
+          field: status
+          cases:
+            ok: verdict
 
   verdict:
     pre_actions:

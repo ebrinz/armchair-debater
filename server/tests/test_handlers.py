@@ -24,6 +24,9 @@ class FakeScorer:
     def answer_complete(self, node, question=None):
         self.log.append(f"answer_complete:{node}")
 
+    def round_complete(self, node):
+        self.log.append(f"round_complete:{node}")
+
     async def drain(self):
         self.log.append("drain")
         if self._on_drain:
@@ -91,6 +94,7 @@ async def ready_for_verdict(monkeypatch, write_rationale):
 
     fm = FakeFlowManager(scorer=FakeScorer(on_drain=late_hit))
     await handlers.set_positions(fm, user_theory="gwt", bot_theory="iit")
+    fm.state["scorer"].heard_turns.update({("closing", "bot"): 1, ("closing", "user"): 1})
     fm.state["scorer"].log.clear()
     return fm
 
@@ -104,7 +108,7 @@ async def test_judge_debate_closes_speaks_drains_then_decides(monkeypatch):
     fm = await ready_for_verdict(monkeypatch, write_rationale)
     result, nxt = await handlers.judge_debate(fm)
     assert nxt is TRANSITION_IN_YAML
-    assert fm.state["scorer"].log == ["close", "drain"]
+    assert fm.state["scorer"].log == ["round_complete:closing", "close", "drain"]
     assert isinstance(fm.worker.frames[0], TTSSpeakFrame)
     assert fm.worker.frames[0].append_to_context is False
     assert result["status"] == "ok" and result["winner"] == "user"
@@ -147,7 +151,7 @@ async def test_judge_debate_called_twice_decides_once(monkeypatch):
 
     assert len(calls) == 1
     assert len(fm.worker.frames) == 1
-    assert fm.state["scorer"].log == ["close", "drain"]
+    assert fm.state["scorer"].log == ["round_complete:closing", "close", "drain"]
     assert first == second == third and first["status"] == "ok"
     assert nxt is TRANSITION_IN_YAML
 
@@ -198,9 +202,36 @@ async def test_answer_given_waits_until_the_house_has_answered_and_asked():
     assert result["status"] == "answer_first"
     assert nxt is TRANSITION_IN_YAML
 
+    assert fm.state["scorer"].log == []
+
     fm.state["scorer"].heard_turns[("crossexam_answer", "bot")] = 1
     result, _ = await handlers.answer_given(fm)
     assert result["status"] == "ok"
+    assert fm.state["scorer"].log == ["round_complete:crossexam_answer"]
+
+
+async def test_the_round_tools_land_their_rounds():
+    fm = FakeFlowManager()
+    result, nxt = await handlers.opening_done(fm)
+    assert result["status"] == "ok" and nxt is TRANSITION_IN_YAML
+    result, nxt = await handlers.rebuttal_done(fm)
+    assert result["status"] == "ok" and nxt is TRANSITION_IN_YAML
+    assert fm.state["scorer"].log == ["round_complete:opening", "round_complete:rebuttal"]
+
+
+async def test_judge_debate_waits_for_both_closing_statements():
+    # Recorded: "we won", said before the house's closing, brought the verdict
+    # with neither closing scored.
+    fm = FakeFlowManager()
+    result, nxt = await handlers.judge_debate(fm)
+    assert result["status"] == "closing_first" and nxt is TRANSITION_IN_YAML
+    assert "your closing" in result["instruction"]
+
+    fm.state["scorer"].heard_turns[("closing", "bot")] = 1
+    result, _ = await handlers.judge_debate(fm)
+    assert result["status"] == "closing_first"
+    assert "user" in result["instruction"]
+    assert fm.state["scorer"].log == [] and "verdict_task" not in fm.state
 
 
 async def test_use_voice_does_nothing_when_no_judge_voice_is_configured(monkeypatch):

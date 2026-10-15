@@ -17,7 +17,8 @@
     "mode": null,
     "focus": null,
     "question": null,
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -37,7 +38,8 @@
     "mode": "sparring",
     "focus": null,
     "question": null,
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -57,7 +59,8 @@
     "mode": "sparring",
     "focus": null,
     "question": null,
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -80,7 +83,8 @@
       "number": 1,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -108,7 +112,8 @@
       "number": 1,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -136,7 +141,8 @@
       "number": 2,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -164,7 +170,8 @@
       "number": 2,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -192,7 +199,8 @@
       "number": 3,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -220,7 +228,8 @@
       "number": 3,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -248,7 +257,8 @@
       "number": 4,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -276,7 +286,8 @@
       "number": 4,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -304,7 +315,8 @@
       "number": 5,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -332,7 +344,8 @@
       "number": 5,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   },
   {
     "type": "debate_state",
@@ -363,6 +376,7 @@
       "number": 5,
       "of": 5
     },
-    "lesson": null
+    "lesson": null,
+    "floor": null
   }
 ]

@@ -104,6 +104,18 @@ async def set_positions(flow_manager: FlowManager, user_theory: str, bot_theory:
     return {"status": "ok", "user_theory": user.name, "bot_theory": bot.name}, TRANSITION_IN_YAML
 
 
+async def opening_done(flow_manager: FlowManager):
+    """The user has finished their opening statement. Moves the debate to the rebuttal round."""
+    flow_manager.state["scorer"].round_complete("opening")
+    return {"status": "ok"}, TRANSITION_IN_YAML
+
+
+async def rebuttal_done(flow_manager: FlowManager):
+    """The user has finished their rebuttal. Moves the debate to cross-examination."""
+    flow_manager.state["scorer"].round_complete("rebuttal")
+    return {"status": "ok"}, TRANSITION_IN_YAML
+
+
 async def answer_given(flow_manager: FlowManager):
     """The user has answered your cross-examination question.
 
@@ -121,6 +133,7 @@ async def answer_given(flow_manager: FlowManager):
                 "Do both now, as this round's instructions describe."
             ),
         }, TRANSITION_IN_YAML
+    flow_manager.state["scorer"].round_complete("crossexam_answer")
     return {"status": "ok"}, TRANSITION_IN_YAML
 
 
@@ -481,10 +494,28 @@ async def judge_debate(flow_manager: FlowManager):
     Call this exactly once, as soon as the user has given their closing
     statement. Do not reply to the closing statement first.
     """
+    state = flow_manager.state
+    # The same guard as the other rounds: a "we won" before the house's closing
+    # brought the verdict with neither closing scored (recorded session).
+    scorer = state["scorer"]
+    if scorer.heard("closing", "bot") == 0:
+        return {
+            "status": "closing_first",
+            "instruction": (
+                "You have not given your closing statement yet. Give it now and "
+                "invite the user's, as this round's instructions describe."
+            ),
+        }, TRANSITION_IN_YAML
+    if scorer.heard("closing", "user") == 0:
+        return {
+            "status": "closing_first",
+            "instruction": (
+                "The user has not given their closing statement yet. Invite it and wait."
+            ),
+        }, TRANSITION_IN_YAML
     # "Exactly once" is the LLM's promise, not a guarantee: a second call in the
     # same response, or a repeat, gets the first call's decision rather than a
     # second announcement, a second judge call, and a second verdict snapshot.
-    state = flow_manager.state
     if "verdict_task" not in state:
         state["verdict_task"] = asyncio.ensure_future(_decide(flow_manager))
     try:
@@ -499,6 +530,7 @@ async def _decide(flow_manager: FlowManager) -> dict:
     state = flow_manager.state
     debate, scorer = state["debate"], state["scorer"]
 
+    scorer.round_complete("closing")
     scorer.close()
     await flow_manager.worker.queue_frames(
         [TTSSpeakFrame("Thank you. The judge is tallying the scores.", append_to_context=False)]

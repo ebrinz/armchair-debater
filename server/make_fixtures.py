@@ -46,6 +46,7 @@ async def debate() -> list[dict]:
     await s.set_positions(*GWT, *IIT)
     r.keep()  # the lock-in: both matched, the first round not yet begun
     await s.set_stage("opening")
+    await s.set_floor("bot")  # the house steps up
     r.keep()
 
     # (stage the hit lands in, by, raw damage, raw recovery, reason). A user's hit
@@ -102,7 +103,11 @@ async def debate() -> list[dict]:
         if s.stage != stage:
             await s.set_stage(stage)
             if stage == "crossexam":
+                await s.set_floor("user")  # the house has invited their question
                 r.keep()  # the stage change itself: a new stage, the same last hit
+        # A round's hits land once the user has spoken; each one is shown with
+        # the floor as it is by then: the other side's.
+        await s.set_floor("bot" if by == "user" else "user")
         await s.apply_hit(by, damage, recovery, reason)
         r.keep()
 

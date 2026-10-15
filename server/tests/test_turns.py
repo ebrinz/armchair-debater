@@ -1,3 +1,5 @@
+import asyncio
+
 from pipecat.frames.frames import (
     BotStoppedSpeakingFrame,
     LLMContextFrame,
@@ -353,3 +355,22 @@ async def test_a_raising_user_callback_is_swallowed_and_logged():
     context = LLMContext(messages=[{"role": "user", "content": "hello there"}])
 
     await observer.on_push_frame(context_push(context, destination=llm))
+
+
+async def test_an_async_on_turn_is_awaited_so_its_effects_land_in_order():
+    llm = object()
+    turns = []
+
+    async def on_turn(by, text):
+        await asyncio.sleep(0)
+        turns.append((by, text))
+
+    observer = TurnObserver(llm, on_turn)
+    await observer.on_push_frame(push(source=llm, destination=object(), frame=LLMTextFrame("Hi.")))
+    await observer.on_push_frame(
+        push(source=llm, destination=object(), frame=LLMFullResponseEndFrame())
+    )
+    context = LLMContext(messages=[{"role": "user", "content": "hello there"}])
+    await observer.on_push_frame(context_push(context, destination=llm))
+
+    assert turns == [("bot", "Hi."), ("user", "hello there")]

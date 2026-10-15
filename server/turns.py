@@ -41,6 +41,7 @@ whichever flush -- the next stop event or the next user turn -- reports the
 turn it belongs to.
 """
 
+import inspect
 from collections.abc import Callable
 
 from loguru import logger
@@ -56,7 +57,8 @@ from pipecat.processors.frame_processor import FrameProcessor
 
 
 class TurnObserver(BaseObserver):
-    """Calls `on_turn(by, text)` once per confirmed turn, `by` "user" or "bot"."""
+    """Calls `on_turn(by, text)` once per confirmed turn, `by` "user" or "bot".
+    `on_turn` may be a coroutine function; then each call is awaited."""
 
     def __init__(self, llm: FrameProcessor, on_turn: Callable[[str, str], None]):
         super().__init__()
@@ -79,7 +81,7 @@ class TurnObserver(BaseObserver):
 
         if isinstance(frame, BotStoppedSpeakingFrame):
             if self._is_new_stop(frame):
-                self._flush_bot_turn()
+                await self._flush_bot_turn()
             return
 
         if data.source is self._llm:
@@ -124,8 +126,8 @@ class TurnObserver(BaseObserver):
         self._last_reported_user = key
 
         # The bot's turn always precedes the user's reply to it.
-        self._flush_bot_turn()
-        self._report("user", text)
+        await self._flush_bot_turn()
+        await self._report("user", text)
 
     def _is_new_stop(self, frame: BotStoppedSpeakingFrame) -> bool:
         if frame.id in self._handled_stop_ids:
@@ -135,7 +137,7 @@ class TurnObserver(BaseObserver):
             self._handled_stop_ids.add(frame.broadcast_sibling_id)
         return True
 
-    def _flush_bot_turn(self) -> None:
+    async def _flush_bot_turn(self) -> None:
         parts = list(self._pending_bot_parts)
         current = "".join(self._response_parts).strip()
         if current:
@@ -145,11 +147,15 @@ class TurnObserver(BaseObserver):
 
         text = " ".join(parts).strip()
         if text:
-            self._report("bot", text)
+            await self._report("bot", text)
 
-    def _report(self, by: str, text: str) -> None:
+    async def _report(self, by: str, text: str) -> None:
+        """Call `on_turn`, and wait for it if it is a coroutine, so what it does
+        (a snapshot, say) goes out before the next turn is reported."""
         try:
-            self._on_turn(by, text)
+            result = self._on_turn(by, text)
+            if inspect.isawaitable(result):
+                await result
         except Exception:
             logger.exception(f"TurnObserver: on_turn callback raised for a {by} turn")
 

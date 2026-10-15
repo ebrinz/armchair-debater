@@ -54,6 +54,10 @@ export interface DebateSnapshot {
   question: { number: number; of: number } | null;
   /** The tutor: which step of the lesson this is. */
   lesson: { step: number; of: number; title: string } | null;
+  /** Whose turn it is, set as each side's turn ends. A round's hits land after
+   *  the player has spoken, so the cue cannot follow `last_hit` alone. `null`
+   *  before the first turn, and from a server that sends none. */
+  floor: Side | null;
 }
 
 export interface TheoryCard {
@@ -119,6 +123,7 @@ export const isDebateSnapshot = (data: unknown): data is DebateSnapshot => {
     isDebater(s.bot) &&
     (s.last_hit == null || isHit(s.last_hit)) &&
     (s.verdict == null || isVerdict(s.verdict)) &&
+    (s.floor == null || SIDES.includes(s.floor as unknown as string)) &&
     (s.mode == null || MODE_NAMES.includes(s.mode as unknown as string)) &&
     (s.focus == null || typeof s.focus === 'string') &&
     (s.question == null ||

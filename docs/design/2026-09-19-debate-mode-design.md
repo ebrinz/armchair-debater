@@ -110,11 +110,11 @@ nothing.
 | Node | On entry the bot… | Tool that leaves the node |
 |---|---|---|
 | `setup` | greets, asks what the user thinks consciousness is | `set_positions(user_theory, bot_theory)` → `opening` when `status: ok` |
-| `opening` | states which theory it defends, gives its opening, invites the user's | `opening_done` (transition only) |
-| `rebuttal` | rebuts the user's opening, invites their rebuttal | `rebuttal_done` (transition only) |
+| `opening` | states which theory it defends, gives its opening, invites the user's | `opening_done` (lands the round) |
+| `rebuttal` | rebuts the user's opening, invites their rebuttal | `rebuttal_done` (lands the round) |
 | `crossexam_question` | announces cross-examination and invites ONE question about its theory; does not argue | `question_asked` (transition only) |
 | `crossexam_answer` | answers that question in two sentences, then puts ONE pointed question to the user, aimed at their weakest point or a known objection on their card | `answer_given` (transition only) |
-| `closing` | responds to the user's answer, gives its closing, invites the user's | `judge_debate()` → `verdict` |
+| `closing` | responds to the user's answer, gives its closing, invites the user's | `judge_debate()` → `verdict` when `status: ok`; `closing_first` until both closings have been heard |
 | `verdict` | announces the final health, the winner, and the judge's rationale; offers a rematch | `rematch` (transition only → `setup`) |
 
 **Cross-examination** keeps the shape every other round has — the house speaks,
@@ -215,9 +215,19 @@ round the user spoke in.
 A turn with non-empty text, finished while the flow's current node is a debate
 round, is submitted for scoring. Submissions run as a chain of background asyncio
 tasks — each awaits the one before — so scores apply in turn order and never delay
-the bot's reply. Bars move a second or two after a turn ends. Any error while
-scoring a turn is logged and skips only that turn; a `reset()` for a rematch
-discards turns still in flight.
+the bot's reply. Any error while scoring a turn is logged and skips only that
+turn; a `reset()` for a rematch discards turns still in flight.
+
+**A round lands when its tool says it is over** (`scorer.round_complete`, called
+by `opening_done`, `rebuttal_done`, `answer_given`, and `judge_debate`). The house
+opens every round, and when its turn was applied as soon as it was judged, the hit
+landed a breath after it stopped speaking, before the user had said a word
+(recorded sessions, 2026-10-15). Now the house's turn goes to the judge as soon
+as it is heard, so the judge's latency is paid while the user speaks, but it is
+applied only when the round completes; the user's turns in that round, which a
+pause mid-statement splits into several, are then joined and judged once, as the
+sparring answers already were. So the bars move after the user has spoken: the
+house's blow, then theirs, a judge call apart.
 
 A failed or unparseable scoring call is retried once, then skipped: that turn moves
 no bars, and the miss is logged.
@@ -248,7 +258,8 @@ one; there are no diffs to apply.
   "user": {"theory_id": null, "theory_name": null, "health": 100},
   "bot":  {"theory_id": null, "theory_name": null, "health": 100},
   "last_hit": null,
-  "verdict": null
+  "verdict": null,
+  "floor": null
 }
 ```
 
@@ -256,6 +267,10 @@ one; there are no diffs to apply.
 - `last_hit`: `{"by": "user" | "bot", "damage": int, "recovery": int, "reason": str}`
   — the most recent scored turn, or `null`.
 - `verdict`: `{"winner": "user" | "bot" | "draw", "rationale": str}` or `null`.
+- `floor`: `"user"` | `"bot"` | `null` — whose turn it is, set as each side's turn
+  ends (`bot.py`'s turn callback). A round's hits land after the user has spoken,
+  so the client's cue reads this rather than `last_hit.by`; `null` before the
+  first turn and after the front door.
 - Messages whose `type` is not `debate_state` are ignored by the debate UI.
 
 `docs/design/debate-state-fixtures.json` holds an ordered list of example snapshots

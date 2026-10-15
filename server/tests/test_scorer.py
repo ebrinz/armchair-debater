@@ -38,6 +38,7 @@ async def test_scores_are_applied_in_submission_order_even_if_the_first_is_slow(
     rig.gates["first"] = asyncio.Event()
     rig.scorer.submit("bot", "first")
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
     await asyncio.sleep(0)
     assert rig.state.hits == []
     rig.gates["first"].set()
@@ -49,6 +50,7 @@ async def test_history_excludes_the_turn_being_scored():
     rig = Rig()
     rig.scorer.submit("bot", "first")
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     assert rig.calls[0]["history"] == []
     assert rig.calls[1]["history"] == [("bot", "first")]
@@ -59,7 +61,10 @@ async def test_was_hit_is_true_only_after_the_opponent_has_landed_a_hit():
     rig = Rig()
     rig.scorer.submit("bot", "first")
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
+    rig.stage = "rebuttal"
     rig.scorer.submit("bot", "third")
+    rig.scorer.round_complete("rebuttal")
     await rig.scorer.drain()
     assert [c["was_hit"] for c in rig.calls] == [False, True, True]
     assert rig.state.health == {"user": 63, "bot": 83}
@@ -82,6 +87,7 @@ async def test_a_failed_score_is_skipped_and_later_turns_still_apply():
     rig.failing.add("first")
     rig.scorer.submit("bot", "first")
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     assert [h["reason"] for h in rig.state.hits] == ["scored second"]
 
@@ -89,12 +95,14 @@ async def test_a_failed_score_is_skipped_and_later_turns_still_apply():
 async def test_close_stops_new_turns_and_reset_reopens_with_empty_history():
     rig = Rig()
     rig.scorer.submit("bot", "first")
+    rig.scorer.round_complete("opening")
     rig.scorer.close()
     rig.scorer.submit("user", "ignored")
     await rig.scorer.drain()
     assert len(rig.calls) == 1
     rig.scorer.reset()
     rig.scorer.submit("user", "fresh")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     assert rig.calls[-1]["history"] == []
 
@@ -108,6 +116,7 @@ async def test_an_unexpected_error_is_skipped_and_later_turns_still_apply():
     rig.crashing.add("first")
     rig.scorer.submit("bot", "first")
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     assert [h["reason"] for h in rig.state.hits] == ["scored second"]
 
@@ -116,6 +125,7 @@ async def test_an_apply_hit_failure_does_not_break_the_chain():
     rig = Rig()
     rig.scorer.submit("referee", "first")
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     assert [h["reason"] for h in rig.state.hits] == ["scored second"]
 
@@ -124,6 +134,7 @@ async def test_reset_discards_turns_still_in_flight():
     rig = Rig()
     rig.gates["first"] = asyncio.Event()
     rig.scorer.submit("bot", "first")
+    rig.scorer.round_complete("opening")
     in_flight = rig.scorer._tail
     await asyncio.sleep(0)
     rig.scorer.reset()
@@ -133,6 +144,7 @@ async def test_reset_discards_turns_still_in_flight():
     await in_flight
     assert rig.state.hits == []
     rig.scorer.submit("user", "fresh")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     assert [h["reason"] for h in rig.state.hits] == ["scored fresh"]
     assert rig.calls[-1]["history"] == []
@@ -149,9 +161,11 @@ async def test_a_failure_reading_the_theories_skips_that_turn_and_never_escapes_
 
     rig.scorer._theories = theories
     rig.scorer.submit("bot", "first")
+    rig.scorer.round_complete("opening")
     await rig.scorer.drain()
     # The LAST queued turn is the one drain() awaits directly.
     rig.scorer.submit("user", "second")
+    rig.scorer.round_complete("opening")
 
     await rig.scorer.drain()  # must not raise: judge_debate awaits this before the verdict
 
@@ -162,6 +176,7 @@ async def test_abandon_discards_the_turn_in_flight_and_refuses_new_ones():
     rig = Rig()
     rig.gates["first"] = asyncio.Event()
     rig.scorer.submit("bot", "first")
+    rig.scorer.round_complete("opening")
     await asyncio.sleep(0)
 
     rig.scorer.abandon()
@@ -181,7 +196,8 @@ async def test_a_cross_examination_question_is_heard_but_not_scored():
     await rig.scorer.drain()
     assert rig.state.hits == [] and rig.calls == []
 
-    # The answer is scored, and the judge is shown the question it answers.
+    # The house's answer is scored, and the judge is shown the question it answers.
+    # It lands at once: the user spoke first in this round, so it is no free hit.
     rig.stage = "crossexam_answer"
     rig.scorer.submit("bot", "It is intractable, not undefined.")
     await rig.scorer.drain()
@@ -191,6 +207,15 @@ async def test_a_cross_examination_question_is_heard_but_not_scored():
         ("bot", "Put one question to me."),
         ("user", "How would anyone ever measure phi in a brain?"),
     ]
+
+    # The user's answer is joined and lands when the house's tool says it is given.
+    rig.scorer.submit("user", "Then it predicts nothing,")
+    rig.scorer.submit("user", "and that is my answer.")
+    await rig.scorer.drain()
+    assert len(rig.state.hits) == 1
+    rig.scorer.round_complete("crossexam_answer")
+    await rig.scorer.drain()
+    assert rig.state.hits[-1]["reason"] == "scored Then it predicts nothing, and that is my answer."
 
 
 async def test_the_scorer_knows_who_has_been_heard_in_a_node_and_forgets_on_reset():
@@ -405,3 +430,59 @@ async def test_without_a_named_question_the_last_bot_turn_is_the_question():
     rig.scorer.answer_complete("sparring")
     await rig.scorer.drain()
     assert answers[0]["history"][-1] == ("bot", "Q2?")
+
+
+# --- a debate round lands when it is complete --------------------------------------
+
+
+async def test_in_a_debate_round_the_houses_hit_is_judged_at_once_but_lands_when_the_round_ends():
+    # Recorded sessions: the house opens every round, and its hit landed one to
+    # three seconds after it stopped speaking, as the player drew breath.
+    rig = Rig()
+    rig.scorer.submit("bot", "first")
+    for _ in range(5):
+        await asyncio.sleep(0)
+    assert [c["turn"] for c in rig.calls] == ["first"]  # the judge's latency is paid now
+    assert rig.state.hits == []  # but nothing lands before the player has replied
+
+    rig.scorer.round_complete("opening")
+    await rig.scorer.drain()
+    assert [h["reason"] for h in rig.state.hits] == ["scored first"]
+
+
+async def test_the_players_round_is_scored_once_joined_after_the_houses_hit():
+    # A pause mid-statement made "and um" a turn of its own, judged as no argument.
+    rig = Rig()
+    rig.scorer.submit("bot", "first")
+    rig.scorer.submit("user", "My opening,")
+    rig.scorer.submit("user", "and the rest of it.")
+    await rig.scorer.drain()
+    assert rig.state.hits == []
+
+    rig.scorer.round_complete("opening")
+    await rig.scorer.drain()
+    assert [h["reason"] for h in rig.state.hits] == [
+        "scored first",
+        "scored My opening, and the rest of it.",
+    ]
+    assert rig.calls[1]["history"] == [("bot", "first")]
+    assert rig.calls[1]["was_hit"] is True
+    assert rig.scorer.heard("opening", "user") == 2
+
+    rig.scorer.round_complete("opening")  # a repeat has nothing left to land
+    await rig.scorer.drain()
+    assert len(rig.state.hits) == 2
+
+
+async def test_reset_drops_a_round_still_held():
+    rig = Rig()
+    rig.gates["first"] = asyncio.Event()
+    rig.scorer.submit("bot", "first")
+    rig.scorer.submit("user", "a part")
+    await asyncio.sleep(0)
+    rig.scorer.reset()
+    rig.gates["first"].set()
+    rig.scorer.round_complete("opening")
+    await rig.scorer.drain()
+    assert rig.state.hits == []
+    assert [c["turn"] for c in rig.calls] == ["first"]
